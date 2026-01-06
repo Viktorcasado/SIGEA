@@ -49,22 +49,22 @@ const Profile: React.FC<ProfileProps> = ({ navigateTo, toggleRole, darkMode, set
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-36">
-      <header className="sticky top-0 z-50 flex items-center justify-between bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md p-4 border-b-2 border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
-        <button onClick={() => isEditing ? setIsEditing(false) : navigateTo('home')} className="size-11 flex items-center justify-center rounded-full">
-          <span className="material-symbols-outlined font-bold">{isEditing ? 'close' : 'arrow_back'}</span>
+    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-36 safe-bottom">
+      <header className="sticky top-0 z-50 flex items-center justify-between bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md px-4 py-3 border-b-2 border-slate-300 dark:border-slate-800 shadow-sm transition-colors safe-top">
+        <button onClick={() => isEditing ? setIsEditing(false) : navigateTo('home')} className="size-10 flex items-center justify-center rounded-full active:scale-90 transition-transform">
+          <span className="material-symbols-outlined font-bold text-2xl">{isEditing ? 'close' : 'arrow_back'}</span>
         </button>
-        <h2 className="text-xs font-black uppercase tracking-widest">{isEditing ? 'Editar Perfil' : 'Meu Perfil'}</h2>
-        {!isEditing && (
-          <button onClick={() => setIsEditing(true)} className="size-11 text-primary">
-            <span className="material-symbols-outlined font-bold">edit</span>
+        <h2 className="text-sm font-black uppercase tracking-widest">{isEditing ? 'Editar Perfil' : 'Meu Perfil'}</h2>
+        {!isEditing ? (
+          <button onClick={() => setIsEditing(true)} className="size-10 text-primary flex items-center justify-center active:scale-90 transition-transform">
+            <span className="material-symbols-outlined font-bold text-2xl">edit</span>
           </button>
-        )}
+        ) : <div className="size-10"></div>}
       </header>
 
-      <main className="flex flex-col items-center px-6 pt-10 space-y-10">
+      <main className="flex-1 flex flex-col items-center px-[var(--spacing-unit)] pt-8 space-y-8 w-full max-w-md mx-auto overflow-y-auto no-scrollbar">
         <div
-          className="size-32 rounded-full border-4 border-white shadow-xl bg-cover bg-center relative group overflow-hidden"
+          className="size-[8rem] rounded-full border-4 border-white shadow-xl bg-cover bg-center relative group overflow-hidden shrink-0"
           style={{ backgroundImage: `url("${formData.photo}")` }}
         >
           {isEditing && (
@@ -128,6 +128,7 @@ const Profile: React.FC<ProfileProps> = ({ navigateTo, toggleRole, darkMode, set
               )}
             </div>
 
+            {/* Número de Matrícula / SIAPE (Apenas Aluno e Servidor) */}
             {(formData.user_category === UserCategory.ALUNO || formData.user_category === UserCategory.SERVIDOR) && (
               <div className="space-y-1">
                 <span className="text-[10px] font-black text-slate-500 uppercase">
@@ -188,18 +189,38 @@ const Profile: React.FC<ProfileProps> = ({ navigateTo, toggleRole, darkMode, set
               )}
             </div>
 
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-slate-500 uppercase">Departamento</span>
-              {isEditing ? (
-                <input
-                  value={formData.department}
-                  onChange={e => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
-                />
-              ) : (
-                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.department || 'Não informado'}</p>
-              )}
-            </div>
+            {/* Departamento (Apenas Servidor e Coordenador) */}
+            {(formData.user_category === UserCategory.SERVIDOR || formData.user_category === UserCategory.COORDENADOR) && (
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-500 uppercase">Departamento</span>
+                {isEditing ? (
+                  <input
+                    value={formData.department}
+                    onChange={e => setFormData({ ...formData, department: e.target.value })}
+                    className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
+                  />
+                ) : (
+                  <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.department || 'Não informado'}</p>
+                )}
+              </div>
+            )}
+
+            {/* Instituição (Palestrante, Avaliador, Visitante) */}
+            {(formData.user_category === UserCategory.PALESTRANTE || formData.user_category === UserCategory.AVALIADOR || formData.user_category === UserCategory.VISITANTE) && (
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-500 uppercase">Instituição</span>
+                {isEditing ? (
+                  <input
+                    value={formData.institution}
+                    onChange={e => setFormData({ ...formData, institution: e.target.value })}
+                    className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
+                    placeholder="Ex: UFAL, MCTI, Outra..."
+                  />
+                ) : (
+                  <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.institution || 'Não informado'}</p>
+                )}
+              </div>
+            )}
 
             {formData.user_category === UserCategory.ALUNO && (
               <div className="space-y-1">
@@ -242,7 +263,7 @@ const Profile: React.FC<ProfileProps> = ({ navigateTo, toggleRole, darkMode, set
 
               <button
                 onClick={() => navigateTo('contacts')}
-                className="w-full p-5 flex items-center justify-between bg-blue-50 dark:bg-blue-900/10 rounded-3xl border-2 border-blue-100 dark:border-blue-900/30 active:scale-95 transition-all"
+                className="w-full p-4 flex items-center justify-between bg-blue-50 dark:bg-blue-900/10 rounded-2xl border-2 border-blue-100 dark:border-blue-900/30 active:scale-95 transition-all"
               >
                 <span className="text-sm font-black uppercase text-slate-700 dark:text-slate-300">Contatos e Suporte</span>
                 <span className="material-symbols-outlined text-primary">support_agent</span>
@@ -250,13 +271,13 @@ const Profile: React.FC<ProfileProps> = ({ navigateTo, toggleRole, darkMode, set
 
               <button
                 onClick={() => navigateTo('privacy')}
-                className="w-full p-5 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-3xl border-2 border-slate-100 dark:border-slate-800 active:scale-95 transition-all"
+                className="w-full p-4 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-slate-100 dark:border-slate-800 active:scale-95 transition-all"
               >
                 <span className="text-sm font-black uppercase text-slate-700 dark:text-slate-300">Políticas e Privacidade</span>
                 <span className="material-symbols-outlined text-slate-400">verified_user</span>
               </button>
 
-              <button onClick={onLogout} className="w-full py-5 text-red-600 font-black text-[11px] uppercase tracking-widest border-2 border-transparent hover:bg-red-50 rounded-3xl">
+              <button onClick={onLogout} className="w-full py-4 text-red-600 font-black text-[11px] uppercase tracking-widest border-2 border-transparent hover:bg-red-50 rounded-2xl">
                 Sair da Conta
               </button>
             </div>

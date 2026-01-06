@@ -21,6 +21,7 @@ export interface UserProfile {
   user_category?: UserCategory;
   registration_number?: string;
   department?: string;
+  institution?: string;
   course?: string;
   cpf?: string;
   phone?: string;

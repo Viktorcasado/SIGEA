@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SIGEA - IFAL</title>
 
     <!-- Proteção contra erro de process.env no navegador -->
@@ -18,6 +19,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SIGEA">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2907/2907150.png">
+
+    <!-- Performance Optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://esm.sh">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap"
@@ -168,19 +174,25 @@
             box-shadow: 0 0 0 4px rgba(19, 91, 236, 0.1) !important;
         }
 
-        #root {
-            padding-bottom: calc(95px + var(--sab, 0px));
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding-top: var(--sat, 0px);
+        :root {
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+            --sar: env(safe-area-inset-right, 0px);
+            --sal: env(safe-area-inset-left, 0px);
+
+            /* Fluid Spacing Base */
+            --spacing-unit: clamp(0.75rem, 2vw, 1rem);
         }
 
-        :root {
-            --sat: env(safe-area-inset-top);
-            --sab: env(safe-area-inset-bottom);
-            --sar: env(safe-area-inset-right);
-            --sal: env(safe-area-inset-left);
+        #root {
+            padding-bottom: calc(100px + var(--sab));
+            min-height: 100dvh;
+            /* Dynamic viewport height */
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--sat);
+            overflow-x: hidden;
+            width: 100%;
         }
 
         .fixed-nav-container {
