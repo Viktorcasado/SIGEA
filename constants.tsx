@@ -1,5 +1,5 @@
 
-import { Event, Participant, Certificate } from './types';
+import { Event, Participant, Certificate, UserCategory } from './types';
 
 export const MOCK_EVENTS: Event[] = [
   {
@@ -87,3 +87,21 @@ export const CAMPUS_LIST = [
   "Campus São Miguel dos Campos", "Campus Viçosa", "Campus Coruripe",
   "Campus Rio Largo", "Campus Murici", "Campus Batalha"
 ];
+
+export const USER_CATEGORIES = [
+  UserCategory.ALUNO,
+  UserCategory.SERVIDOR,
+  UserCategory.COORDENADOR,
+  UserCategory.PALESTRANTE,
+  UserCategory.AVALIADOR,
+  UserCategory.VISITANTE
+];
+
+export const USER_CATEGORY_LABELS: Record<UserCategory, string> = {
+  [UserCategory.ALUNO]: 'Aluno',
+  [UserCategory.SERVIDOR]: 'Servidor',
+  [UserCategory.COORDENADOR]: 'Coordenador',
+  [UserCategory.PALESTRANTE]: 'Palestrante',
+  [UserCategory.AVALIADOR]: 'Avaliador',
+  [UserCategory.VISITANTE]: 'Visitante'
+};

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserRole, Event } from './types.ts';
+import { UserRole, Event, UserProfile, UserCategory } from './types.ts';
 import { supabase } from './supabaseClient.ts';
 import Home from './pages/Home.tsx';
 import EventsList from './pages/EventsList.tsx';
@@ -20,7 +20,7 @@ import AIAssistant from './components/AIAssistant.tsx';
 import ContactsSupport from './pages/ContactsSupport.tsx';
 import PrivacyPolicy from './pages/PrivacyPolicy.tsx';
 import { logActivity } from './utils/logger.ts';
-import NotificationDrawer from './components/NotificationDrawer.tsx';
+
 
 const SQL_SCRIPT = `DROP TABLE IF EXISTS public.registrations;
 DROP TABLE IF EXISTS public.profiles;
@@ -49,6 +49,13 @@ CREATE TABLE public.profiles (
     role text, 
     campus text,
     avatar_url text,
+    user_category text,
+    registration_number text,
+    department text,
+    course text,
+    cpf text,
+    phone text,
+    is_verified boolean DEFAULT false,
     updated_at timestamp with time zone DEFAULT now()
 );
 
@@ -162,16 +169,22 @@ const App: React.FC = () => {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('sigea_dark_mode') === 'true';
   });
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
+
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [tablesMissing, setTablesMissing] = useState(false);
-  const [userProfile, setUserProfile] = useState({
+  const [userProfile, setUserProfile] = useState<UserProfile>({
     name: 'Usuário SIGEA',
     photo: 'https://lh3.googleusercontent.com/a/ACg8ocL_FmR_I_J870vM4g=s96-c',
     campus: 'Campus Maceió',
-    email: ''
+    email: '',
+    user_category: UserCategory.ALUNO,
+    registration_number: '',
+    department: '',
+    course: '',
+    cpf: '',
+    phone: '',
+    is_verified: false
   });
 
   useEffect(() => {
@@ -200,49 +213,13 @@ const App: React.FC = () => {
       setSession(session);
       if (session?.user) {
         fetchProfile(session.user);
-        fetchNotifications(session.user.id);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchNotifications = async (userId: string) => {
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
 
-    if (data) setNotifications(data);
-  };
-
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notificationId);
-
-      if (!error) {
-        setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
-      }
-    } catch (err) { }
-  };
-
-  const addNotification = async (userId: string, title: string, text: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .insert([{ user_id: userId, title, text }])
-        .select()
-        .single();
-
-      if (!error && data) {
-        setNotifications(prev => [data, ...prev]);
-      }
-    } catch (err) { }
-  };
 
   const fetchProfile = async (user: any) => {
     try {
@@ -267,7 +244,14 @@ const App: React.FC = () => {
           name: data.full_name || user.user_metadata?.full_name || 'Usuário',
           photo: data.avatar_url || 'https://lh3.googleusercontent.com/a/ACg8ocL_FmR_I_J870vM4g=s96-c',
           campus: data.campus || 'Campus Maceió',
-          email: email
+          email: email,
+          user_category: data.user_category as UserCategory || UserCategory.ALUNO,
+          registration_number: data.registration_number || '',
+          department: data.department || '',
+          course: data.course || '',
+          cpf: data.cpf || '',
+          phone: data.phone || '',
+          is_verified: data.is_verified || false
         });
       }
     } catch (err) { }
@@ -346,8 +330,13 @@ const App: React.FC = () => {
           id: session?.user?.id,
           full_name: updatedData.name,
           avatar_url: photoUrl,
-          // Garante persistência de e-mail e campus
           campus: updatedData.campus || 'Campus Maceió',
+          user_category: updatedData.user_category,
+          registration_number: updatedData.registration_number,
+          department: updatedData.department,
+          course: updatedData.course,
+          cpf: updatedData.cpf,
+          phone: updatedData.phone,
           updated_at: new Date().toISOString(),
         });
 
@@ -479,13 +468,10 @@ const App: React.FC = () => {
   };
 
   const renderPage = () => {
-    const unreadCount = notifications.filter(n => !n.read).length;
     const commonProps = {
       navigateTo,
       profile: userProfile,
-      events,
-      unreadNotifications: unreadCount,
-      onNotify: () => setIsNotificationsOpen(true)
+      events
     };
     const selectedEvent = events.find(e => e.id === selectedEventId);
 
@@ -510,7 +496,7 @@ const App: React.FC = () => {
       case 'home': return <Home {...commonProps} />;
       case 'events': return <EventsList navigateTo={navigateTo} events={events} />;
       case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} />;
-      case 'register': return <Registration navigateTo={navigateTo} eventId={selectedEventId} events={events} user={session.user} addNotification={addNotification} />;
+      case 'register': return <Registration navigateTo={navigateTo} eventId={selectedEventId} events={events} user={session.user} />;
       case 'certificates': return <Certificates navigateTo={navigateTo} events={events} />;
       case 'profile': return <Profile {...commonProps} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} darkMode={darkMode} setDarkMode={setDarkMode} role={role} onUpdate={handleUpdateProfile} onLogout={handleLogout} />;
       case 'contacts': return <ContactsSupport navigateTo={navigateTo} />;
@@ -519,9 +505,7 @@ const App: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    (window as any).addNotification = addNotification;
-  }, [addNotification]);
+
 
   const NavButton = ({ label, icon, page }: { label: string, icon: string, page: string }) => {
     const isActive = currentPage === page || (page === 'home' && role === UserRole.ORGANIZER && currentPage === 'dashboard');
@@ -553,12 +537,7 @@ const App: React.FC = () => {
         {renderPage()}
       </div>
 
-      <NotificationDrawer
-        isOpen={isNotificationsOpen}
-        onClose={() => setIsNotificationsOpen(false)}
-        notifications={notifications}
-        onMarkAsRead={markAsRead}
-      />
+
 
       <div className="fixed-nav-container">
         <div className="dock-container">
@@ -576,6 +555,7 @@ const App: React.FC = () => {
             )}
 
             <NavButton label="Certificados" icon="workspace_premium" page="certificates" />
+            <NavButton label="Perfil" icon="person" page="profile" />
           </nav>
         </div>
       </div>

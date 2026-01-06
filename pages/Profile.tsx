@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { UserRole } from '../types';
-import { CAMPUS_LIST } from '../constants';
+import { UserRole, UserProfile, UserCategory } from '../types';
+import { CAMPUS_LIST, USER_CATEGORIES, USER_CATEGORY_LABELS } from '../constants';
 
 interface ProfileProps {
   navigateTo: (page: string) => void;
@@ -9,14 +9,14 @@ interface ProfileProps {
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
   role: UserRole;
-  profile: { name: string; photo: string; campus: string; email: string };
-  onUpdate: (profile: any, file?: File) => Promise<void>;
+  profile: UserProfile;
+  onUpdate: (profile: UserProfile, file?: File) => Promise<void>;
   onLogout: () => void;
 }
 
 const Profile: React.FC<ProfileProps> = ({ navigateTo, toggleRole, darkMode, setDarkMode, role, profile, onUpdate, onLogout }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ ...profile });
+  const [formData, setFormData] = useState<UserProfile>({ ...profile });
   const [hasChanges, setHasChanges] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,6 +102,119 @@ const Profile: React.FC<ProfileProps> = ({ navigateTo, toggleRole, darkMode, set
                 <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-bold opacity-70">{profile.email}</p>
               )}
             </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-500 uppercase">Tipo de Usuário</span>
+                {profile.is_verified && (
+                  <div className="flex items-center gap-1 text-green-500">
+                    <span className="material-symbols-outlined text-xs filled">verified</span>
+                    <span className="text-[9px] font-black uppercase tracking-tighter">Verificado</span>
+                  </div>
+                )}
+              </div>
+              {isEditing ? (
+                <select
+                  value={formData.user_category}
+                  onChange={e => setFormData({ ...formData, user_category: e.target.value as UserCategory })}
+                  className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
+                >
+                  {USER_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{USER_CATEGORY_LABELS[cat]}</option>
+                  ))}
+                </select>
+              ) : (
+                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{USER_CATEGORY_LABELS[profile.user_category || UserCategory.ALUNO]}</p>
+              )}
+            </div>
+
+            {(formData.user_category === UserCategory.ALUNO || formData.user_category === UserCategory.SERVIDOR) && (
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-500 uppercase">
+                  {formData.user_category === UserCategory.ALUNO ? 'Número de Matrícula' : 'Número do SIAPE'}
+                </span>
+                {isEditing ? (
+                  <input
+                    value={formData.registration_number}
+                    onChange={e => setFormData({ ...formData, registration_number: e.target.value })}
+                    className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
+                  />
+                ) : (
+                  <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.registration_number || 'Não informado'}</p>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black text-slate-500 uppercase">CPF</span>
+              {isEditing ? (
+                <input
+                  value={formData.cpf}
+                  onChange={e => setFormData({ ...formData, cpf: e.target.value })}
+                  placeholder="000.000.000-00"
+                  className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
+                />
+              ) : (
+                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black tracking-widest">{profile.cpf || 'Não informado'}</p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black text-slate-500 uppercase">Celular</span>
+              {isEditing ? (
+                <input
+                  value={formData.phone}
+                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="(00) 00000-0000"
+                  className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
+                />
+              ) : (
+                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.phone || 'Não informado'}</p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black text-slate-500 uppercase">Campus</span>
+              {isEditing ? (
+                <select
+                  value={formData.campus}
+                  onChange={e => setFormData({ ...formData, campus: e.target.value })}
+                  className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
+                >
+                  {CAMPUS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              ) : (
+                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.campus}</p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black text-slate-500 uppercase">Departamento</span>
+              {isEditing ? (
+                <input
+                  value={formData.department}
+                  onChange={e => setFormData({ ...formData, department: e.target.value })}
+                  className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
+                />
+              ) : (
+                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.department || 'Não informado'}</p>
+              )}
+            </div>
+
+            {formData.user_category === UserCategory.ALUNO && (
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-slate-500 uppercase">Curso</span>
+                {isEditing ? (
+                  <input
+                    value={formData.course}
+                    onChange={e => setFormData({ ...formData, course: e.target.value })}
+                    className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
+                  />
+                ) : (
+                  <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.course || 'Não informado'}</p>
+                )}
+              </div>
+            )}
           </div>
 
           {!isEditing && (

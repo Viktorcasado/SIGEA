@@ -4,6 +4,30 @@ export enum UserRole {
   ORGANIZER = 'ORGANIZER'
 }
 
+export enum UserCategory {
+  ALUNO = 'ALUNO',
+  SERVIDOR = 'SERVIDOR',
+  COORDENADOR = 'COORDENADOR',
+  PALESTRANTE = 'PALESTRANTE',
+  AVALIADOR = 'AVALIADOR',
+  VISITANTE = 'VISITANTE'
+}
+
+export interface UserProfile {
+  name: string;
+  photo: string;
+  campus: string;
+  email: string;
+  user_category?: UserCategory;
+  registration_number?: string;
+  department?: string;
+  course?: string;
+  cpf?: string;
+  phone?: string;
+  is_verified?: boolean;
+}
+
+
 export interface Event {
   id: string;
   title: string;

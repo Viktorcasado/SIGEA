@@ -10,11 +10,10 @@ interface RegistrationProps {
   eventId: string | null;
   events: Event[];
   user: any;
-  unreadNotifications: number;
-  addNotification: (userId: string, title: string, text: string) => void;
+
 }
 
-const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events, user, unreadNotifications, addNotification }) => {
+const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events, user }) => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [campus, setCampus] = useState('');
@@ -42,9 +41,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
 
       await logActivity(user.id, 'EVENT_REGISTER', `Inscrição no evento: ${event.title}`, { eventId: event.id, campus });
 
-      if ((window as any).addNotification) {
-        await (window as any).addNotification(user.id, 'Inscrição Confirmada!', `Você agora está inscrito em: ${event.title}`);
-      }
+
 
       navigateTo('home');
       alert('Inscrição realizada com sucesso!');
