@@ -33,7 +33,7 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ navigateTo, onN
   }, []);
 
   return (
-    <div className="flex flex-col w-full pb-32 min-h-screen bg-slate-50 dark:bg-[#0f172a]">
+    <div className="flex flex-col w-full pb-36 min-h-screen bg-slate-50 dark:bg-[#0f172a]">
       {/* Header Premium com Gradiente Suave */}
       <header className="relative pt-8 pb-6 px-6 bg-gradient-to-b from-white to-slate-50 dark:from-[#1e293b] dark:to-[#0f172a] rounded-b-[2.5rem] shadow-sm z-30">
         <div className="flex justify-center mb-6">

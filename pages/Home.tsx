@@ -22,7 +22,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, onNotify, events, unre
   );
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-[#0f172a] pb-20">
+    <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-[#0f172a] pb-36">
 
       {/* Hero Header */}
       <header className="px-6 pt-8 pb-6 bg-white dark:bg-[#1e293b] rounded-b-[3rem] shadow-sm z-30">

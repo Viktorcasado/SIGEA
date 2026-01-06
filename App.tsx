@@ -514,12 +514,12 @@ const App: React.FC = () => {
         onClick={() => navigateTo(page)}
         className="flex flex-col items-center justify-center flex-1 h-full relative group"
       >
-        <div className={`nav-pill mb-1 ${isActive ? 'active' : ''}`}>
-          <span className={`material-symbols-outlined text-[26px] transition-all duration-300 ${isActive ? 'text-primary drop-shadow-md scale-110' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'}`}>
+        <div className={`nav-pill mb-0.5 ${isActive ? 'active' : ''}`}>
+          <span className={`material-symbols-outlined text-[24px] transition-all duration-300 ${isActive ? 'text-primary drop-shadow-md scale-110' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'}`}>
             {icon}
           </span>
         </div>
-        <span className={`text-[9px] font-bold uppercase tracking-tight transition-all duration-300 ${isActive ? 'text-primary translate-y-0 opacity-100' : 'text-slate-400 translate-y-1 opacity-70'}`}>
+        <span className={`text-[8px] font-bold uppercase tracking-tight transition-all duration-300 ${isActive ? 'text-primary translate-y-0 opacity-100' : 'text-slate-400 translate-y-0.5 opacity-70'}`}>
           {label}
         </span>
       </button>
@@ -548,9 +548,9 @@ const App: React.FC = () => {
             {role === UserRole.ORGANIZER && (
               <button
                 onClick={() => navigateTo('create-event')}
-                className="fab-button -mt-8 mx-1 shrink-0"
+                className="fab-button -mt-6 mx-0.5 shrink-0"
               >
-                <span className="material-symbols-outlined text-white text-3xl">add</span>
+                <span className="material-symbols-outlined text-white text-2xl">add</span>
               </button>
             )}
 

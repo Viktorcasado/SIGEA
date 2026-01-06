@@ -49,7 +49,7 @@ const Profile: React.FC<ProfileProps> = ({ navigateTo, toggleRole, darkMode, set
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-32">
+    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-36">
       <header className="sticky top-0 z-50 flex items-center justify-between bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md p-4 border-b-2 border-slate-300 dark:border-slate-800 shadow-sm transition-colors">
         <button onClick={() => isEditing ? setIsEditing(false) : navigateTo('home')} className="size-11 flex items-center justify-center rounded-full">
           <span className="material-symbols-outlined font-bold">{isEditing ? 'close' : 'arrow_back'}</span>

@@ -138,7 +138,7 @@ const Certificates: React.FC<CertificatesProps> = ({ navigateTo, isAdmin = false
   };
 
   return (
-    <div className="flex flex-col w-full pb-24 min-h-screen bg-background-light dark:bg-background-dark">
+    <div className="flex flex-col w-full pb-36 min-h-screen bg-background-light dark:bg-background-dark">
       <header className="sticky top-0 z-30 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-md border-b-2 border-slate-200 dark:border-gray-800 p-4">
         <div className="flex items-center justify-between">
           <button onClick={() => navigateTo('home')} className="flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">

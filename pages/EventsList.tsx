@@ -13,19 +13,19 @@ const EventsList: React.FC<EventsListProps> = ({ navigateTo, events }) => {
   const [filter, setFilter] = useState('Todos');
 
   const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          event.campus.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.campus.toLowerCase().includes(searchTerm.toLowerCase());
+
     if (filter === 'Todos') return matchesSearch;
     if (filter === 'Esta Semana') return matchesSearch; // Simulação
     if (filter === 'Estudantes') return matchesSearch && event.type === 'Workshop'; // Simulação
     if (filter === 'Online') return matchesSearch && event.location.toLowerCase().includes('online');
-    
+
     return matchesSearch;
   });
 
   return (
-    <div className="flex flex-col w-full pb-24 min-h-screen">
+    <div className="flex flex-col w-full pb-36 min-h-screen">
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md p-4 border-b border-gray-100 dark:border-gray-800">
         <h1 className="text-xl font-black">Eventos Disponíveis</h1>
         <p className="text-xs text-gray-500 font-medium">Descubra e participe de eventos no IFAL</p>
@@ -33,7 +33,7 @@ const EventsList: React.FC<EventsListProps> = ({ navigateTo, events }) => {
 
       <main className="p-4 space-y-6">
         <div className="relative w-full">
-          <input 
+          <input
             type="text"
             className="w-full p-4 pl-12 bg-white dark:bg-surface-dark border-2 border-slate-200 dark:border-slate-800 rounded-2xl outline-none font-bold text-sm"
             placeholder="Pesquisar por nome ou campus..."
@@ -46,8 +46,8 @@ const EventsList: React.FC<EventsListProps> = ({ navigateTo, events }) => {
         {/* Chips */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {['Todos', 'Esta Semana', 'Estudantes', 'Online'].map((label) => (
-            <button 
-              key={label} 
+            <button
+              key={label}
               onClick={() => setFilter(label)}
               className={`shrink-0 h-9 px-5 rounded-full text-xs font-bold transition-all ${filter === label ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300'}`}
             >
