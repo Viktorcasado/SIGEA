@@ -52,13 +52,12 @@ const CheckIn: React.FC<CheckInProps> = ({ navigateTo, events = [] }) => {
   }, [isScannerActive, selectedEventId]);
 
   const onScanSuccess = (decodedText: string) => {
-    // Para o scanner após sucesso para não disparar multiplas vezes
+    // Feedback tátil (vibration) se disponível
+    if (navigator.vibrate) navigator.vibrate(100);
+
+    // Pequeno feedback visual no scanner antes de processar
     setIsScannerActive(false);
     processCheckIn(decodedText);
-  };
-
-  const onScanFailure = (error: any) => {
-    // Erros de "QR não encontrado" no frame são ignorados por padrão
   };
 
   const fetchRecentCheckIns = async () => {
@@ -125,16 +124,16 @@ const CheckIn: React.FC<CheckInProps> = ({ navigateTo, events = [] }) => {
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-[#0f172a] pb-24">
-      <header className="flex items-center justify-between p-4 pt-8 shrink-0">
-        <button onClick={() => navigateTo('home')} className="size-11 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-95 transition-all">
-          <span className="material-symbols-outlined">arrow_back</span>
+    <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-background-dark pb-32 safe-bottom safe-top">
+      <header className="flex items-center justify-between px-4 py-3 shrink-0 bg-white/50 dark:bg-surface-dark/50 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
+        <button onClick={() => navigateTo('home')} className="size-10 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-90 transition-all">
+          <span className="material-symbols-outlined font-bold text-2xl">arrow_back</span>
         </button>
         <div className="flex flex-col items-center text-center">
-          <h2 className="text-lg font-black uppercase tracking-tighter">Validação de Entrada</h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Câmera & Manual</p>
+          <h2 className="text-sm font-black uppercase tracking-tighter">Check-in</h2>
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Validação de Entrada</p>
         </div>
-        <div className="size-11"></div> {/* Spacer */}
+        <div className="size-10"></div>
       </header>
 
       <main className="flex-1 flex flex-col p-6 space-y-8">
@@ -166,30 +165,30 @@ const CheckIn: React.FC<CheckInProps> = ({ navigateTo, events = [] }) => {
             )}
           </div>
 
-          <div className="relative w-full aspect-square max-w-[400px] mx-auto bg-black rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800">
+          <div className="relative w-full aspect-square max-w-[20rem] mx-auto bg-black rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800">
             {isScannerActive ? (
               <div id="qr-reader" className="w-full h-full"></div>
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900">
-                <span className="material-symbols-outlined text-white/20 text-7xl mb-4">videocam_off</span>
+                <span className="material-symbols-outlined text-white/10 text-7xl mb-4">qr_code_scanner</span>
                 <button
                   onClick={() => setIsScannerActive(true)}
                   disabled={!selectedEventId}
-                  className="px-6 py-3 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 uppercase text-[10px] tracking-widest active:scale-95 transition-all disabled:opacity-50"
+                  className="px-8 py-4 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 uppercase text-[10px] tracking-widest active:scale-95 transition-all disabled:opacity-50"
                 >
-                  Ligar Câmera
+                  Ativar Leitor QR
                 </button>
               </div>
             )}
 
-            {/* Overlay de Guia (Só aparece se ativo) */}
+            {/* Overlay de Guia */}
             {isScannerActive && (
               <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-                <div className="size-64 border-2 border-white/30 rounded-3xl relative">
-                  <div className="absolute top-0 left-0 size-8 border-t-4 border-l-4 border-primary rounded-tl-xl"></div>
-                  <div className="absolute top-0 right-0 size-8 border-t-4 border-r-4 border-primary rounded-tr-xl"></div>
-                  <div className="absolute bottom-0 left-0 size-8 border-b-4 border-l-4 border-primary rounded-bl-xl"></div>
-                  <div className="absolute bottom-0 right-0 size-8 border-b-4 border-r-4 border-primary rounded-br-xl"></div>
+                <div className="size-48 border-2 border-white/20 rounded-3xl relative">
+                  <div className="absolute top-0 left-0 size-6 border-t-[3px] border-l-[3px] border-primary rounded-tl-xl"></div>
+                  <div className="absolute top-0 right-0 size-6 border-t-[3px] border-r-[3px] border-primary rounded-tr-xl"></div>
+                  <div className="absolute bottom-0 left-0 size-6 border-b-[3px] border-l-[3px] border-primary rounded-bl-xl"></div>
+                  <div className="absolute bottom-0 right-0 size-6 border-b-[3px] border-r-[3px] border-primary rounded-br-xl"></div>
                 </div>
               </div>
             )}
