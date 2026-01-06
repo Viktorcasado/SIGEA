@@ -256,6 +256,200 @@
                 transform: translateY(0) scale(1);
             }
         }
+
+        /* ========================================
+           MOBILE OPTIMIZATIONS
+           ======================================== */
+
+        /* Smooth Scrolling with Momentum */
+        * {
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+
+        /* Improved Touch Targets - Minimum 44x44px */
+        button,
+        a,
+        input,
+        select,
+        textarea {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        /* Enhanced Tap Feedback */
+        button:active,
+        a:active,
+        [role="button"]:active {
+            opacity: 0.7;
+            transform: scale(0.97);
+        }
+
+        /* Prevent Text Selection on Tap */
+        button,
+        .nav-pill,
+        .fab-button {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* Optimized Spacing for Small Screens */
+        @media (max-width: 375px) {
+            .fixed-nav-container {
+                bottom: calc(12px + var(--sab, 0px));
+                padding: 0 8px;
+            }
+
+            .nav-main {
+                height: 72px;
+                padding: 0 4px;
+            }
+
+            .nav-pill {
+                width: 44px;
+                height: 44px;
+            }
+
+            .fab-button {
+                width: 52px;
+                height: 52px;
+            }
+        }
+
+        /* Landscape Mode Support */
+        @media (orientation: landscape) and (max-height: 500px) {
+            #root {
+                padding-bottom: calc(85px + var(--sab, 0px));
+            }
+
+            .fixed-nav-container {
+                bottom: calc(8px + var(--sab, 0px));
+            }
+
+            .nav-main {
+                height: 64px;
+            }
+
+            .fab-button {
+                width: 48px;
+                height: 48px;
+                -mt-6: -1.5rem;
+            }
+        }
+
+        /* Better Scroll Performance */
+        .overflow-x-auto,
+        .overflow-y-auto {
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x mandatory;
+            overscroll-behavior-x: contain;
+        }
+
+        /* Optimize Images for Mobile */
+        img {
+            max-width: 100%;
+            height: auto;
+            -webkit-user-drag: none;
+            user-select: none;
+        }
+
+        /* Prevent Zoom on Input Focus (iOS) */
+        @supports (-webkit-touch-callout: none) {
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            input[type="search"],
+            select,
+            textarea {
+                font-size: 16px !important;
+            }
+        }
+
+        /* Improved Active States for Cards */
+        [class*="rounded-"][class*="bg-white"],
+        [class*="rounded-"][class*="bg-slate"] {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        [class*="rounded-"][class*="bg-white"]:active,
+        [class*="rounded-"][class*="bg-slate"]:active {
+            transform: scale(0.98);
+        }
+
+        /* Safe Area Padding for Headers */
+        header {
+            padding-top: max(2rem, env(safe-area-inset-top));
+        }
+
+        /* Optimized Font Rendering on Mobile */
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* Better Focus Indicators for Accessibility */
+        *:focus-visible {
+            outline: 2px solid #135bec;
+            outline-offset: 2px;
+        }
+
+        /* Reduce Motion for Users Who Prefer It */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* Dark Mode Optimizations for OLED Screens */
+        @media (prefers-color-scheme: dark) {
+            .dark body {
+                background-color: #000000;
+            }
+
+            .dark .liquid-glass {
+                background: rgba(10, 10, 10, 0.7);
+            }
+        }
+
+        /* Horizontal Scroll Snap for Carousels */
+        .snap-x {
+            scroll-snap-type: x mandatory;
+            scroll-padding: 0 1.5rem;
+        }
+
+        .snap-center {
+            scroll-snap-align: center;
+        }
+
+        /* Improved Pull-to-Refresh Experience */
+        body {
+            overscroll-behavior-y: contain;
+        }
+
+        /* Better Touch Response for Navigation */
+        .nav-main button {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        /* Optimized Shadow for Mobile Performance */
+        @media (max-width: 768px) {
+            .shadow-xl {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            .shadow-lg {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+        }
+    
     </style>
     <script type="importmap">
 {

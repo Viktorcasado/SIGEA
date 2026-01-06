@@ -576,7 +576,6 @@ const App: React.FC = () => {
             )}
 
             <NavButton label="Certificados" icon="workspace_premium" page="certificates" />
-            <NavButton label="Perfil" icon="person" page="profile" />
           </nav>
         </div>
       </div>
