@@ -21,7 +21,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
   };
 
   return (
-    <div className="relative flex flex-col w-full pb-24 bg-background-light dark:bg-background-dark min-h-screen">
+    <div className="relative flex flex-col w-full pb-40 bg-background-light dark:bg-background-dark min-h-screen">
       {/* Header */}
       <header className="sticky top-0 z-50 flex items-center justify-between bg-white/90 dark:bg-surface-dark/90 backdrop-blur-md p-4 border-b border-gray-100 dark:border-gray-800">
         <button onClick={() => navigateTo('home')} className="flex size-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -35,7 +35,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
 
       {/* Hero Image */}
       <div className="w-full h-[240px] relative">
-        <div className="w-full h-full bg-center bg-cover" style={{backgroundImage: `url(${event.imageUrl})`}}>
+        <div className="w-full h-full bg-center bg-cover" style={{ backgroundImage: `url(${event.imageUrl})` }}>
           <div className="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent opacity-90"></div>
         </div>
       </div>
@@ -52,7 +52,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
         </div>
 
         {/* Support Button */}
-        <button 
+        <button
           onClick={handleSupport}
           className="flex items-center justify-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-2xl border-2 border-green-100 dark:border-green-800/30 font-black text-xs uppercase tracking-widest active:scale-95 transition-all shadow-sm"
         >
@@ -87,13 +87,13 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
 
         {/* Tabs */}
         <div className="flex p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl">
-          <button 
+          <button
             onClick={() => setTab('sobre')}
             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${tab === 'sobre' ? 'bg-white dark:bg-surface-dark text-primary shadow-sm' : 'text-gray-500'}`}
           >
             Sobre
           </button>
-          <button 
+          <button
             onClick={() => setTab('programacao')}
             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${tab === 'programacao' ? 'bg-white dark:bg-surface-dark text-primary shadow-sm' : 'text-gray-500'}`}
           >
@@ -139,7 +139,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
           <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Valor</span>
           <span className="text-xl font-black text-primary">{event.price}</span>
         </div>
-        <button 
+        <button
           onClick={() => navigateTo('register', event.id)}
           className="bg-primary hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-primary/30 active:scale-95 transition-all flex items-center gap-2"
         >

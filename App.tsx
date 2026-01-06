@@ -158,6 +158,8 @@ CREATE POLICY "Avatares Públicos" ON storage.objects FOR SELECT USING (bucket_i
 CREATE POLICY "Upload de Avatares" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'avatars' AND auth.uid() = (storage.foldername(name))[1]::uuid);
 CREATE POLICY "Deletar Próprios Avatares" ON storage.objects FOR DELETE USING (bucket_id = 'avatars' AND auth.uid() = (storage.foldername(name))[1]::uuid);`;
 
+const hideNavPages = ['details', 'register', 'manage-event', 'edit-event', 'create-event', 'check-in', 'participants', 'reports', 'privacy', 'contacts'];
+
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [role, setRole] = useState<UserRole>(() => {
@@ -537,28 +539,28 @@ const App: React.FC = () => {
         {renderPage()}
       </div>
 
+      {!hideNavPages.includes(currentPage) && (
+        <div className="fixed-nav-container">
+          <div className="dock-container">
+            <nav className="nav-main liquid-glass w-full">
+              <NavButton label="Início" icon="home" page="home" />
+              <NavButton label="Eventos" icon="calendar_today" page="events" />
 
+              {role === UserRole.ORGANIZER && (
+                <button
+                  onClick={() => navigateTo('create-event')}
+                  className="fab-button -mt-6 mx-0.5 shrink-0"
+                >
+                  <span className="material-symbols-outlined text-white text-2xl">add</span>
+                </button>
+              )}
 
-      <div className="fixed-nav-container">
-        <div className="dock-container">
-          <nav className="nav-main liquid-glass w-full">
-            <NavButton label="Início" icon="home" page="home" />
-            <NavButton label="Eventos" icon="calendar_today" page="events" />
-
-            {role === UserRole.ORGANIZER && (
-              <button
-                onClick={() => navigateTo('create-event')}
-                className="fab-button -mt-6 mx-0.5 shrink-0"
-              >
-                <span className="material-symbols-outlined text-white text-2xl">add</span>
-              </button>
-            )}
-
-            <NavButton label="Certificados" icon="workspace_premium" page="certificates" />
-            <NavButton label="Perfil" icon="person" page="profile" />
-          </nav>
+              <NavButton label="Certificados" icon="workspace_premium" page="certificates" />
+              <NavButton label="Perfil" icon="person" page="profile" />
+            </nav>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

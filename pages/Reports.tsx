@@ -49,7 +49,7 @@ const Reports: React.FC<ReportsProps> = ({ navigateTo }) => {
   }, []);
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-20">
+    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-36">
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md border-b-2 border-slate-200 dark:border-gray-800 p-4 flex items-center justify-between">
         <button onClick={() => navigateTo('home')} className="size-11 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors">
           <span className="material-symbols-outlined font-black">arrow_back</span>
@@ -84,16 +84,16 @@ const Reports: React.FC<ReportsProps> = ({ navigateTo }) => {
           <div className="h-40 flex items-end justify-between gap-2 px-2">
             {[40, 70, 45, 90, 65, 80, 100].map((h, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                <div 
+                <div
                   className="w-full bg-primary/20 rounded-t-xl relative group transition-all"
-                  style={{height: `${h}%`}}
+                  style={{ height: `${h}%` }}
                 >
-                  <div 
+                  <div
                     className="absolute bottom-0 w-full bg-primary rounded-t-xl transition-all"
-                    style={{height: `${h/2}%`}}
+                    style={{ height: `${h / 2}%` }}
                   ></div>
                 </div>
-                <span className="text-[8px] font-black text-slate-400">D{i+1}</span>
+                <span className="text-[8px] font-black text-slate-400">D{i + 1}</span>
               </div>
             ))}
           </div>

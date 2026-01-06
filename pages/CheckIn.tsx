@@ -26,6 +26,7 @@ const CheckIn: React.FC<CheckInProps> = ({ navigateTo, events = [] }) => {
   useEffect(() => {
     if (selectedEventId) {
       fetchRecentCheckIns();
+      setIsScannerActive(true);
     }
   }, [selectedEventId]);
 

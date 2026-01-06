@@ -53,7 +53,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
   };
 
   return (
-    <div className="relative flex flex-col w-full pb-32 min-h-screen bg-background-light dark:bg-background-dark">
+    <div className="relative flex flex-col w-full pb-36 min-h-screen bg-background-light dark:bg-background-dark">
       <div className="sticky top-0 z-50 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md border-b-2 border-slate-200 dark:border-gray-800 transition-colors">
         <div className="flex items-center justify-between px-4 py-4">
           <button onClick={() => navigateTo('details', event.id)} className="flex items-center justify-center w-10 h-10 -ml-2 rounded-full text-slate-900 dark:text-gray-200 font-bold">

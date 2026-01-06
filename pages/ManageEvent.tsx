@@ -152,7 +152,7 @@ const ManageEvent: React.FC<ManageEventProps> = ({ navigateTo, eventId, events, 
         </button>
       </header>
 
-      <main className="p-5 space-y-6 pb-32">
+      <main className="p-5 space-y-6 pb-40">
         <div className="bg-white dark:bg-surface-dark rounded-[2.5rem] p-5 shadow-xl border-2 border-slate-200 dark:border-slate-800 space-y-5">
           <div className="aspect-video w-full rounded-3xl bg-cover bg-center overflow-hidden relative border border-slate-100" style={{ backgroundImage: `url(${event.imageUrl})` }}>
             <div className={`absolute top-4 right-4 px-4 py-1.5 text-white text-[10px] font-black rounded-full uppercase backdrop-blur-md ${event.status === 'Inscrições Abertas' ? 'bg-green-600/80' : 'bg-primary/80'}`}>

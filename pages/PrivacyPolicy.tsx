@@ -24,6 +24,8 @@ const PrivacyPolicy: React.FC<{ navigateTo: (page: string) => void }> = ({ navig
                         <ul className="list-disc pl-5 text-sm space-y-1 mt-2">
                             <li>Nome completo e E-mail institucional;</li>
                             <li>Dados de vínculo (Aluno, Servidor, Externo);</li>
+                            <li>CPF, Matrícula ou SIAPE;</li>
+                            <li>Departamento, Curso e Telefone;</li>
                             <li>Campus de origem;</li>
                             <li>Registros de participação em eventos e emissão de certificados.</li>
                         </ul>

@@ -41,21 +41,27 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ navigateTo, onN
         </div>
 
         <div className="flex items-center justify-between mb-6">
-          <div className="flex flex-col">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Bem-vindo de volta,</p>
-            <h1 className="text-xl font-black text-slate-800 dark:text-white leading-none tracking-tight">
-              {profile.name.split(' ')[0]} 👋
-            </h1>
-          </div>
+          {/* Esquerda: Notificações */}
           <button
             onClick={onNotify}
-            className="size-11 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-sm border border-slate-100 dark:border-slate-700 relative active:scale-95 transition-all"
+            className="size-11 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-sm border border-slate-100 dark:border-slate-700 relative active:scale-95 transition-all order-1"
           >
             <span className="material-symbols-outlined">notifications</span>
             {unreadNotifications > 0 && (
               <span className="absolute top-3 right-3.5 size-2 bg-red-500 rounded-full border border-white dark:border-slate-800 animate-pulse"></span>
             )}
           </button>
+
+          {/* Centro: Saudação */}
+          <div className="flex flex-col items-center order-2 text-center">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Bem-vindo de volta,</p>
+            <h1 className="text-xl font-black text-slate-800 dark:text-white leading-none tracking-tight">
+              {profile.name.split(' ')[0]} 👋
+            </h1>
+          </div>
+
+          {/* Direita: Espaçador para equilíbrio */}
+          <div className="order-3 size-11"></div>
         </div>
 
         {/* Stats Widgets - Mais Visuais */}

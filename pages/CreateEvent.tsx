@@ -103,7 +103,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, onUpd
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-20">
+    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-36">
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md border-b-2 border-slate-200 dark:border-gray-800 p-4 flex items-center justify-between">
         <button onClick={() => navigateTo(eventToEdit ? 'manage-event' : 'home', eventToEdit?.id)} className="size-11 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors">
           <span className="material-symbols-outlined font-black">close</span>
