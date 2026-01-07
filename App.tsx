@@ -18,9 +18,11 @@ import CreateEvent from './pages/CreateEvent.tsx';
 import ManageEvent from './pages/ManageEvent.tsx';
 import PublishSuccess from './pages/PublishSuccess.tsx';
 import Logo from './components/Logo.tsx';
+import AIAssistant from './components/AIAssistant.tsx';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(localStorage.getItem('sigea_demo') === 'true');
   const [role, setRole] = useState<UserRole>(UserRole.PARTICIPANT);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState('home');
@@ -30,10 +32,8 @@ const App: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   
-  // Detecção de OS e Tela
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
   const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent), []);
-  const isAndroid = useMemo(() => /Android/.test(navigator.userAgent), []);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
@@ -42,6 +42,11 @@ const App: React.FC = () => {
   }, []);
 
   const fetchInitialData = useCallback(async () => {
+    if (isDemoMode) {
+      setEvents(MOCK_EVENTS);
+      return;
+    }
+    
     setIsSyncing(true);
     try {
       const { data, error } = await supabase
@@ -53,15 +58,33 @@ const App: React.FC = () => {
         setEvents(data as SIGEAEvent[]);
       }
     } catch (e) { 
-      console.warn("Modo offline ativo.");
+      console.warn("SIGEA: Servidor indisponível, usando dados de demonstração.");
+      setEvents(MOCK_EVENTS);
     } finally {
       setIsSyncing(false);
     }
-  }, []);
+  }, [isDemoMode]);
 
-  const checkAuth = useCallback(async () => {
+  const checkAuth = useCallback(async (demoMode: boolean = false) => {
     setIsLoading(true);
     setAuthError(null);
+    
+    if (demoMode || isDemoMode) {
+      localStorage.setItem('sigea_demo', 'true');
+      setIsDemoMode(true);
+      setUserProfile({
+        id: 'demo-user',
+        name: 'Convidado SIGEA',
+        email: 'visitante@ifal.edu.br',
+        campus: 'Campus Maceió',
+        photo: ''
+      });
+      setIsAuthenticated(true);
+      setEvents(MOCK_EVENTS);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
@@ -91,7 +114,7 @@ const App: React.FC = () => {
     } finally { 
       setIsLoading(false); 
     }
-  }, [fetchInitialData]);
+  }, [fetchInitialData, isDemoMode]);
 
   useEffect(() => { checkAuth(); }, [checkAuth]);
 
@@ -101,11 +124,19 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const logout = async () => {
+    localStorage.removeItem('sigea_demo');
+    setIsDemoMode(false);
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setCurrentPage('home');
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 px-8 text-center">
         <div className="size-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-8 text-[10px] font-black uppercase tracking-[0.5em] text-zinc-400">Sincronizando SIGEA...</p>
+        <p className="mt-8 text-[10px] font-black uppercase tracking-[0.5em] text-zinc-400">Iniciando SIGEA...</p>
       </div>
     );
   }
@@ -125,7 +156,7 @@ const App: React.FC = () => {
       case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} />;
       case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={async () => {}} />;
       case 'certificates': return <Certificates navigateTo={navigateTo} events={events} />;
-      case 'profile': return <Profile {...commonProps} darkMode={true} setDarkMode={() => {}} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={() => supabase.auth.signOut().then(() => setIsAuthenticated(false))} onDeleteAccount={async () => {}} />;
+      case 'profile': return <Profile {...commonProps} darkMode={true} setDarkMode={() => {}} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={logout} onDeleteAccount={async () => {}} />;
       case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId) || events[0]} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} />;
       case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={(e) => setEvents([e, ...events])} />;
@@ -157,10 +188,17 @@ const App: React.FC = () => {
       {/* Sidebar Desktop */}
       {isDesktop && !isFullscreenPage && (
         <aside className="w-72 h-screen sticky top-0 bg-zinc-900 border-r border-white/5 flex flex-col py-10 shrink-0">
-          <div className="px-8 mb-12">
+          <div className="px-8 mb-4">
             <Logo size="md" />
             <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mt-2">IFAL • SIGEA System</p>
           </div>
+          
+          {isDemoMode && (
+             <div className="mx-6 mb-8 px-4 py-2 bg-primary/10 border border-primary/20 rounded-2xl flex items-center gap-2">
+                <span className="size-2 bg-primary rounded-full animate-pulse"></span>
+                <span className="text-[9px] font-black text-primary uppercase tracking-widest">Modo Demonstração</span>
+             </div>
+          )}
           
           <nav className="flex-1 flex flex-col gap-2">
             <NavItem page="home" icon="home" label="Início" />
@@ -190,11 +228,12 @@ const App: React.FC = () => {
         </div>
       </main>
 
+      <AIAssistant events={events} />
+
       {/* Bottom Nav Mobile */}
       {!isDesktop && !isFullscreenPage && (
         <div className="fixed bottom-0 left-0 w-full z-[5000] px-6 pb-[calc(1.2rem+var(--safe-bottom))] animate-in slide-in-from-bottom duration-700">
           <nav className="glass rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-around h-16 border border-white/10 relative overflow-hidden">
-             {/* Indicador visual de OS */}
              {isIOS && <div className="absolute top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-white/10 rounded-full"></div>}
              <NavItem page="home" icon="home" label="Início" />
              <NavItem page="events" icon="explore" label="Eventos" />

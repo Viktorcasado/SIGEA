@@ -5,7 +5,7 @@ import Logo from '../components/Logo.tsx';
 import { CAMPUS_LIST } from '../constants.tsx';
 
 interface LoginProps {
-  onLogin: () => void;
+  onLogin: (demo?: boolean) => void;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
   errorMsg?: string | null;
@@ -55,10 +55,23 @@ const Login: React.FC<LoginProps> = ({ onLogin, darkMode, errorMsg }) => {
         }
       }
     } catch (err: any) {
-      setError(handleSupabaseError(err));
+      const errorText = handleSupabaseError(err);
+      setError(errorText);
+      // Sugestão automática de modo demo em caso de erro de rede
+      if (errorText.toLowerCase().includes('rede') || errorText.toLowerCase().includes('servidor')) {
+        setMessage("Dica: O servidor está offline. Você pode clicar em 'Acessar modo demonstração' para testar as telas.");
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const enterDemo = () => {
+    setLoading(true);
+    setTimeout(() => {
+      onLogin(true);
+      setLoading(false);
+    }, 800);
   };
 
   const changeView = (newView: AuthView) => {
@@ -84,6 +97,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, darkMode, errorMsg }) => {
             className="w-full h-16 rounded-2xl font-black text-sm uppercase tracking-[0.2em] bg-primary text-white shadow-2xl shadow-primary/20 transition-all active:scale-95"
           >
             Acessar Plataforma
+          </button>
+          
+          <button 
+            onClick={enterDemo}
+            className="w-full h-16 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] bg-zinc-900 text-zinc-400 border border-white/5 transition-all active:scale-95 flex items-center justify-center gap-3"
+          >
+            {loading ? <div className="size-4 border-2 border-zinc-700 border-t-zinc-400 rounded-full animate-spin"></div> : 'Modo Demonstração'}
           </button>
           
           <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mt-4">
@@ -115,7 +135,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, darkMode, errorMsg }) => {
 
           {message && (
             <div className="p-5 bg-primary/10 border border-primary/20 rounded-2xl animate-in zoom-in duration-300">
-              <p className="text-[10px] font-black text-primary uppercase text-center">{message}</p>
+              <p className="text-[10px] font-black text-primary uppercase text-center leading-relaxed">{message}</p>
             </div>
           )}
 
@@ -141,6 +161,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, darkMode, errorMsg }) => {
           </button>
 
           <div className="flex flex-col gap-6 mt-10 items-center">
+            <button type="button" onClick={enterDemo} className="text-[10px] font-black text-primary uppercase tracking-[0.2em] border-b border-primary/20 pb-1">
+              Testar em Modo Demonstração
+            </button>
             <button type="button" onClick={() => changeView(view === 'SIGN_IN' ? 'SIGN_UP' : 'SIGN_IN')} className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] hover:text-primary transition-colors">
               {view === 'SIGN_IN' ? 'Não possui conta? Registre-se' : 'Já é cadastrado? Acesse aqui'}
             </button>

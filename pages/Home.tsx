@@ -16,6 +16,7 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasUnread, isSyncing }) => {
   const [search, setSearch] = useState('');
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+  const isDemoMode = localStorage.getItem('sigea_demo') === 'true';
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
@@ -36,9 +37,9 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
               Bem-vindo, {profile?.name?.split(' ')[0]}
             </h1>
             <div className="flex items-center gap-1.5 mt-1.5">
-              <div className={`size-1.5 rounded-full ${isSyncing ? 'bg-amber-400 animate-pulse' : 'bg-primary'}`}></div>
+              <div className={`size-1.5 rounded-full ${isDemoMode ? 'bg-amber-400' : isSyncing ? 'bg-amber-400 animate-pulse' : 'bg-primary'}`}></div>
               <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">
-                {isSyncing ? 'Sincronizando' : 'IFAL Database Active'}
+                {isDemoMode ? 'Modo Demonstração Ativo' : isSyncing ? 'Sincronizando' : 'IFAL Database Active'}
               </span>
             </div>
           </div>

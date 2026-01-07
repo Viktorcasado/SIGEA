@@ -30,17 +30,27 @@ const EventsList: React.FC<EventsListProps> = ({ navigateTo, events }) => {
   }, [events, searchTerm, selectedType]);
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-32 animate-in fade-in duration-500">
+    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-zinc-950 pb-32 animate-in fade-in duration-500">
       <header className="px-6 pt-12 pb-6 space-y-8">
-        <div>
-          <h1 className="text-[32px] font-[900] text-zinc-900 dark:text-white uppercase tracking-tighter leading-none">Explorar</h1>
-          <p className="text-[10px] text-zinc-400 font-black uppercase tracking-[0.4em] mt-2">Eventos Acadêmicos IFAL</p>
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigateTo('home')}
+              className="size-11 flex items-center justify-center rounded-2xl bg-zinc-900 border border-white/5 text-zinc-400 active:scale-90 transition-all hover:text-white"
+            >
+              <span className="material-symbols-outlined font-black">arrow_back</span>
+            </button>
+            <div className="flex flex-col">
+              <h1 className="text-[32px] font-[900] text-zinc-900 dark:text-white uppercase tracking-tighter leading-none">Explorar</h1>
+              <p className="text-[10px] text-zinc-400 font-black uppercase tracking-[0.4em] mt-1">Eventos Acadêmicos IFAL</p>
+            </div>
+          </div>
         </div>
 
         <div className="relative">
           <input 
             type="text"
-            className="w-full h-16 pl-14 pr-6 bg-slate-100 dark:bg-zinc-900 border-none rounded-3xl font-bold text-sm outline-none focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-zinc-400"
+            className="w-full h-16 pl-14 pr-6 bg-zinc-900 border border-white/5 rounded-3xl font-bold text-sm outline-none focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-zinc-600 dark:text-white"
             placeholder="O que você quer aprender hoje?"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -51,7 +61,7 @@ const EventsList: React.FC<EventsListProps> = ({ navigateTo, events }) => {
 
       <main className="px-6 space-y-10">
         <section className="space-y-4">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 px-1">Tipo de Atividade</h3>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1">Tipo de Atividade</h3>
           <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
             {eventTypes.map((type) => (
               <button 
@@ -60,7 +70,7 @@ const EventsList: React.FC<EventsListProps> = ({ navigateTo, events }) => {
                 className={`flex items-center gap-2 shrink-0 h-12 px-6 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all active:scale-95 border ${
                   selectedType === type.name 
                   ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' 
-                  : 'bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700 text-zinc-500'
+                  : 'bg-zinc-900 border-white/5 text-zinc-500'
                 }`}
               >
                 <span className="material-symbols-outlined text-[20px]">{type.icon}</span>
@@ -71,7 +81,7 @@ const EventsList: React.FC<EventsListProps> = ({ navigateTo, events }) => {
         </section>
 
         <section className="space-y-4">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 px-1">Período</h3>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 px-1">Período</h3>
           <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
             {periods.map((p) => (
               <button 
@@ -79,8 +89,8 @@ const EventsList: React.FC<EventsListProps> = ({ navigateTo, events }) => {
                 onClick={() => setSelectedPeriod(p)}
                 className={`shrink-0 h-12 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border ${
                   selectedPeriod === p 
-                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-zinc-900 dark:border-white shadow-lg' 
-                  : 'bg-white dark:bg-zinc-800 border-zinc-100 dark:border-zinc-700 text-zinc-500'
+                  ? 'bg-white text-zinc-900 border-white shadow-lg' 
+                  : 'bg-zinc-900 border-white/5 text-zinc-500'
                 }`}
               >
                 {p}
@@ -89,13 +99,13 @@ const EventsList: React.FC<EventsListProps> = ({ navigateTo, events }) => {
           </div>
         </section>
 
-        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-5">
-          <span className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.3em]">
+        <div className="flex items-center justify-between border-b border-white/5 pb-5">
+          <span className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">
             {filteredEvents.length} Encontrados
           </span>
           
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black text-zinc-300 uppercase">Ordem:</span>
+            <span className="text-[10px] font-black text-zinc-600 uppercase">Ordem:</span>
             <div className="flex items-center gap-1 text-[10px] font-black text-primary uppercase cursor-pointer">
               Recentes
               <span className="material-symbols-outlined text-sm">expand_more</span>
