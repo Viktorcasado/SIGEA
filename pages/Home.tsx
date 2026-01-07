@@ -102,9 +102,9 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
       {!isDesktop && (
         <button 
           onClick={() => navigateTo('check-in')}
-          className="fixed bottom-28 right-6 z-[4000] size-16 rounded-3xl bg-primary text-white shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all group border border-white/20"
+          className="fixed bottom-44 right-6 z-[4000] size-14 rounded-2xl bg-white dark:bg-zinc-900 text-primary shadow-xl border border-primary/20 flex items-center justify-center hover:scale-105 active:scale-95 transition-all group"
         >
-          <span className="material-symbols-outlined text-3xl font-black">qr_code_scanner</span>
+          <span className="material-symbols-outlined text-2xl font-black">qr_code_scanner</span>
         </button>
       )}
     </div>
