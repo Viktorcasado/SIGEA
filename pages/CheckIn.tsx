@@ -1,276 +1,208 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../supabaseClient.ts';
-import { Event } from '../types.ts';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+
+import React, { useState, useRef, useEffect } from 'react';
 
 interface CheckInProps {
   navigateTo: (page: string) => void;
-  events?: Event[];
 }
 
-const CheckIn: React.FC<CheckInProps> = ({ navigateTo, events = [] }) => {
-  const [searchInput, setSearchInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [lastCheckIns, setLastCheckIns] = useState<any[]>([]);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
-  const [isScannerActive, setIsScannerActive] = useState(false);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+const CheckIn: React.FC<CheckInProps> = ({ navigateTo }) => {
+  const [lastCheckIns, setLastCheckIns] = useState([
+    { name: 'João da Silva', role: 'Estudante', time: '14:32', initials: 'JS', status: 'Sucesso' },
+    { name: 'Maria Oliveira', role: 'Docente', time: '14:30', initials: 'MO', status: 'Sucesso' },
+    { name: 'Carlos Lima', role: 'Visitante', time: '14:28', initials: 'CL', status: 'Sucesso' }
+  ]);
 
-  useEffect(() => {
-    if (events.length > 0 && !selectedEventId) {
-      setSelectedEventId(events[0].id);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [cameraMode, setCameraMode] = useState<'user' | 'environment'>('environment');
+  const [hasError, setHasError] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<string | null>(null);
+
+  const startCamera = async () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
     }
-  }, [events]);
-
-  useEffect(() => {
-    if (selectedEventId) {
-      fetchRecentCheckIns();
-      setIsScannerActive(true);
-    }
-  }, [selectedEventId]);
-
-  // Manejo do Scanner
-  useEffect(() => {
-    if (isScannerActive && selectedEventId) {
-      scannerRef.current = new Html5QrcodeScanner(
-        "qr-reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false
-      );
-
-      scannerRef.current.render(onScanSuccess, onScanFailure);
-    } else if (scannerRef.current) {
-      scannerRef.current.clear().catch(err => console.error("Erro ao limpar scanner", err));
-    }
-
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(err => console.error("Erro cleanup scanner", err));
-      }
-    };
-  }, [isScannerActive, selectedEventId]);
-
-  const onScanSuccess = (decodedText: string) => {
-    // Feedback tátil (vibration) se disponível
-    if (navigator.vibrate) navigator.vibrate(100);
-
-    // Pequeno feedback visual no scanner antes de processar
-    setIsScannerActive(false);
-    processCheckIn(decodedText);
-  };
-
-  const fetchRecentCheckIns = async () => {
-    const { data, error } = await supabase
-      .from('registrations')
-      .select('*')
-      .eq('status', 'Presente')
-      .eq('event_id', selectedEventId)
-      .order('updated_at', { ascending: false })
-      .limit(5);
-
-    if (!error && data) {
-      setLastCheckIns(data);
-    }
-  };
-
-  const processCheckIn = async (identifier: string) => {
-    if (!identifier.trim() || !selectedEventId) return;
-    setLoading(true);
-    setFeedback(null);
 
     try {
-      // 1. Verificar se o participante está inscrito NESTE evento
-      // O identificador pode ser o e-mail
-      const { data, error } = await supabase
-        .from('registrations')
-        .select('*')
-        .eq('event_id', selectedEventId)
-        .or(`user_email.eq.${identifier.trim()},user_id.eq.${identifier.trim()}`)
-        .maybeSingle();
+      const constraints = {
+        video: {
+          facingMode: cameraMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      };
 
-      if (error) throw error;
-
-      if (!data) {
-        setFeedback({ type: 'error', msg: 'Inscrição não encontrada para este participante.' });
-        return;
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
       }
-
-      if (data.status === 'Presente') {
-        setFeedback({ type: 'error', msg: `${data.user_name} já realizou check-in.` });
-        return;
-      }
-
-      // 2. Realizar o check-in (atualizar status para Presente)
-      const { error: updateError } = await supabase
-        .from('registrations')
-        .update({
-          status: 'Presente',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', data.id);
-
-      if (updateError) throw updateError;
-
-      setFeedback({ type: 'success', msg: `Check-in de ${data.user_name} realizado com sucesso!` });
-      setSearchInput('');
-      fetchRecentCheckIns();
+      setHasError(null);
     } catch (err: any) {
-      console.error("Erro check-in:", err);
-      setFeedback({ type: 'error', msg: 'Erro técnico ao processar check-in.' });
-    } finally {
-      setLoading(false);
+      setHasError("Acesso à câmera negado. Verifique as permissões do navegador.");
     }
+  };
+
+  useEffect(() => {
+    startCamera();
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraMode]);
+
+  const simulateScan = () => {
+    if (isScanning) return;
+    setIsScanning(true);
+    
+    // Simula o tempo de processamento da leitura do QR
+    setTimeout(() => {
+      setIsScanning(false);
+      setScanResult("VALIDADO");
+      
+      // Adiciona um novo check-in fictício à lista para mostrar que funcionou
+      const newCheckIn = {
+        name: 'Novo Participante',
+        role: 'Estudante',
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        initials: 'NP',
+        status: 'Sucesso'
+      };
+      setLastCheckIns([newCheckIn, ...lastCheckIns.slice(0, 2)]);
+
+      // Limpa o estado de sucesso após 2 segundos
+      setTimeout(() => setScanResult(null), 2000);
+    }, 1500);
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-background-dark pb-32 safe-bottom safe-top">
-      <header className="flex items-center justify-between px-4 py-3 shrink-0 bg-white/50 dark:bg-surface-dark/50 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
-        <button onClick={() => navigateTo('home')} className="size-10 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700 active:scale-90 transition-all">
-          <span className="material-symbols-outlined font-bold text-2xl">arrow_back</span>
+    <div className="flex flex-col w-full h-screen bg-background-light dark:bg-zinc-950 overflow-hidden">
+      <header className="flex items-center justify-between px-6 py-6 shrink-0 z-10 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-100 dark:border-white/5">
+        <button onClick={() => navigateTo('home')} className="size-11 flex items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900 active:scale-90 transition-all">
+          <span className="material-symbols-outlined font-black">arrow_back</span>
         </button>
-        <div className="flex flex-col items-center text-center">
-          <h2 className="text-sm font-black uppercase tracking-tighter">Check-in</h2>
-          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Validação de Entrada</p>
+        <div className="flex flex-col items-center">
+          <h2 className="text-sm font-black uppercase tracking-tighter text-zinc-900 dark:text-white">Validador SIGEA</h2>
+          <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">Check-in em Tempo Real</p>
         </div>
-        <div className="size-10"></div>
+        <button onClick={() => setCameraMode(cameraMode === 'user' ? 'environment' : 'user')} className="size-11 flex items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-400 active:scale-90 transition-all">
+          <span className="material-symbols-outlined">flip_camera_ios</span>
+        </button>
       </header>
 
-      <main className="flex-1 flex flex-col p-6 space-y-8">
+      <main className="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto no-scrollbar">
+        {/* Scanner Container */}
+        <div 
+          onClick={simulateScan}
+          className="relative w-full aspect-square bg-black rounded-[3rem] overflow-hidden shadow-2xl shrink-0 group ring-4 ring-white/10 cursor-pointer"
+        >
+          {hasError ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center bg-zinc-900">
+              <span className="material-symbols-outlined text-4xl text-red-500 mb-4">videocam_off</span>
+              <p className="text-white text-[10px] font-black uppercase opacity-60 leading-relaxed">{hasError}</p>
+              <button 
+                onClick={startCamera}
+                className="mt-8 px-10 py-4 bg-primary text-white text-[10px] font-black rounded-2xl uppercase tracking-widest shadow-xl shadow-primary/30 active:scale-95 transition-all"
+              >
+                Tentar Novamente
+              </button>
+            </div>
+          ) : (
+            <>
+              <video 
+                ref={videoRef}
+                autoPlay 
+                playsInline 
+                muted
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${scanResult ? 'brightness-50 blur-sm' : ''}`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none"></div>
+            </>
+          )}
 
-        {/* Event Selection - Obrigatorio */}
-        <div className="space-y-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Evento Ativo</span>
-          <select
-            value={selectedEventId}
-            onChange={e => setSelectedEventId(e.target.value)}
-            className="w-full h-14 px-4 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-[1.5rem] outline-none font-bold text-sm shadow-sm focus:border-primary transition-all"
-          >
-            <option value="">Selecione para validar...</option>
-            {events.map(e => (
-              <option key={e.id} value={e.id}>{e.title}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Camera Scanner */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest">Leitor de QR Code</h3>
-            {isScannerActive && (
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 dark:bg-red-900/30">
-                <div className="size-1.5 rounded-full bg-red-500 animate-pulse"></div>
-                <span className="text-[8px] font-black text-red-700 uppercase">Câmera Ligada</span>
+          {/* Frame de Scanner */}
+          {!hasError && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <div className={`relative w-[240px] h-[240px] transition-transform duration-500 ${isScanning ? 'scale-110' : ''}`}>
+                {/* Cantos do Scanner */}
+                <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-primary rounded-tl-3xl"></div>
+                <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-primary rounded-tr-3xl"></div>
+                <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-primary rounded-bl-3xl"></div>
+                <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-primary rounded-br-3xl"></div>
+                
+                {/* Linha de Scan Ativa */}
+                <div className={`absolute top-0 left-0 w-full h-0.5 bg-primary shadow-[0_0_15px_#10b981] ${!scanResult ? 'animate-[scan_2s_linear_infinite]' : 'opacity-0'}`}></div>
               </div>
-            )}
-          </div>
 
-          <div className="relative w-full aspect-square max-w-[20rem] mx-auto bg-black rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800">
-            {isScannerActive ? (
-              <div id="qr-reader" className="w-full h-full"></div>
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900">
-                <span className="material-symbols-outlined text-white/10 text-7xl mb-4">qr_code_scanner</span>
-                <button
-                  onClick={() => setIsScannerActive(true)}
-                  disabled={!selectedEventId}
-                  className="px-8 py-4 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 uppercase text-[10px] tracking-widest active:scale-95 transition-all disabled:opacity-50"
-                >
-                  Ativar Leitor QR
-                </button>
-              </div>
-            )}
-
-            {/* Overlay de Guia */}
-            {isScannerActive && (
-              <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-                <div className="size-48 border-2 border-white/20 rounded-3xl relative">
-                  <div className="absolute top-0 left-0 size-6 border-t-[3px] border-l-[3px] border-primary rounded-tl-xl"></div>
-                  <div className="absolute top-0 right-0 size-6 border-t-[3px] border-r-[3px] border-primary rounded-tr-xl"></div>
-                  <div className="absolute bottom-0 left-0 size-6 border-b-[3px] border-l-[3px] border-primary rounded-bl-xl"></div>
-                  <div className="absolute bottom-0 right-0 size-6 border-b-[3px] border-r-[3px] border-primary rounded-br-xl"></div>
+              {/* Feedback Visual de Resultado */}
+              {scanResult && (
+                <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm flex flex-col items-center justify-center animate-in zoom-in duration-300">
+                  <div className="size-24 rounded-full bg-white flex items-center justify-center shadow-2xl mb-4">
+                    <span className="material-symbols-outlined text-primary text-5xl font-black">verified</span>
+                  </div>
+                  <h3 className="text-white text-xl font-black uppercase tracking-[0.3em]">VALIDADO</h3>
+                  <p className="text-white/80 text-[10px] font-bold uppercase mt-2 tracking-widest">Entrada Liberada</p>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
 
-          {isScannerActive && (
-            <button
-              onClick={() => setIsScannerActive(false)}
-              className="w-full py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-red-500 transition-colors"
-            >
-              Câmera Ligada • Clique para desligar
-            </button>
+              {/* Status de Processamento */}
+              {!scanResult && (
+                <div className="mt-16 px-6 py-3 rounded-full bg-black/40 backdrop-blur-2xl border border-white/10 flex items-center gap-3">
+                  <span className={`size-2 rounded-full ${isScanning ? 'bg-primary animate-ping' : 'bg-white/40'}`}></span>
+                  <p className="text-white text-[9px] font-black uppercase tracking-[0.2em]">
+                    {isScanning ? 'Lendo SIGEA Token...' : 'Posicione o QR Code'}
+                  </p>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Feedback Section */}
-        {feedback && (
-          <div className={`p-5 rounded-3xl border-2 animate-in zoom-in-95 duration-300 flex items-center gap-4 ${feedback.type === 'success' ? 'bg-green-50 border-green-100 text-green-800' : 'bg-red-50 border-red-100 text-red-800'}`}>
-            <span className="material-symbols-outlined text-3xl">
-              {feedback.type === 'success' ? 'check_circle' : 'error'}
-            </span>
-            <p className="text-xs font-black uppercase leading-tight">{feedback.msg}</p>
-          </div>
-        )}
-
-        {/* Manual Entry */}
-        <div className="space-y-4">
-          <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest px-1">Busca Manual</h3>
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">mail</span>
-              <input
-                type="text"
-                value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
-                onKeyPress={e => e.key === 'Enter' && processCheckIn(searchInput)}
-                placeholder="aluno@ifal.edu.br"
-                className="w-full h-16 pl-12 pr-4 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-[1.5rem] shadow-sm text-sm font-bold outline-none focus:border-primary transition-all"
-              />
-            </div>
-            <button
-              onClick={() => processCheckIn(searchInput)}
-              disabled={loading || !selectedEventId || !searchInput}
-              className="h-16 px-6 bg-slate-900 dark:bg-slate-700 text-white font-black rounded-[1.5rem] shadow-lg active:scale-95 transition-all disabled:opacity-50"
-            >
-              {loading ? <span className="material-symbols-outlined animate-spin">sync</span> : 'Validar'}
-            </button>
-          </div>
-        </div>
-
-        {/* Live History */}
+        {/* Informações Auxiliares */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-xs font-black uppercase text-slate-500 tracking-widest">Histórico Recente</h3>
-            <span className="text-[10px] font-bold text-slate-400 uppercase">{lastCheckIns.length} Confirmados</span>
+             <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">Atividade Atual</h3>
+             <span className="text-[9px] font-black text-primary uppercase">Mesa Redonda #04</span>
           </div>
-          <div className="space-y-3">
-            {lastCheckIns.length > 0 ? lastCheckIns.map((item) => (
-              <div key={item.id} className="group flex items-center gap-4 p-4 rounded-[1.5rem] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm animate-in fade-in slide-in-from-left-2 transition-all">
-                <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-lg">
-                  {item.user_name?.[0] || 'P'}
+          
+          <div className="p-5 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl flex items-center gap-4 shadow-sm">
+             <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <span className="material-symbols-outlined">analytics</span>
+             </div>
+             <div className="flex-1">
+                <p className="text-[11px] font-black text-zinc-900 dark:text-white uppercase leading-none mb-1">Taxa de Presença</p>
+                <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden mt-2">
+                   <div className="bg-primary h-full" style={{width: '68%'}}></div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-black text-sm truncate uppercase tracking-tight text-slate-800 dark:text-white">{item.user_name}</h4>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase truncate">{item.user_email}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-slate-900 dark:text-white">
-                    {new Date(item.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                  <span className="text-[8px] font-bold text-green-500 uppercase">Check-in OK</span>
-                </div>
-              </div>
-            )) : (
-              <div className="py-12 flex flex-col items-center justify-center opacity-40">
-                <span className="material-symbols-outlined text-5xl mb-2">history</span>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-center">Nenhum check-in<br />neste evento</p>
-              </div>
-            )}
+             </div>
+             <span className="text-[11px] font-black text-primary">68%</span>
           </div>
         </div>
 
+        {/* Log de Check-ins */}
+        <div className="space-y-4 pb-12">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 px-1">Check-ins Recentes</h3>
+          <div className="space-y-2">
+            {lastCheckIns.map((item, idx) => (
+              <div key={idx} className={`flex items-center gap-4 p-4 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 shadow-sm transition-all animate-in slide-in-from-left-4 duration-500 delay-${idx * 100}`}>
+                <div className="size-11 rounded-2xl bg-zinc-50 dark:bg-zinc-800 text-zinc-400 flex items-center justify-center font-black text-sm">
+                  {item.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-black text-xs truncate uppercase text-zinc-900 dark:text-white">{item.name}</p>
+                  <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">{item.role}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black text-zinc-500 uppercase">{item.time}</p>
+                  <p className="text-[8px] font-black text-primary uppercase">SUCESSO</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </main>
     </div>
   );

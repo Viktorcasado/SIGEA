@@ -1,5 +1,5 @@
 
-import { Event, Participant, Certificate, UserCategory } from './types';
+import { Event, Participant, Certificate } from './types';
 
 export const MOCK_EVENTS: Event[] = [
   {
@@ -10,7 +10,7 @@ export const MOCK_EVENTS: Event[] = [
     date: '12-14 Out',
     time: '08:00 - 18:00',
     location: 'Auditório Central',
-    imageUrl: 'https://picsum.photos/seed/tech1/800/400',
+    imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80',
     type: 'Congresso',
     status: 'Inscrições Abertas',
     price: 'Gratuito',
@@ -24,7 +24,7 @@ export const MOCK_EVENTS: Event[] = [
     date: '20 Nov',
     time: '09:00 - 17:00',
     location: 'Lab 03 - Bloco B',
-    imageUrl: 'https://picsum.photos/seed/robot/800/400',
+    imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80',
     type: 'Workshop',
     status: 'Em Breve',
     price: 'Gratuito',
@@ -38,7 +38,7 @@ export const MOCK_EVENTS: Event[] = [
     date: '05 Dez',
     time: '08:30 - 16:30',
     location: 'Auditório Principal',
-    imageUrl: 'https://picsum.photos/seed/agro/800/400',
+    imageUrl: 'https://images.unsplash.com/photo-1495107336281-199c15864eea?auto=format&fit=crop&w=800&q=80',
     type: 'Palestra',
     status: 'Inscrições Abertas',
     price: 'Gratuito',
@@ -87,21 +87,3 @@ export const CAMPUS_LIST = [
   "Campus São Miguel dos Campos", "Campus Viçosa", "Campus Coruripe",
   "Campus Rio Largo", "Campus Murici", "Campus Batalha"
 ];
-
-export const USER_CATEGORIES = [
-  UserCategory.ALUNO,
-  UserCategory.SERVIDOR,
-  UserCategory.COORDENADOR,
-  UserCategory.PALESTRANTE,
-  UserCategory.AVALIADOR,
-  UserCategory.VISITANTE
-];
-
-export const USER_CATEGORY_LABELS: Record<UserCategory, string> = {
-  [UserCategory.ALUNO]: 'Aluno',
-  [UserCategory.SERVIDOR]: 'Servidor',
-  [UserCategory.COORDENADOR]: 'Coordenador',
-  [UserCategory.PALESTRANTE]: 'Palestrante',
-  [UserCategory.AVALIADOR]: 'Avaliador',
-  [UserCategory.VISITANTE]: 'Visitante'
-};

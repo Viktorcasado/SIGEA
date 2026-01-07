@@ -1,487 +1,79 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SIGEA - IFAL</title>
-
-    <!-- Proteção contra erro de process.env no navegador -->
-    <script>
-        window.process = { env: {} };
-    </script>
-
-    <!-- PWA Meta Tags -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#135bec">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SIGEA">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2907/2907150.png">
-
-    <!-- Performance Optimizations -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://esm.sh">
-
+    
+    <title>SIGEA | IFAL</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    
     <script>
+        window.process = { env: { NODE_ENV: 'production', API_KEY: '' } };
+        
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: "#135bec",
-                        "primary-dark": "#0f4bc4",
-                        "sigea-green": "#43a047",
-                        background: {
-                            light: "#f8fafc",
-                            dark: "#080c14"
-                        },
-                        surface: {
-                            light: "#ffffff",
-                            dark: "#0b101b"
-                        }
+                        primary: "#10b981",
+                        secondary: "#059669",
+                        background: { light: "#f8fafc", dark: "#09090b" },
+                        surface: { light: "#ffffff", dark: "#18181b" }
                     },
-                    fontFamily: {
-                        sans: ["Public Sans", "sans-serif"]
-                    },
-                    animation: {
-                        'slide-up': 'slideUp 0.3s ease-out',
-                        'fade-in': 'fadeIn 0.2s ease-in-out'
-                    },
-                    keyframes: {
-                        slideUp: {
-                            '0%': { transform: 'translateY(10px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' }
-                        },
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' }
-                        }
-                    }
+                    fontFamily: { sans: ["Plus Jakarta Sans", "sans-serif"] },
+                    borderRadius: { '4xl': '2rem', '5xl': '2.5rem' }
                 }
             }
         }
     </script>
+    
     <style>
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+        * { -webkit-tap-highlight-color: transparent; outline: none !important; }
+        body { background: #f8fafc; color: #1e293b; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; transition: background-color 0.5s ease; }
+        .dark body { background: #09090b; color: #f8fafc; }
+        
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); }
+        .dark .glass { background: rgba(24, 24, 27, 0.8); border: 1px solid rgba(255,255,255,0.05); }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes scan {
+          0% { transform: translateY(-110px); opacity: 0; }
+          50% { opacity: 1; }
+          100% { transform: translateY(110px); opacity: 0; }
         }
-
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-
-        .material-symbols-outlined.filled {
-            font-variation-settings: 'FILL' 1;
-        }
-
-        body {
-            background-color: #f8fafc;
-            color: #0f172a;
-            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .dark body {
-            background-color: #080c14;
-            color: #f8fafc;
-        }
-
-        .nav-pill {
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 44px;
-            border-radius: 9999px;
-            position: relative;
-        }
-
-        .nav-pill:not(.active):hover {
-            background-color: rgba(0, 0, 0, 0.03);
-        }
-
-        .dark .nav-pill:not(.active):hover {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        /* Minimalist Active State (No Background) */
-        .nav-pill.active {
-            transform: translateY(-2px);
-        }
-
-        .nav-pill.active span {
-            color: #135bec !important;
-            font-variation-settings: 'FILL' 1 !important;
-            text-shadow: 0 4px 12px rgba(19, 91, 236, 0.4);
-        }
-
-        /* FAB Button adjustments */
-        .fab-button {
-            width: 56px;
-            height: 56px;
-            border-radius: 9999px;
-            background: #135bec;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 20px rgba(19, 91, 236, 0.4);
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-        }
-
-        .dark .fab-button {
-            box-shadow: 0 8px 30px rgba(19, 91, 236, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .fab-button:active {
-            transform: scale(0.92);
-        }
-
-        input,
-        select,
-        textarea {
-            border: 2px solid #e2e8f0 !important;
-            transition: all 0.2s ease !important;
-            font-size: 16px !important;
-            /* Prevents auto-zoom on iOS */
-        }
-
-        .dark input,
-        .dark select,
-        .dark textarea {
-            border: 2px solid #1e293b !important;
-            background-color: #0b101b !important;
-        }
-
-        input:focus,
-        select:focus {
-            border-color: #135bec !important;
-            box-shadow: 0 0 0 4px rgba(19, 91, 236, 0.1) !important;
-        }
-
-        :root {
-            --sat: env(safe-area-inset-top, 0px);
-            --sab: env(safe-area-inset-bottom, 0px);
-            --sar: env(safe-area-inset-right, 0px);
-            --sal: env(safe-area-inset-left, 0px);
-
-            /* Fluid Spacing Base */
-            --spacing-unit: clamp(0.75rem, 2vw, 1rem);
-        }
-
-        #root {
-            padding-bottom: calc(100px + var(--sab));
-            min-height: 100dvh;
-            /* Dynamic viewport height */
-            display: flex;
-            flex-direction: column;
-            padding-top: var(--sat);
-            overflow-x: hidden;
-            width: 100%;
-        }
-
-        .fixed-nav-container {
-            position: fixed;
-            bottom: calc(20px + var(--sab, 0px));
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 26rem;
-            z-index: 1000;
-            padding: 0 12px;
-        }
-
-        .dock-container {
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            gap: 8px;
-            width: 100%;
-        }
-
-        .liquid-glass {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow:
-                0 4px 30px rgba(0, 0, 0, 0.1),
-                inset 0 0 20px rgba(255, 255, 255, 0.5);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .dark .liquid-glass {
-            background: rgba(15, 20, 30, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow:
-                0 4px 30px rgba(0, 0, 0, 0.4),
-                inset 0 0 20px rgba(255, 255, 255, 0.05);
-        }
-
-        .nav-main {
-            flex: 1;
-            height: 68px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-evenly;
-            padding: 0 8px;
-        }
-
-        .nav-profile {
-            width: 68px;
-            height: 68px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .page-content {
-            animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes slideUpFade {
-            0% {
-                opacity: 0;
-                transform: translateY(20px) scale(0.98);
-            }
-
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        /* ========================================
-           MOBILE OPTIMIZATIONS
-           ======================================== */
-
-        /* Smooth Scrolling with Momentum */
-        * {
-            -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-        }
-
-        /* Improved Touch Targets - Minimum 44x44px */
-        button,
-        a,
-        input,
-        select,
-        textarea {
-            min-height: 44px;
-            min-width: 44px;
-        }
-
-        /* Enhanced Tap Feedback */
-        button:active,
-        a:active,
-        [role="button"]:active {
-            opacity: 0.7;
-            transform: scale(0.97);
-        }
-
-        /* Prevent Text Selection on Tap */
-        button,
-        .nav-pill,
-        .fab-button {
-            -webkit-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-        }
-
-        /* Optimized Spacing for Small Screens */
-        @media (max-width: 375px) {
-            .fixed-nav-container {
-                bottom: calc(12px + var(--sab, 0px));
-                padding: 0 8px;
-            }
-
-            .nav-main {
-                height: 72px;
-                padding: 0 4px;
-            }
-
-            .nav-pill {
-                width: 44px;
-                height: 44px;
-            }
-
-            .fab-button {
-                width: 52px;
-                height: 52px;
-            }
-        }
-
-        /* Landscape Mode Support */
-        @media (orientation: landscape) and (max-height: 500px) {
-            #root {
-                padding-bottom: calc(85px + var(--sab, 0px));
-            }
-
-            .fixed-nav-container {
-                bottom: calc(8px + var(--sab, 0px));
-            }
-
-            .nav-main {
-                height: 64px;
-            }
-
-            .fab-button {
-                width: 48px;
-                height: 48px;
-                -mt-6: -1.5rem;
-            }
-        }
-
-        /* Better Scroll Performance */
-        .overflow-x-auto,
-        .overflow-y-auto {
-            -webkit-overflow-scrolling: touch;
-            scroll-snap-type: x mandatory;
-            overscroll-behavior-x: contain;
-        }
-
-        /* Optimize Images for Mobile */
-        img {
-            max-width: 100%;
-            height: auto;
-            -webkit-user-drag: none;
-            user-select: none;
-        }
-
-        /* Prevent Zoom on Input Focus (iOS) */
-        @supports (-webkit-touch-callout: none) {
-
-            input[type="text"],
-            input[type="email"],
-            input[type="password"],
-            input[type="search"],
-            select,
-            textarea {
-                font-size: 16px !important;
-            }
-        }
-
-        /* Improved Active States for Cards */
-        [class*="rounded-"][class*="bg-white"],
-        [class*="rounded-"][class*="bg-slate"] {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        [class*="rounded-"][class*="bg-white"]:active,
-        [class*="rounded-"][class*="bg-slate"]:active {
-            transform: scale(0.98);
-        }
-
-        /* Safe Area Padding for Headers */
-        header {
-            padding-top: max(2rem, env(safe-area-inset-top));
-        }
-
-        /* Optimized Font Rendering on Mobile */
-        body {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            text-rendering: optimizeLegibility;
-        }
-
-        /* Better Focus Indicators for Accessibility */
-        *:focus-visible {
-            outline: 2px solid #135bec;
-            outline-offset: 2px;
-        }
-
-        /* Reduce Motion for Users Who Prefer It */
-        @media (prefers-reduced-motion: reduce) {
-
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-                scroll-behavior: auto !important;
-            }
-        }
-
-        /* Dark Mode Optimizations for OLED Screens */
-        @media (prefers-color-scheme: dark) {
-            .dark body {
-                background-color: #000000;
-            }
-
-            .dark .liquid-glass {
-                background: rgba(10, 10, 10, 0.7);
-            }
-        }
-
-        /* Horizontal Scroll Snap for Carousels */
-        .snap-x {
-            scroll-snap-type: x mandatory;
-            scroll-padding: 0 1.5rem;
-        }
-
-        .snap-center {
-            scroll-snap-align: center;
-        }
-
-        /* Improved Pull-to-Refresh Experience */
-        body {
-            overscroll-behavior-y: contain;
-        }
-
-        /* Better Touch Response for Navigation */
-        .nav-main button {
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
-
-        /* Optimized Shadow for Mobile Performance */
-        @media (max-width: 768px) {
-            .shadow-xl {
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            }
-
-            .shadow-lg {
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
+        .scan-line { animation: scan 2s linear infinite; }
+        
+        .premium-shadow {
+          box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
         }
     </style>
+
     <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
     "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "@google/genai": "https://esm.sh/@google/genai@1.34.0",
+    "@google/genai": "https://esm.sh/@google/genai@1.3.0",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.48.1",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
-
 </head>
-
 <body class="antialiased">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="module" src="./index.tsx"></script>
 </body>
-
 </html>

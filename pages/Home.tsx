@@ -1,130 +1,89 @@
 
 import React, { useState } from 'react';
-import { CAMPUS_LIST } from '../constants';
-import EventCard from '../components/EventCard';
-import Logo from '../components/Logo';
-import { Event } from '../types';
+import EventCard from '../components/EventCard.tsx';
+import Logo from '../components/Logo.tsx';
+import { Event as SIGEAEvent } from '../types.ts';
 
 interface HomeProps {
-  navigateTo: (page: string, eventId?: string) => void;
-  profile: { name: string; photo: string; campus: string };
+  navigateTo: (page: string, id?: string) => void;
+  profile: any;
+  events: SIGEAEvent[];
   onNotify: () => void;
-  events: Event[];
-  unreadNotifications: number;
+  hasUnread?: boolean;
 }
 
-const Home: React.FC<HomeProps> = ({ navigateTo, profile, onNotify, events, unreadNotifications }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const filteredEvents = events.filter(event =>
-    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.campus.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasUnread }) => {
+  const [search, setSearch] = useState('');
+  
+  const featured = events.slice(0, 3);
+  const filtered = events.filter(e => e.title.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-[#0f172a] pb-36">
-
-      {/* Hero Header */}
-      <header className="px-6 pt-8 pb-6 bg-white dark:bg-[#1e293b] rounded-b-[3rem] shadow-sm z-30">
-        <div className="flex justify-center mb-6">
-          <Logo className="h-12" />
-        </div>
-
+    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark animate-in fade-in duration-700">
+      <header className="px-6 pt-12 pb-6">
         <div className="flex items-center justify-between mb-8">
-          {/* Esquerda: Notificações */}
-          <button onClick={onNotify} className="size-11 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center relative active:scale-95 transition-all order-1">
-            <span className="material-symbols-outlined">notifications</span>
-            {unreadNotifications > 0 && (
-              <span className="absolute top-3 right-3.5 size-2 bg-red-500 rounded-full border border-white dark:border-slate-800 animate-pulse"></span>
+          <div className="flex items-center gap-3">
+            <div 
+              onClick={() => navigateTo('profile')}
+              className="size-11 rounded-2xl bg-cover bg-center border-2 border-white dark:border-zinc-800 shadow-md cursor-pointer flex items-center justify-center bg-primary text-white font-black text-sm"
+              style={profile?.photo ? { backgroundImage: `url("${profile.photo}")` } : {}}
+            >
+              {!profile?.photo && (profile?.name?.charAt(0) || 'U')}
+            </div>
+            <Logo size="md" />
+          </div>
+          <button onClick={onNotify} className="size-11 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 relative active:scale-90 transition-all">
+            <span className="material-symbols-outlined text-[26px]">notifications</span>
+            {hasUnread && (
+              <span className="absolute top-2.5 right-2.5 size-2.5 bg-primary rounded-full ring-2 ring-white dark:ring-zinc-900 shadow-lg animate-in zoom-in duration-300"></span>
             )}
           </button>
-
-          {/* Centro: Saudação */}
-          <div className="flex flex-col items-center order-2">
-            <h1 className="text-xl font-black text-slate-800 dark:text-white leading-none">
-              Olá, {profile.name.split(' ')[0]} 👋
-            </h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{profile.campus || 'Visitante'}</p>
-          </div>
-
-          {/* Direita: Espaçador para equilíbrio */}
-          <div className="order-3 size-11"></div>
         </div>
 
-        {/* Search Bar - Moderno */}
-        <div className="relative">
-          <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-          <input
+        <div className="relative group">
+          <input 
             type="text"
-            placeholder="Buscar eventos, palestras..."
-            className="w-full h-14 pl-12 pr-4 bg-slate-100 dark:bg-slate-900/50 rounded-2xl font-bold text-sm text-slate-800 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-16 pl-14 pr-6 bg-white dark:bg-zinc-900 rounded-3xl outline-none text-[15px] font-bold shadow-sm border border-zinc-100 dark:border-zinc-800 focus:border-primary/30 transition-all placeholder:text-zinc-300 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-[0.2em]"
+            placeholder="Buscar eventos..."
           />
+          <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary text-2xl font-black">search</span>
         </div>
       </header>
 
-      <main className="space-y-8 mt-6">
-
-        {/* Filtros de Campus */}
-        <div className="pl-6">
-          <div className="flex overflow-x-auto gap-3 no-scrollbar pb-2 pr-6">
-            {CAMPUS_LIST.slice(0, 6).map(campus => (
-              <button
-                key={campus}
-                onClick={() => setSearchTerm(campus === searchTerm ? '' : campus.replace('Campus ', ''))}
-                className={`shrink-0 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${searchTerm === campus.replace('Campus ', '') ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white dark:bg-slate-800 text-slate-500 border border-slate-100 dark:border-slate-700'}`}
-              >
-                {campus.replace('Campus ', '')}
-              </button>
+      <main className="space-y-10 pb-12">
+        <section>
+          <div className="px-7 flex items-center justify-between mb-5">
+            <h3 className="text-[11px] font-[900] uppercase tracking-[0.25em] text-zinc-400">Em Destaque</h3>
+            <button onClick={() => navigateTo('events')} className="text-primary text-[10px] font-black uppercase tracking-widest">Ver tudo</button>
+          </div>
+          <div className="flex gap-5 overflow-x-auto no-scrollbar px-6 pb-6">
+            {featured.map(event => (
+              <EventCard key={event.id} event={event} horizontal onClick={() => navigateTo('details', event.id)} />
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Destaque / Carrossel */}
-        {filteredEvents.length > 0 && (
-          <div className="pl-6">
-            <h2 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight mb-4">Em Destaque 🔥</h2>
-            <div className="flex overflow-x-auto gap-5 no-scrollbar pb-8 pr-6 snap-x snap-mandatory">
-              {filteredEvents.slice(0, 5).map(event => (
-                <div key={event.id} className="snap-center shrink-0 w-[85vw] max-w-[320px]">
-                  <EventCard event={event} horizontal onClick={() => navigateTo('details', event.id)} />
-                </div>
-              ))}
-            </div>
+        <section className="px-7 space-y-5">
+          <div className="flex items-center justify-between">
+             <h3 className="text-[11px] font-[900] uppercase tracking-[0.25em] text-zinc-400">Feed de Notícias</h3>
+             <span className="text-[9px] font-black text-zinc-300 uppercase tracking-widest">{filtered.length} Atividades</span>
           </div>
-        )}
-
-        {/* Todos os Eventos - Lista Clean */}
-        <div className="px-6 pb-12">
-          <h2 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight mb-4">Próximos Eventos</h2>
-          <div className="space-y-4">
-            {events.map(event => (
-              <div
-                key={event.id}
-                onClick={() => navigateTo('details', event.id)}
-                className="flex gap-4 p-4 bg-white dark:bg-[#1e293b] rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 active:scale-[0.98] transition-all"
-              >
-                <div className="shrink-0 flex flex-col items-center justify-center size-16 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
-                  <span className="text-[10px] font-black text-primary uppercase">{event.date.split(' ')[1] || 'MÊS'}</span>
-                  <span className="text-xl font-black text-slate-900 dark:text-white">{event.date.split('-')[0]}</span>
-                </div>
-                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                  <h3 className="font-black text-sm text-slate-800 dark:text-white truncate uppercase">{event.title}</h3>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="material-symbols-outlined text-[12px] text-slate-400">location_on</span>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase truncate">{event.campus}</p>
-                  </div>
-                </div>
-                <div className="self-center">
-                  <span className="material-symbols-outlined text-slate-300">chevron_right</span>
-                </div>
-              </div>
+          <div className="grid gap-5">
+            {filtered.map(event => (
+              <EventCard key={event.id} event={event} onClick={() => navigateTo('details', event.id)} />
             ))}
           </div>
-        </div>
-
+        </section>
       </main>
+
+      <button 
+        onClick={() => navigateTo('check-in')}
+        className="fixed bottom-28 right-6 z-[4000] size-16 rounded-3xl bg-primary text-white shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all group border border-white/20"
+      >
+        <span className="material-symbols-outlined text-3xl font-black">qr_code_scanner</span>
+      </button>
     </div>
   );
 };

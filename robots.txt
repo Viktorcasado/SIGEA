@@ -1,0 +1,4 @@
+
+User-agent: *
+Allow: /
+Sitemap: https://sigea-ifal.vercel.app/sitemap.xml

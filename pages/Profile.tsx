@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { UserRole, UserProfile, UserCategory } from '../types';
-import { CAMPUS_LIST, USER_CATEGORIES, USER_CATEGORY_LABELS } from '../constants';
+import { UserRole } from '../types';
+import { CAMPUS_LIST } from '../constants';
 
 interface ProfileProps {
   navigateTo: (page: string) => void;
@@ -9,293 +9,215 @@ interface ProfileProps {
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
   role: UserRole;
-  profile: UserProfile;
-  onUpdate: (profile: UserProfile, file?: File) => Promise<void>;
+  profile: { id: string; name: string; photo: string; campus: string; email: string };
+  onUpdate: (profile: any) => Promise<void> | void;
   onLogout: () => void;
+  onDeleteAccount: () => Promise<void>;
 }
 
-const Profile: React.FC<ProfileProps> = ({ navigateTo, toggleRole, darkMode, setDarkMode, role, profile, onUpdate, onLogout }) => {
+const Profile: React.FC<ProfileProps> = ({ 
+  navigateTo, toggleRole, darkMode, setDarkMode, role, profile, onUpdate, onLogout, onDeleteAccount 
+}) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<UserProfile>({ ...profile });
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({ ...profile });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sincroniza o formulário sempre que o perfil mudar (puxando do Supabase)
   useEffect(() => {
     setFormData({ ...profile });
   }, [profile]);
 
-  useEffect(() => {
-    const changed = JSON.stringify(formData) !== JSON.stringify(profile);
-    setHasChanges(changed);
-  }, [formData, profile]);
-
-  const handleSave = async () => {
-    setIsUploading(true);
-    await onUpdate(formData, fileInputRef.current?.files?.[0]);
-    setIsUploading(false);
-    setIsEditing(false);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, photo: reader.result as string }));
+        setFormData({ ...formData, photo: reader.result as string });
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await onUpdate({ 
+        name: formData.name, 
+        campus: formData.campus,
+        email: formData.email,
+        photo: formData.photo
+      });
+      setIsEditing(false);
+    } catch (error) { 
+      console.error(error); 
+      alert("Erro ao salvar perfil.");
+    } finally { 
+      setIsSaving(false); 
+    }
+  };
+
+  const initials = profile.name ? profile.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'US';
+
   return (
-    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-36 safe-bottom">
-      <header className="sticky top-0 z-50 flex items-center justify-between bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md px-4 py-3 border-b-2 border-slate-300 dark:border-slate-800 shadow-sm transition-colors safe-top">
-        <button onClick={() => isEditing ? setIsEditing(false) : navigateTo('home')} className="size-10 flex items-center justify-center rounded-full active:scale-90 transition-transform">
-          <span className="material-symbols-outlined font-bold text-2xl">{isEditing ? 'close' : 'arrow_back'}</span>
+    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-zinc-950 pb-32 animate-in fade-in duration-500 overflow-y-auto no-scrollbar">
+      <header className="px-6 pt-12 pb-8 flex items-center justify-between sticky top-0 bg-background-light/80 dark:bg-zinc-950/80 backdrop-blur-xl z-50">
+        <button 
+          onClick={() => isEditing ? setIsEditing(false) : navigateTo('home')} 
+          className="size-11 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-sm text-zinc-900 dark:text-white transition-all active:scale-90"
+        >
+          <span className="material-symbols-outlined font-black">{isEditing ? 'close' : 'arrow_back'}</span>
         </button>
-        <h2 className="text-sm font-black uppercase tracking-widest">{isEditing ? 'Editar Perfil' : 'Meu Perfil'}</h2>
-        {!isEditing ? (
-          <button onClick={() => setIsEditing(true)} className="size-10 text-primary flex items-center justify-center active:scale-90 transition-transform">
-            <span className="material-symbols-outlined font-bold text-2xl">edit</span>
-          </button>
-        ) : <div className="size-10"></div>}
+        <h2 className="text-[11px] font-[900] uppercase tracking-[0.4em] text-zinc-400">
+          {isEditing ? 'Editando Perfil' : 'Meu Perfil'}
+        </h2>
+        <button 
+          onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+          disabled={isSaving}
+          className={`size-11 flex items-center justify-center rounded-2xl transition-all active:scale-90 ${isEditing ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-primary/10 text-primary'}`}
+        >
+          {isSaving ? (
+            <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          ) : (
+            <span className="material-symbols-outlined font-bold">{isEditing ? 'check' : 'edit'}</span>
+          )}
+        </button>
       </header>
 
-      <main className="flex-1 flex flex-col items-center px-[var(--spacing-unit)] pt-8 space-y-8 w-full max-w-md mx-auto overflow-y-auto no-scrollbar">
-        <div
-          className="size-[8rem] rounded-full border-4 border-white shadow-xl bg-cover bg-center relative group overflow-hidden shrink-0"
-          style={{ backgroundImage: `url("${formData.photo}")` }}
-        >
-          {isEditing && (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="absolute inset-0 bg-black/40 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+      <main className="px-6 flex flex-col items-center">
+        {/* Avatar Section */}
+        <div className="flex flex-col items-center mb-10 w-full">
+          <div className="relative mb-6">
+            <div 
+              onClick={() => isEditing && fileInputRef.current?.click()}
+              className={`size-36 rounded-[2.5rem] bg-primary flex items-center justify-center text-white text-[56px] font-[900] tracking-tighter ring-8 ring-white dark:ring-zinc-900 shadow-2xl relative overflow-hidden transition-all ${isEditing ? 'cursor-pointer hover:opacity-80' : ''}`}
             >
-              <span className="material-symbols-outlined text-4xl">add_a_photo</span>
-            </button>
-          )}
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            accept="image/*"
-          />
-        </div>
-
-        <div className="w-full space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-slate-500 uppercase">Nome</span>
-              {isEditing ? (
-                <input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm" />
-              ) : (
-                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.name}</p>
-              )}
+               {formData.photo ? (
+                 <img src={formData.photo} className="w-full h-full object-cover" alt="Profile" />
+               ) : (
+                 initials
+               )}
+               {isEditing && (
+                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-white text-3xl">add_a_photo</span>
+                 </div>
+               )}
             </div>
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-slate-500 uppercase">E-mail</span>
-              {isEditing ? (
-                <input value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm" />
-              ) : (
-                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-bold opacity-70">{profile.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-500 uppercase">Tipo de Usuário</span>
-                {profile.is_verified && (
-                  <div className="flex items-center gap-1 text-green-500">
-                    <span className="material-symbols-outlined text-xs filled">verified</span>
-                    <span className="text-[9px] font-black uppercase tracking-tighter">Verificado</span>
-                  </div>
-                )}
-              </div>
-              {isEditing ? (
-                <select
-                  value={formData.user_category}
-                  onChange={e => setFormData({ ...formData, user_category: e.target.value as UserCategory })}
-                  className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
-                >
-                  {USER_CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{USER_CATEGORY_LABELS[cat]}</option>
-                  ))}
-                </select>
-              ) : (
-                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{USER_CATEGORY_LABELS[profile.user_category || UserCategory.ALUNO]}</p>
-              )}
-            </div>
-
-            {/* Número de Matrícula / SIAPE (Apenas Aluno e Servidor) */}
-            {(formData.user_category === UserCategory.ALUNO || formData.user_category === UserCategory.SERVIDOR) && (
-              <div className="space-y-1">
-                <span className="text-[10px] font-black text-slate-500 uppercase">
-                  {formData.user_category === UserCategory.ALUNO ? 'Número de Matrícula' : 'Número do SIAPE'}
-                </span>
-                {isEditing ? (
-                  <input
-                    value={formData.registration_number}
-                    onChange={e => setFormData({ ...formData, registration_number: e.target.value })}
-                    className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
-                  />
-                ) : (
-                  <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.registration_number || 'Não informado'}</p>
-                )}
-              </div>
-            )}
-
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-slate-500 uppercase">CPF</span>
-              {isEditing ? (
-                <input
-                  value={formData.cpf}
-                  onChange={e => setFormData({ ...formData, cpf: e.target.value })}
-                  placeholder="000.000.000-00"
-                  className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
-                />
-              ) : (
-                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black tracking-widest">{profile.cpf || 'Não informado'}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-slate-500 uppercase">Celular</span>
-              {isEditing ? (
-                <input
-                  value={formData.phone}
-                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="(00) 00000-0000"
-                  className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
-                />
-              ) : (
-                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.phone || 'Não informado'}</p>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-[10px] font-black text-slate-500 uppercase">Campus</span>
-              {isEditing ? (
-                <select
-                  value={formData.campus}
-                  onChange={e => setFormData({ ...formData, campus: e.target.value })}
-                  className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
-                >
-                  {CAMPUS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              ) : (
-                <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.campus}</p>
-              )}
-            </div>
-
-            {/* Departamento (Apenas Servidor e Coordenador) */}
-            {(formData.user_category === UserCategory.SERVIDOR || formData.user_category === UserCategory.COORDENADOR) && (
-              <div className="space-y-1">
-                <span className="text-[10px] font-black text-slate-500 uppercase">Departamento</span>
-                {isEditing ? (
-                  <input
-                    value={formData.department}
-                    onChange={e => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
-                  />
-                ) : (
-                  <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.department || 'Não informado'}</p>
-                )}
-              </div>
-            )}
-
-            {/* Instituição (Palestrante, Avaliador, Visitante) */}
-            {(formData.user_category === UserCategory.PALESTRANTE || formData.user_category === UserCategory.AVALIADOR || formData.user_category === UserCategory.VISITANTE) && (
-              <div className="space-y-1">
-                <span className="text-[10px] font-black text-slate-500 uppercase">Instituição</span>
-                {isEditing ? (
-                  <input
-                    value={formData.institution}
-                    onChange={e => setFormData({ ...formData, institution: e.target.value })}
-                    className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
-                    placeholder="Ex: UFAL, MCTI, Outra..."
-                  />
-                ) : (
-                  <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.institution || 'Não informado'}</p>
-                )}
-              </div>
-            )}
-
-            {formData.user_category === UserCategory.ALUNO && (
-              <div className="space-y-1">
-                <span className="text-[10px] font-black text-slate-500 uppercase">Curso</span>
-                {isEditing ? (
-                  <input
-                    value={formData.course}
-                    onChange={e => setFormData({ ...formData, course: e.target.value })}
-                    className="w-full p-4 bg-white dark:bg-slate-800 border-2 border-slate-200 rounded-2xl outline-none font-bold text-sm"
-                  />
-                ) : (
-                  <p className="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl font-black">{profile.course || 'Não informado'}</p>
-                )}
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+            
+            {!isEditing && (
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-primary text-white px-5 py-2 rounded-full shadow-lg border-2 border-white dark:border-zinc-900">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">{role}</span>
               </div>
             )}
           </div>
-
-          {!isEditing && (
-            <div className="pt-4 space-y-4">
-              <div className="p-1 bg-slate-100 dark:bg-slate-800/50 rounded-3xl border border-slate-200 dark:border-slate-800 flex relative">
-                <button
-                  onClick={() => setDarkMode(false)}
-                  className={`flex-1 py-4 rounded-[1.2rem] flex items-center justify-center gap-2 transition-all duration-300 ${!darkMode ? 'bg-white shadow-lg shadow-slate-200/50 text-slate-900 border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
-                >
-                  <span className={`material-symbols-outlined ${!darkMode ? 'filled text-orange-500' : ''}`}>light_mode</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Claro</span>
-                </button>
-                <button
-                  onClick={() => setDarkMode(true)}
-                  className={`flex-1 py-4 rounded-[1.2rem] flex items-center justify-center gap-2 transition-all duration-300 ${darkMode ? 'bg-slate-800 shadow-lg shadow-black/20 text-white border border-slate-700' : 'text-slate-400 hover:text-slate-600'}`}
-                >
-                  <span className={`material-symbols-outlined ${darkMode ? 'filled text-blue-400' : ''}`}>dark_mode</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest">Escuro</span>
-                </button>
+          
+          {isEditing ? (
+            <div className="w-full space-y-4 animate-in slide-in-from-bottom-2">
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-4">Nome Completo</label>
+                <input 
+                  type="text" 
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  className="w-full h-14 px-6 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white"
+                  placeholder="Seu nome"
+                />
               </div>
-              <button onClick={toggleRole} className="w-full p-5 flex items-center justify-between bg-white dark:bg-slate-800 rounded-3xl border-2 border-primary/20">
-                <span className="text-sm font-black uppercase">Mudar para {role === UserRole.PARTICIPANT ? 'Organizador' : 'Participante'}</span>
-                <span className="material-symbols-outlined">swap_horiz</span>
-              </button>
-
-              <button
-                onClick={() => navigateTo('contacts')}
-                className="w-full p-4 flex items-center justify-between bg-blue-50 dark:bg-blue-900/10 rounded-2xl border-2 border-blue-100 dark:border-blue-900/30 active:scale-95 transition-all"
-              >
-                <span className="text-sm font-black uppercase text-slate-700 dark:text-slate-300">Contatos e Suporte</span>
-                <span className="material-symbols-outlined text-primary">support_agent</span>
-              </button>
-
-              <button
-                onClick={() => navigateTo('privacy')}
-                className="w-full p-4 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-slate-100 dark:border-slate-800 active:scale-95 transition-all"
-              >
-                <span className="text-sm font-black uppercase text-slate-700 dark:text-slate-300">Políticas e Privacidade</span>
-                <span className="material-symbols-outlined text-slate-400">verified_user</span>
-              </button>
-
-              <button onClick={onLogout} className="w-full py-4 text-red-600 font-black text-[11px] uppercase tracking-widest border-2 border-transparent hover:bg-red-50 rounded-2xl">
-                Sair da Conta
-              </button>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-4">E-mail</label>
+                <input 
+                  type="email" 
+                  value={formData.email}
+                  onChange={e => setFormData({...formData, email: e.target.value})}
+                  className="w-full h-14 px-6 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white"
+                  placeholder="seu@email.com"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest ml-4">Campus</label>
+                <select 
+                  value={formData.campus}
+                  onChange={e => setFormData({...formData, campus: e.target.value})}
+                  className="w-full h-14 px-6 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary/20 transition-all dark:text-white appearance-none"
+                >
+                  {CAMPUS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center space-y-2 animate-in fade-in">
+              <h1 className="text-[28px] font-[900] text-zinc-900 dark:text-white uppercase tracking-tighter leading-none">
+                {profile.name || 'Usuário'}
+              </h1>
+              <p className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em]">{profile.email || 'email@dominio.com'}</p>
+              <div className="mt-4 flex items-center justify-center gap-2 px-5 py-2 bg-zinc-100 dark:bg-zinc-900 rounded-full">
+                <span className="material-symbols-outlined text-sm text-primary">location_on</span>
+                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">{profile.campus || 'Não Informado'}</span>
+              </div>
             </div>
           )}
         </div>
-      </main>
 
-      {isEditing && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-xs px-4">
-          <button
-            onClick={handleSave}
-            disabled={isUploading}
-            className="w-full py-5 bg-primary text-white font-black rounded-3xl uppercase tracking-widest shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isUploading ? <span className="material-symbols-outlined animate-spin">sync</span> : 'Salvar'}
-          </button>
-        </div>
-      )}
+        {/* Preferences Section (Only visible when NOT editing) */}
+        {!isEditing && (
+          <div className="w-full space-y-8 animate-in slide-in-from-bottom-4">
+            <h3 className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.3em] ml-2">Preferências</h3>
+            
+            <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-3 shadow-xl premium-shadow border border-zinc-100 dark:border-white/5 space-y-1">
+               <div onClick={() => setDarkMode(!darkMode)} className="flex items-center justify-between p-6 rounded-3xl hover:bg-zinc-50 dark:hover:bg-white/5 transition-all cursor-pointer">
+                  <div className="flex items-center gap-5">
+                     <div className="size-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400">
+                        <span className="material-symbols-outlined">{darkMode ? 'dark_mode' : 'light_mode'}</span>
+                     </div>
+                     <div>
+                        <p className="text-[13px] font-[900] text-zinc-900 dark:text-white uppercase tracking-tight">Tema Visual</p>
+                        <p className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest">{darkMode ? 'Escuro Ativo' : 'Claro Ativo'}</p>
+                     </div>
+                  </div>
+                  <div className={`w-11 h-6 rounded-full p-1 transition-all ${darkMode ? 'bg-primary' : 'bg-zinc-200'}`}>
+                     <div className={`size-4 bg-white rounded-full transition-all transform ${darkMode ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </div>
+               </div>
+
+               <div onClick={toggleRole} className="flex items-center justify-between p-6 rounded-3xl hover:bg-zinc-50 dark:hover:bg-white/5 transition-all cursor-pointer">
+                  <div className="flex items-center gap-5">
+                     <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                        <span className="material-symbols-outlined">account_circle</span>
+                     </div>
+                     <div>
+                        <p className="text-[13px] font-[900] text-zinc-900 dark:text-white uppercase tracking-tight">Tipo de Conta</p>
+                        <p className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest">Mudar para {role === UserRole.PARTICIPANT ? 'Organizador' : 'Participante'}</p>
+                     </div>
+                  </div>
+                  <span className="material-symbols-outlined text-zinc-200">chevron_right</span>
+               </div>
+            </div>
+
+            <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-3 shadow-xl premium-shadow border border-zinc-100 dark:border-white/5 space-y-1">
+               <button onClick={onLogout} className="w-full flex items-center gap-5 p-6 rounded-3xl hover:bg-zinc-50 dark:hover:bg-white/5 transition-all text-left">
+                  <div className="size-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400">
+                     <span className="material-symbols-outlined">logout</span>
+                  </div>
+                  <div>
+                     <p className="text-[13px] font-[900] text-zinc-900 dark:text-white uppercase tracking-tight">Encerrar Sessão</p>
+                     <p className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest">Sair deste dispositivo</p>
+                  </div>
+               </button>
+               
+               <button onClick={onDeleteAccount} className="w-full flex items-center gap-5 p-6 rounded-3xl hover:bg-red-500/10 transition-all text-left">
+                  <div className="size-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500">
+                     <span className="material-symbols-outlined">delete_forever</span>
+                  </div>
+                  <div>
+                     <p className="text-[13px] font-[900] text-red-500 uppercase tracking-tight">Excluir Tudo</p>
+                     <p className="text-[9px] font-bold text-red-300 uppercase tracking-widest">Apagar conta do banco</p>
+                  </div>
+               </button>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 };

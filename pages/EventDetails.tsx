@@ -11,141 +11,218 @@ interface EventDetailsProps {
 const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events }) => {
   const event = events.find(e => e.id === eventId) || events[0];
   const [tab, setTab] = useState<'sobre' | 'programacao'>('sobre');
+  const [showToast, setShowToast] = useState(false);
 
   if (!event) return null;
 
-  const handleSupport = () => {
-    const phoneNumber = "5582996281235";
-    const msg = encodeURIComponent(`Olá! Tenho uma dúvida sobre o evento "${event.title}" no SIGEA.`);
-    window.open(`https://wa.me/${phoneNumber}?text=${msg}`, '_blank');
+  const handleShare = async () => {
+    const shareData = {
+      title: event.title,
+      text: `Confira este evento no SIGEA IFAL: ${event.title}`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+      }
+    } catch (err) {
+      console.log('Erro ao compartilhar:', err);
+    }
   };
 
   return (
-    <div className="relative flex flex-col w-full pb-40 bg-background-light dark:bg-background-dark min-h-screen">
-      {/* Header */}
-      <header className="sticky top-0 z-50 flex items-center justify-between bg-white/90 dark:bg-surface-dark/90 backdrop-blur-md p-4 border-b border-gray-100 dark:border-gray-800">
-        <button onClick={() => navigateTo('home')} className="flex size-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <h2 className="text-sm font-bold truncate flex-1 text-center px-4">Detalhes do Evento</h2>
-        <button className="flex size-10 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
-          <span className="material-symbols-outlined">share</span>
-        </button>
-      </header>
+    <div className="relative flex flex-col w-full pb-32 bg-background-light dark:bg-background-dark min-h-screen animate-in fade-in duration-500">
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[10000] bg-zinc-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl animate-in slide-in-from-top duration-300">
+          Link copiado para a área de transferência!
+        </div>
+      )}
 
-      {/* Hero Image */}
-      <div className="w-full h-[240px] relative">
-        <div className="w-full h-full bg-center bg-cover" style={{ backgroundImage: `url(${event.imageUrl})` }}>
-          <div className="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent opacity-90"></div>
+      {/* Imagem de Capa com Controles Flutuantes */}
+      <div className="relative w-full h-[400px] overflow-hidden">
+        <img 
+          src={event.imageUrl} 
+          alt={event.title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background-light dark:from-background-dark via-transparent to-black/30"></div>
+        
+        {/* Header Flutuante */}
+        <div className="absolute top-0 left-0 w-full p-6 flex items-center justify-between z-30">
+          <button 
+            onClick={() => navigateTo('home')} 
+            className="size-12 flex items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white active:scale-90 transition-all"
+          >
+            <span className="material-symbols-outlined font-bold">arrow_back</span>
+          </button>
+          <button 
+            onClick={handleShare}
+            className="size-12 flex items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white active:scale-90 transition-all"
+          >
+            <span className="material-symbols-outlined font-bold">share</span>
+          </button>
+        </div>
+
+        {/* Badge de Categoria Flutuante */}
+        <div className="absolute bottom-24 left-6 z-20">
+          <span className="px-4 py-2 rounded-full bg-primary text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-primary/30">
+            {event.type}
+          </span>
         </div>
       </div>
 
-      {/* Content */}
-      <main className="flex flex-col px-5 -mt-16 z-20 relative gap-6">
-        <div>
-          <div className="flex gap-2 mb-3">
-            <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold text-primary">Presencial</span>
-            <span className="inline-flex items-center rounded-full bg-orange-100 dark:bg-orange-900/30 px-2.5 py-0.5 text-[10px] font-bold text-orange-700 dark:text-orange-400">Certificado {event.certificateHours}h</span>
-          </div>
-          <h1 className="text-2xl font-bold leading-tight mb-2 text-gray-900 dark:text-white">{event.title}</h1>
-          <p className="text-gray-500 text-xs">Organizado por Pró-Reitoria de Pesquisa</p>
-        </div>
-
-        {/* Support Button */}
-        <button
-          onClick={handleSupport}
-          className="flex items-center justify-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-2xl border-2 border-green-100 dark:border-green-800/30 font-black text-xs uppercase tracking-widest active:scale-95 transition-all shadow-sm"
-        >
-          <svg viewBox="0 0 24 24" className="size-5 fill-current" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-          </svg>
-          Dúvidas? Fale conosco
-        </button>
-
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 gap-3">
-          <div className="flex items-start gap-4 p-4 rounded-2xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 shadow-sm">
-            <div className="flex items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0 size-12">
-              <span className="material-symbols-outlined">calendar_month</span>
+      {/* Container de Conteúdo */}
+      <main className="flex flex-col px-6 -mt-16 z-20 relative">
+        {/* Card Principal de Título e Autor */}
+        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 shadow-xl shadow-zinc-200/50 dark:shadow-none mb-6">
+          <h1 className="text-3xl font-black leading-tight text-zinc-900 dark:text-white tracking-tight mb-4">
+            {event.title}
+          </h1>
+          
+          <div className="flex items-center gap-4 border-t border-zinc-100 dark:border-zinc-800 pt-6">
+            <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <span className="material-symbols-outlined">account_balance</span>
             </div>
             <div>
-              <p className="font-bold text-sm text-gray-900 dark:text-white">{event.date}</p>
-              <p className="text-xs text-gray-500">{event.time}</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-4 p-4 rounded-2xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 shadow-sm">
-            <div className="flex items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0 size-12">
-              <span className="material-symbols-outlined">location_on</span>
-            </div>
-            <div>
-              <p className="font-bold text-sm text-gray-900 dark:text-white">{event.location}</p>
-              <p className="text-xs text-gray-500">{event.campus}</p>
+              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Organização</p>
+              <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Pró-Reitoria de Pesquisa e Inovação</p>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl">
-          <button
+        {/* Dashboard de Informações Cruciais */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="bg-zinc-100 dark:bg-zinc-800/50 p-6 rounded-3xl flex flex-col gap-3">
+            <span className="material-symbols-outlined text-primary text-3xl">calendar_today</span>
+            <div>
+              <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Data e Hora</p>
+              <p className="text-xs font-black text-zinc-900 dark:text-white">{event.date}</p>
+              <p className="text-[10px] font-bold text-zinc-500">{event.time.split(' - ')[0]}</p>
+            </div>
+          </div>
+          <div className="bg-zinc-100 dark:bg-zinc-800/50 p-6 rounded-3xl flex flex-col gap-3">
+            <span className="material-symbols-outlined text-primary text-3xl">location_on</span>
+            <div>
+              <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Localização</p>
+              <p className="text-xs font-black text-zinc-900 dark:text-white truncate">{event.location}</p>
+              <p className="text-[10px] font-bold text-zinc-500 truncate">{event.campus}</p>
+            </div>
+          </div>
+          <div className="bg-zinc-100 dark:bg-zinc-800/50 p-6 rounded-3xl flex flex-col gap-3">
+            <span className="material-symbols-outlined text-primary text-3xl">workspace_premium</span>
+            <div>
+              <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Certificação</p>
+              <p className="text-xs font-black text-zinc-900 dark:text-white">{event.certificateHours} Horas</p>
+              <p className="text-[10px] font-bold text-zinc-500">Complementar</p>
+            </div>
+          </div>
+          <div className="bg-zinc-100 dark:bg-zinc-800/50 p-6 rounded-3xl flex flex-col gap-3">
+            <span className="material-symbols-outlined text-primary text-3xl">group</span>
+            <div>
+              <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Vagas</p>
+              <p className="text-xs font-black text-zinc-900 dark:text-white">Limitadas</p>
+              <p className="text-[10px] font-bold text-zinc-500">Inscrição Prévia</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Abas Modernas */}
+        <div className="flex gap-8 border-b border-zinc-100 dark:border-zinc-800 mb-8">
+          <button 
             onClick={() => setTab('sobre')}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${tab === 'sobre' ? 'bg-white dark:bg-surface-dark text-primary shadow-sm' : 'text-gray-500'}`}
+            className={`pb-4 text-xs font-black uppercase tracking-widest transition-all relative ${tab === 'sobre' ? 'text-primary' : 'text-zinc-400'}`}
           >
             Sobre
+            {tab === 'sobre' && <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-full animate-in zoom-in"></div>}
           </button>
-          <button
+          <button 
             onClick={() => setTab('programacao')}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${tab === 'programacao' ? 'bg-white dark:bg-surface-dark text-primary shadow-sm' : 'text-gray-500'}`}
+            className={`pb-4 text-xs font-black uppercase tracking-widest transition-all relative ${tab === 'programacao' ? 'text-primary' : 'text-zinc-400'}`}
           >
             Programação
+            {tab === 'programacao' && <div className="absolute bottom-0 left-0 w-full h-1 bg-primary rounded-full animate-in zoom-in"></div>}
           </button>
         </div>
 
-        {tab === 'sobre' ? (
-          <section className="space-y-4">
-            <h3 className="text-lg font-bold">Descrição do Evento</h3>
-            <div className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 space-y-3">
-              <p>{event.description}</p>
-              <p>Participe desta jornada de aprendizado intenso com os melhores professores e pesquisadores do IFAL.</p>
+        {/* Conteúdo Dinâmico */}
+        <div className="min-h-[200px]">
+          {tab === 'sobre' ? (
+            <div className="animate-in fade-in slide-in-from-left-4 duration-300">
+              <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400 font-medium">
+                {event.description}
+              </p>
+              
+              {/* Botão de Compartilhamento Social no Conteúdo */}
+              <div className="mt-8 flex flex-col gap-4">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Gostou do evento? Compartilhe!</h4>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={handleShare}
+                    className="flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 active:scale-95 transition-all text-[10px] font-black uppercase tracking-widest"
+                  >
+                    <span className="material-symbols-outlined text-lg">share</span>
+                    Compartilhar
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-8 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800">
+                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-4">Público Alvo</h4>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-white dark:bg-zinc-800 text-[10px] font-bold text-zinc-600 dark:text-zinc-300 rounded-full border border-zinc-200 dark:border-zinc-700">Estudantes</span>
+                  <span className="px-3 py-1 bg-white dark:bg-zinc-800 text-[10px] font-bold text-zinc-600 dark:text-zinc-300 rounded-full border border-zinc-200 dark:border-zinc-700">Docentes</span>
+                  <span className="px-3 py-1 bg-white dark:bg-zinc-800 text-[10px] font-bold text-zinc-600 dark:text-zinc-300 rounded-full border border-zinc-200 dark:border-zinc-700">Comunidade Externa</span>
+                </div>
+              </div>
             </div>
-          </section>
-        ) : (
-          <section className="space-y-6">
-            <h3 className="text-lg font-bold">Programação</h3>
-            <div className="relative space-y-6">
-              <div className="absolute left-3.5 top-2 bottom-4 w-[2px] bg-gray-100 dark:bg-gray-800"></div>
+          ) : (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-6">
               {[
-                { time: '09:00', title: 'Cerimônia de Abertura', loc: 'Auditório Principal' },
-                { time: '10:30', title: 'Palestra Magna: Futuro da Tecnologia', loc: 'Auditório Principal' },
-                { time: '14:00', title: 'Workshops Práticos', loc: 'Laboratórios' }
+                { time: '08:00', title: 'Credenciamento e Coffee', loc: 'Hall de Entrada' },
+                { time: '09:00', title: 'Abertura Oficial', loc: 'Auditório Principal' },
+                { time: '10:30', title: 'Conferência de Abertura', loc: 'Auditório Principal' },
+                { time: '14:00', title: 'Mesa Redonda: Inovação no IFAL', loc: 'Bloco A' }
               ].map((item, idx) => (
-                <div key={idx} className="relative flex gap-4">
-                  <div className="relative z-10 mt-1.5 size-2.5 rounded-full bg-primary ring-4 ring-background-light dark:ring-background-dark ml-[9px]"></div>
-                  <div className="flex-1">
-                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">{item.time}</span>
-                    <h4 className="font-bold text-sm mt-1">{item.title}</h4>
-                    <p className="text-xs text-gray-500">{item.loc}</p>
+                <div key={idx} className="flex gap-6 group">
+                  <div className="flex flex-col items-center">
+                    <div className="size-3 rounded-full bg-primary ring-4 ring-primary/20 group-hover:scale-125 transition-transform"></div>
+                    <div className="w-[2px] flex-1 bg-zinc-100 dark:bg-zinc-800 my-2"></div>
+                  </div>
+                  <div className="pb-6">
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">{item.time}</span>
+                    <h4 className="text-sm font-bold text-zinc-900 dark:text-white mt-1">{item.title}</h4>
+                    <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mt-1">{item.loc}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          )}
+        </div>
       </main>
 
-      {/* Sticky Bottom CTA */}
-      <div className="fixed bottom-0 left-0 w-full bg-white dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 p-4 px-6 z-50 flex items-center justify-between shadow-[0_-4px_20px_rgba(0,0,0,0.05)] max-w-md mx-auto">
-        <div className="flex flex-col">
-          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Valor</span>
-          <span className="text-xl font-black text-primary">{event.price}</span>
+      {/* Footer de Ação Estilizado */}
+      <div className="fixed bottom-0 left-0 w-full bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-t border-zinc-100 dark:border-zinc-800 px-8 py-6 z-[100] max-w-md mx-auto shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={handleShare}
+            className="size-16 flex items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 active:scale-95 transition-all border border-zinc-200 dark:border-zinc-700"
+          >
+            <span className="material-symbols-outlined text-2xl">share</span>
+          </button>
+          <button 
+            onClick={() => navigateTo('register', event.id)}
+            className="flex-1 h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3"
+          >
+            Inscrever-se
+            <span className="material-symbols-outlined text-lg">arrow_forward</span>
+          </button>
         </div>
-        <button
-          onClick={() => navigateTo('register', event.id)}
-          className="bg-primary hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-primary/30 active:scale-95 transition-all flex items-center gap-2"
-        >
-          Inscrever-se
-          <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-        </button>
       </div>
     </div>
   );

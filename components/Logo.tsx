@@ -3,12 +3,32 @@ import React from 'react';
 
 interface LogoProps {
   className?: string;
+  dark?: boolean;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'huge';
 }
 
-const Logo: React.FC<LogoProps> = ({ className = "h-8" }) => {
+const Logo: React.FC<LogoProps> = ({ className = "", dark = false, size = 'md' }) => {
+  const sizeClasses = {
+    sm: 'text-[18px]',
+    md: 'text-[28px]',
+    lg: 'text-[44px]',
+    xl: 'text-[64px]',
+    huge: 'text-[100px]'
+  };
+
   return (
-    <div className={`flex items-center justify-center gap-2 ${className}`}>
-      <span className="text-primary font-black text-3xl tracking-tighter uppercase">Sigea</span>
+    <div className={`flex items-center select-none ${className}`}>
+      <div className="flex flex-col items-start">
+        <span className={`
+          ${dark ? 'text-white' : 'text-primary'} 
+          font-[900] 
+          tracking-[-0.06em] 
+          ${sizeClasses[size]}
+          leading-none
+        `}>
+          Sigea
+        </span>
+      </div>
     </div>
   );
 };

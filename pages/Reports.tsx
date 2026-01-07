@@ -1,55 +1,13 @@
 
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient';
+import React from 'react';
 
 interface ReportsProps {
   navigateTo: (page: string) => void;
 }
 
 const Reports: React.FC<ReportsProps> = ({ navigateTo }) => {
-  const [stats, setStats] = useState({
-    todayRegistrations: 0,
-    totalCheckins: 0,
-    totalEvents: 0
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchReports = async () => {
-      setLoading(true);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      // Inscrições de hoje
-      const { count: todayCount } = await supabase
-        .from('registrations')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', today.toISOString());
-
-      // Total de check-ins
-      const { count: checkinCount } = await supabase
-        .from('registrations')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'Confirmado');
-
-      // Total de eventos
-      const { count: eventCount } = await supabase
-        .from('events')
-        .select('*', { count: 'exact', head: true });
-
-      setStats({
-        todayRegistrations: todayCount || 0,
-        totalCheckins: checkinCount || 0,
-        totalEvents: eventCount || 0
-      });
-      setLoading(false);
-    };
-
-    fetchReports();
-  }, []);
-
   return (
-    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-36">
+    <div className="flex flex-col w-full min-h-screen bg-background-light dark:bg-background-dark pb-20">
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md border-b-2 border-slate-200 dark:border-gray-800 p-4 flex items-center justify-between">
         <button onClick={() => navigateTo('home')} className="size-11 flex items-center justify-center rounded-full hover:bg-slate-100 transition-colors">
           <span className="material-symbols-outlined font-black">arrow_back</span>
@@ -63,18 +21,18 @@ const Reports: React.FC<ReportsProps> = ({ navigateTo }) => {
       <main className="p-6 space-y-8">
         <div className="grid grid-cols-2 gap-4">
           <div className="p-5 bg-white dark:bg-slate-800 rounded-3xl border-2 border-slate-200 dark:border-slate-700 shadow-sm">
-            <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-widest">Inscrições Hoje</p>
-            <p className="text-3xl font-black text-primary">{loading ? '...' : stats.todayRegistrations}</p>
+            <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Inscrições Hoje</p>
+            <p className="text-3xl font-black text-primary">42</p>
             <div className="flex items-center gap-1 text-[9px] text-green-500 font-black mt-2">
               <span className="material-symbols-outlined text-[12px]">trending_up</span>
-              NOVO RECORDE
+              +15%
             </div>
           </div>
           <div className="p-5 bg-white dark:bg-slate-800 rounded-3xl border-2 border-slate-200 dark:border-slate-700 shadow-sm">
-            <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-widest">Check-ins Totais</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white">{loading ? '...' : stats.totalCheckins}</p>
+            <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Check-ins</p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white">852</p>
             <div className="flex items-center gap-1 text-[9px] text-slate-500 font-black mt-2">
-              EFETIVADOS
+              MÉDIA DIÁRIA
             </div>
           </div>
         </div>
@@ -84,28 +42,28 @@ const Reports: React.FC<ReportsProps> = ({ navigateTo }) => {
           <div className="h-40 flex items-end justify-between gap-2 px-2">
             {[40, 70, 45, 90, 65, 80, 100].map((h, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                <div
+                <div 
                   className="w-full bg-primary/20 rounded-t-xl relative group transition-all"
-                  style={{ height: `${h}%` }}
+                  style={{height: `${h}%`}}
                 >
-                  <div
+                  <div 
                     className="absolute bottom-0 w-full bg-primary rounded-t-xl transition-all"
-                    style={{ height: `${h / 2}%` }}
+                    style={{height: `${h/2}%`}}
                   ></div>
                 </div>
-                <span className="text-[8px] font-black text-slate-400">D{i + 1}</span>
+                <span className="text-[8px] font-black text-slate-400">S{i+1}</span>
               </div>
             ))}
           </div>
         </section>
 
         <section className="space-y-4">
-          <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">Relatórios por Demanda</h3>
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-white">Exportação de Dados</h3>
           <div className="space-y-3">
             {[
-              { label: 'Participantes por Campus', ext: 'XLSX' },
-              { label: 'Lista de Chamada Geral', ext: 'PDF' },
-              { label: 'Métricas de Permanência', ext: 'CSV' }
+              { label: 'Relatório Financeiro', ext: 'XLSX' },
+              { label: 'Lista de Presença Geral', ext: 'PDF' },
+              { label: 'Métricas de Engajamento', ext: 'CSV' }
             ].map((r, i) => (
               <button key={i} className="w-full flex items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-3xl border-2 border-slate-200 dark:border-slate-700 active:scale-[0.98] transition-all">
                 <div className="flex items-center gap-4">

@@ -1,0 +1,9 @@
+{
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "name": "SIGEA - Sistema de Gestão de Eventos Acadêmicos",
+  "description": ""
+}
