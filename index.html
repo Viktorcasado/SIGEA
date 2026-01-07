@@ -35,14 +35,41 @@
     </script>
     
     <style>
-        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-        * { -webkit-tap-highlight-color: transparent; outline: none !important; }
-        body { background: #09090b; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
+        :root { 
+            --safe-top: env(safe-area-inset-top, 0px); 
+            --safe-bottom: env(safe-area-inset-bottom, 0px); 
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+        }
         
-        .glass { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        * { -webkit-tap-highlight-color: transparent; outline: none !important; }
+        
+        body { 
+            background: #09090b; 
+            color: #f8fafc; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            overflow-x: hidden;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+        
+        .glass { 
+            background: rgba(24, 24, 27, 0.8); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08); 
+        }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Custom OS Scrollbar for Desktop */
+        @media (min-width: 1024px) {
+            ::-webkit-scrollbar { width: 6px; }
+            ::-webkit-scrollbar-track { background: transparent; }
+            ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+            ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        }
 
         @keyframes scan {
           0% { transform: translateY(-110px); opacity: 0; }
@@ -50,10 +77,6 @@
           100% { transform: translateY(110px); opacity: 0; }
         }
         .scan-line { animation: scan 2s linear infinite; }
-        
-        .premium-shadow {
-          box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
-        }
     </style>
 
     <script type="importmap">

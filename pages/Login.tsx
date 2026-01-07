@@ -29,26 +29,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, darkMode, errorMsg }) => {
     if (errorMsg) setError(errorMsg);
   }, [errorMsg]);
 
-  const handleSocialLogin = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'keycloak', 
-        options: {
-          redirectTo: window.location.origin,
-          queryParams: { prompt: 'login' }
-        }
-      });
-      if (oauthError) throw oauthError;
-      if (data?.url) window.location.assign(data.url);
-    } catch (err: any) {
-      setError(handleSupabaseError(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -125,28 +105,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, darkMode, errorMsg }) => {
           </h1>
           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mt-3">Rede Federal | IFAL</p>
         </div>
-
-        {view === 'SIGN_IN' && (
-          <div className="w-full mb-10 space-y-4">
-            <button 
-              type="button"
-              onClick={handleSocialLogin}
-              className="w-full h-16 bg-zinc-900 text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl border border-white/5 active:scale-[0.98] transition-all group"
-            >
-              <span className="text-xs font-bold text-zinc-400">Entrar com</span>
-              <div className="flex items-center font-black text-xl tracking-tighter">
-                <span className="text-[#60a5fa]">gov</span>
-                <span className="text-[#32963b]">b</span>
-                <span className="text-[#f8b133]">r</span>
-              </div>
-            </button>
-            <div className="flex items-center gap-4 opacity-20">
-              <div className="h-px flex-1 bg-zinc-400"></div>
-              <span className="text-[9px] font-black uppercase tracking-widest">Acesso Local</span>
-              <div className="h-px flex-1 bg-zinc-400"></div>
-            </div>
-          </div>
-        )}
 
         <form onSubmit={handleAuth} className="w-full space-y-4">
           {error && (
