@@ -20,12 +20,14 @@ import PublishSuccess from './pages/PublishSuccess.tsx';
 import Logo from './components/Logo.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
 
+type ThemeMode = 'light' | 'dark' | 'system';
+
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(localStorage.getItem('sigea_demo') === 'true');
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    const saved = localStorage.getItem('sigea_theme');
-    return saved ? saved === 'dark' : true;
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('sigea_theme') as ThemeMode;
+    return saved || 'system';
   });
   
   const [role, setRole] = useState<UserRole>(UserRole.PARTICIPANT);
@@ -46,16 +48,35 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Efeito para aplicar o tema no HTML
+  // Lógica de aplicação do tema
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('sigea_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('sigea_theme', 'light');
-    }
-  }, [isDarkMode]);
+    const root = window.document.documentElement;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const applyTheme = () => {
+      let shouldBeDark = theme === 'dark';
+      if (theme === 'system') {
+        shouldBeDark = mediaQuery.matches;
+      }
+      
+      if (shouldBeDark) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    };
+
+    applyTheme();
+    localStorage.setItem('sigea_theme', theme);
+
+    // Listener para mudanças no sistema caso o modo seja 'system'
+    const handleChange = () => {
+      if (theme === 'system') applyTheme();
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [theme]);
 
   const fetchInitialData = useCallback(async () => {
     if (isDemoMode) {
@@ -157,7 +178,7 @@ const App: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <Login onLogin={checkAuth} darkMode={isDarkMode} setDarkMode={setIsDarkMode} errorMsg={authError} />;
+    return <Login onLogin={checkAuth} darkMode={theme === 'dark'} setDarkMode={() => setTheme(theme === 'dark' ? 'light' : 'dark')} errorMsg={authError} />;
   }
 
   const commonProps = { navigateTo, events, profile: userProfile, onUpdate: () => {}, isSyncing };
@@ -171,7 +192,7 @@ const App: React.FC = () => {
       case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} />;
       case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={async () => {}} />;
       case 'certificates': return <Certificates navigateTo={navigateTo} events={events} />;
-      case 'profile': return <Profile {...commonProps} darkMode={isDarkMode} setDarkMode={setIsDarkMode} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={logout} onDeleteAccount={async () => {}} />;
+      case 'profile': return <Profile {...commonProps} theme={theme} setTheme={setTheme} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={logout} onDeleteAccount={async () => {}} />;
       case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId) || events[0]} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} />;
       case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={(e) => setEvents([e, ...events])} />;
@@ -248,7 +269,7 @@ const App: React.FC = () => {
       {/* Bottom Nav Mobile */}
       {!isDesktop && !isFullscreenPage && (
         <div className="fixed bottom-0 left-0 w-full z-[5000] px-6 pb-[calc(1.2rem+var(--safe-bottom))] animate-in slide-in-from-bottom duration-700">
-          <nav className="glass rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex items-center justify-around h-16 border relative overflow-hidden">
+          <nav className="glass rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex items-center justify-around h-16 border relative overflow-hidden border-slate-200 dark:border-white/10">
              {isIOS && <div className="absolute top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-slate-200 dark:bg-white/10 rounded-full"></div>}
              <NavItem page="home" icon="home" label="Início" />
              <NavItem page="events" icon="explore" label="Eventos" />
