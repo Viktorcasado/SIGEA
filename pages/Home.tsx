@@ -33,26 +33,26 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
         <div className="flex items-center justify-between mb-8">
           <div className="flex flex-col">
             {!isDesktop && <Logo size="md" />}
-            <h1 className={`${isDesktop ? 'text-4xl' : 'text-2xl'} font-black text-white uppercase tracking-tighter leading-none`}>
+            <h1 className={`${isDesktop ? 'text-4xl' : 'text-2xl'} font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none`}>
               Bem-vindo, {profile?.name?.split(' ')[0]}
             </h1>
             <div className="flex items-center gap-1.5 mt-1.5">
               <div className={`size-1.5 rounded-full ${isDemoMode ? 'bg-amber-400' : isSyncing ? 'bg-amber-400 animate-pulse' : 'bg-primary'}`}></div>
-              <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">
+              <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500">
                 {isDemoMode ? 'Modo Demonstração Ativo' : isSyncing ? 'Sincronizando' : 'IFAL Database Active'}
               </span>
             </div>
           </div>
           
           <div className="flex gap-4">
-             <button onClick={onNotify} className="size-12 flex items-center justify-center rounded-2xl bg-zinc-900 shadow-sm border border-white/5 text-zinc-400 relative active:scale-90 transition-all hover:bg-zinc-800">
+             <button onClick={onNotify} className="size-12 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-sm border border-slate-100 dark:border-white/5 text-slate-400 dark:text-zinc-400 relative active:scale-90 transition-all hover:bg-slate-50 dark:hover:bg-zinc-800">
                 <span className="material-symbols-outlined text-[26px]">notifications</span>
-                {hasUnread && <span className="absolute top-3 right-3 size-2.5 bg-primary rounded-full ring-4 ring-zinc-950"></span>}
+                {hasUnread && <span className="absolute top-3 right-3 size-2.5 bg-primary rounded-full ring-4 ring-slate-50 dark:ring-zinc-950"></span>}
              </button>
              {!isDesktop && (
                 <div 
                   onClick={() => navigateTo('profile')}
-                  className="size-12 rounded-2xl bg-cover bg-center border-2 border-white/5 shadow-md cursor-pointer flex items-center justify-center bg-primary text-white font-black text-sm"
+                  className="size-12 rounded-2xl bg-cover bg-center border-2 border-slate-200 dark:border-white/5 shadow-md cursor-pointer flex items-center justify-center bg-primary text-white font-black text-sm"
                   style={profile?.photo ? { backgroundImage: `url("${profile.photo}")` } : {}}
                 >
                   {!profile?.photo && (profile?.name?.charAt(0) || 'U')}
@@ -66,7 +66,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-16 pl-14 pr-6 bg-zinc-900 rounded-3xl outline-none text-[15px] font-bold border border-white/5 focus:border-primary/40 transition-all placeholder:text-zinc-600 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-widest"
+            className="w-full h-16 pl-14 pr-6 bg-white dark:bg-zinc-900 rounded-3xl outline-none text-[15px] font-bold border border-slate-200 dark:border-white/5 focus:border-primary/40 transition-all placeholder:text-slate-400 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-widest dark:text-white"
             placeholder="Buscar por congressos, workshops ou cursos..."
           />
           <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary text-2xl font-black">search</span>
@@ -76,7 +76,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
       <main className="space-y-16">
         <section>
           <div className="px-6 lg:px-0 flex items-center justify-between mb-8">
-            <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-zinc-500 border-l-4 border-primary pl-4">Destaques da Semana</h3>
+            <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-zinc-500 border-l-4 border-primary pl-4">Destaques da Semana</h3>
             <button onClick={() => navigateTo('events')} className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline">Ver catálogo</button>
           </div>
           <div className={`flex gap-6 overflow-x-auto no-scrollbar px-6 lg:px-0 ${isDesktop ? 'grid grid-cols-4 lg:overflow-visible' : ''}`}>
@@ -88,8 +88,8 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
 
         <section className="px-6 lg:px-0 space-y-8">
           <div className="flex items-center justify-between">
-             <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-zinc-500 border-l-4 border-zinc-700 pl-4">Todas as Atividades</h3>
-             <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest bg-zinc-900 px-3 py-1 rounded-full">{filtered.length} Itens</span>
+             <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-zinc-500 border-l-4 border-slate-300 dark:border-zinc-700 pl-4">Todas as Atividades</h3>
+             <span className="text-[9px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-widest bg-white dark:bg-zinc-900 px-3 py-1 rounded-full border border-slate-100 dark:border-white/5">{filtered.length} Itens</span>
           </div>
           <div className={`grid gap-6 ${isDesktop ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
             {filtered.map(event => (

@@ -23,6 +23,11 @@ import AIAssistant from './components/AIAssistant.tsx';
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isDemoMode, setIsDemoMode] = useState<boolean>(localStorage.getItem('sigea_demo') === 'true');
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('sigea_theme');
+    return saved ? saved === 'dark' : true;
+  });
+  
   const [role, setRole] = useState<UserRole>(UserRole.PARTICIPANT);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState('home');
@@ -41,6 +46,17 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Efeito para aplicar o tema no HTML
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('sigea_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('sigea_theme', 'light');
+    }
+  }, [isDarkMode]);
+
   const fetchInitialData = useCallback(async () => {
     if (isDemoMode) {
       setEvents(MOCK_EVENTS);
@@ -58,7 +74,6 @@ const App: React.FC = () => {
         setEvents(data as SIGEAEvent[]);
       }
     } catch (e) { 
-      console.warn("SIGEA: Servidor indisponível, usando dados de demonstração.");
       setEvents(MOCK_EVENTS);
     } finally {
       setIsSyncing(false);
@@ -134,15 +149,15 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 px-8 text-center">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-zinc-950 px-8 text-center transition-colors">
         <div className="size-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-8 text-[10px] font-black uppercase tracking-[0.5em] text-zinc-400">Iniciando SIGEA...</p>
+        <p className="mt-8 text-[10px] font-black uppercase tracking-[0.5em] text-slate-400 dark:text-zinc-400">Iniciando SIGEA...</p>
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return <Login onLogin={checkAuth} darkMode={true} setDarkMode={() => {}} errorMsg={authError} />;
+    return <Login onLogin={checkAuth} darkMode={isDarkMode} setDarkMode={setIsDarkMode} errorMsg={authError} />;
   }
 
   const commonProps = { navigateTo, events, profile: userProfile, onUpdate: () => {}, isSyncing };
@@ -156,7 +171,7 @@ const App: React.FC = () => {
       case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} />;
       case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={async () => {}} />;
       case 'certificates': return <Certificates navigateTo={navigateTo} events={events} />;
-      case 'profile': return <Profile {...commonProps} darkMode={true} setDarkMode={() => {}} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={logout} onDeleteAccount={async () => {}} />;
+      case 'profile': return <Profile {...commonProps} darkMode={isDarkMode} setDarkMode={setIsDarkMode} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={logout} onDeleteAccount={async () => {}} />;
       case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId) || events[0]} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} />;
       case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={(e) => setEvents([e, ...events])} />;
@@ -173,7 +188,7 @@ const App: React.FC = () => {
     return (
       <button 
         onClick={() => navigateTo(page)} 
-        className={`flex flex-col lg:flex-row items-center lg:gap-4 lg:w-full lg:px-6 lg:py-4 transition-all ${active ? 'text-primary' : 'text-zinc-500 hover:text-zinc-300'}`}
+        className={`flex flex-col lg:flex-row items-center lg:gap-4 lg:w-full lg:px-6 lg:py-4 transition-all ${active ? 'text-primary' : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'}`}
       >
         <span className={`material-symbols-outlined text-[28px] lg:text-[24px] ${active ? 'filled' : ''}`}>{icon}</span>
         {isDesktop && <span className="text-sm font-bold uppercase tracking-widest">{label}</span>}
@@ -183,14 +198,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`flex min-h-screen bg-zinc-950 ${isDesktop ? 'flex-row' : 'flex-col'}`}>
+    <div className={`flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors ${isDesktop ? 'flex-row' : 'flex-col'}`}>
       
       {/* Sidebar Desktop */}
       {isDesktop && !isFullscreenPage && (
-        <aside className="w-72 h-screen sticky top-0 bg-zinc-900 border-r border-white/5 flex flex-col py-10 shrink-0">
+        <aside className="w-72 h-screen sticky top-0 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-white/5 flex flex-col py-10 shrink-0">
           <div className="px-8 mb-4">
             <Logo size="md" />
-            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mt-2">IFAL • SIGEA System</p>
+            <p className="text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-2">IFAL • SIGEA System</p>
           </div>
           
           {isDemoMode && (
@@ -208,13 +223,13 @@ const App: React.FC = () => {
           </nav>
 
           <div className="px-6 mt-auto">
-             <div className="p-4 bg-zinc-800 rounded-3xl flex items-center gap-3">
+             <div className="p-4 bg-slate-50 dark:bg-zinc-800 rounded-3xl flex items-center gap-3">
                 <div className="size-10 rounded-2xl bg-primary flex items-center justify-center text-white font-black">
                    {userProfile?.name?.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                   <p className="text-xs font-black text-white truncate uppercase">{userProfile?.name}</p>
-                   <p className="text-[9px] font-bold text-zinc-500 uppercase">{role}</p>
+                   <p className="text-xs font-black text-slate-900 dark:text-white truncate uppercase">{userProfile?.name}</p>
+                   <p className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase">{role}</p>
                 </div>
              </div>
           </div>
@@ -233,8 +248,8 @@ const App: React.FC = () => {
       {/* Bottom Nav Mobile */}
       {!isDesktop && !isFullscreenPage && (
         <div className="fixed bottom-0 left-0 w-full z-[5000] px-6 pb-[calc(1.2rem+var(--safe-bottom))] animate-in slide-in-from-bottom duration-700">
-          <nav className="glass rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-around h-16 border border-white/10 relative overflow-hidden">
-             {isIOS && <div className="absolute top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-white/10 rounded-full"></div>}
+          <nav className="glass rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex items-center justify-around h-16 border relative overflow-hidden">
+             {isIOS && <div className="absolute top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-slate-200 dark:bg-white/10 rounded-full"></div>}
              <NavItem page="home" icon="home" label="Início" />
              <NavItem page="events" icon="explore" label="Eventos" />
              <NavItem page="certificates" icon="workspace_premium" label="Métricas" />
