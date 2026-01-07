@@ -99,6 +99,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
         </section>
       </main>
 
+      {/* Ajuste de posição para não conflitar com Assistente IA */}
       {!isDesktop && (
         <button 
           onClick={() => navigateTo('check-in')}

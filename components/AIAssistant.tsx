@@ -14,7 +14,14 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const quickSuggestions = [
     "Eventos no Maceió",
@@ -51,9 +58,10 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
       }));
 
       const systemInstruction = `Você é o assistente virtual do SIGEA (IFAL).
-      Use um tom amigável e direto.
-      Responda em português.
-      Contexto de eventos: ${JSON.stringify(eventSummary)}.`;
+      Use um tom amigável, prestativo e direto.
+      Responda em português brasileiro.
+      Contexto dos eventos atuais: ${JSON.stringify(eventSummary)}.
+      Se o usuário perguntar sobre check-in, explique que ele deve usar o scanner de QR Code no menu inferior.`;
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -64,10 +72,10 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
         }
       });
 
-      const botResponse = response.text || 'Não consegui processar agora, tente novamente.';
+      const botResponse = response.text || 'Desculpe, tive um problema ao processar sua solicitação. Pode repetir?';
       setMessages(prev => [...prev, { role: 'bot', text: botResponse }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'bot', text: 'Erro de conexão com a IA.' }]);
+      setMessages(prev => [...prev, { role: 'bot', text: 'Estou com dificuldades técnicas para me conectar agora. Verifique sua rede.' }]);
     } finally {
       setIsTyping(false);
     }
@@ -75,12 +83,12 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
 
   return (
     <>
-      {/* FAB Estilizado (Conforme imagem) */}
+      {/* FAB Mobile (Conforme Imagem) */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className={`fixed bottom-24 right-6 z-[8000] size-16 rounded-[2rem] bg-primary text-white shadow-2xl shadow-primary/40 flex items-center justify-center hover:scale-105 active:scale-90 transition-all border border-white/20 group overflow-hidden ${isOpen ? 'rotate-90' : ''}`}
       >
-        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
         {isOpen ? (
           <span className="material-symbols-outlined text-3xl font-black">close</span>
         ) : (
@@ -93,14 +101,17 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
         )}
       </button>
 
-      {/* Chat Mobile Overlay */}
+      {/* Interface de Chat (Bottom Sheet no Mobile, Dialog no Desktop) */}
       {isOpen && (
-        <div className="fixed inset-0 z-[10000] bg-zinc-950/20 backdrop-blur-md flex items-end justify-center animate-in fade-in duration-300">
-          <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-t-[3rem] shadow-[0_-20px_60px_rgba(0,0,0,0.3)] flex flex-col h-[90vh] overflow-hidden animate-in slide-in-from-bottom duration-500 border-t border-white/10">
+        <div className="fixed inset-0 z-[10000] bg-zinc-950/40 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-300">
+          <div 
+            className={`w-full bg-white dark:bg-zinc-900 shadow-[0_-20px_60px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-500 border-t border-white/10 
+              ${isDesktop ? 'max-w-md h-[70vh] rounded-[3rem] mb-24' : 'max-w-lg h-[90vh] rounded-t-[3rem]'}`}
+          >
             
-            {/* Header com indicador de puxar */}
-            <header className="px-8 pt-4 pb-6 bg-primary text-white relative">
-              <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-6"></div>
+            {/* Header com estilo App-Native */}
+            <header className="px-8 pt-4 pb-6 bg-primary text-white relative shrink-0">
+              <div className="w-12 h-1 bg-white/30 rounded-full mx-auto mb-6"></div>
               <div className="flex items-center gap-4">
                 <div className="size-14 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20">
                   <span className="material-symbols-outlined text-3xl animate-pulse">robot_2</span>
@@ -109,7 +120,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
                   <h4 className="font-black text-lg uppercase tracking-tighter leading-none mb-1">Assistente SIGEA</h4>
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full bg-green-300 animate-pulse"></span>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-green-100/80">Inteligência Ativa</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-green-100/80">Inteligência Artificial Ativa</p>
                   </div>
                 </div>
                 <button 
@@ -121,14 +132,14 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
               </div>
             </header>
 
-            {/* Mensagens */}
+            {/* Container de Mensagens */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar bg-slate-50 dark:bg-zinc-950/20">
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2`}>
                   <div className={`max-w-[85%] p-5 text-sm font-bold leading-relaxed shadow-sm ${
                     msg.role === 'user' 
-                      ? 'bg-primary text-white rounded-3xl rounded-tr-none' 
-                      : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-3xl rounded-tl-none border border-zinc-100 dark:border-zinc-700'
+                      ? 'bg-primary text-white rounded-[2rem] rounded-tr-none shadow-primary/10' 
+                      : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-[2rem] rounded-tl-none border border-zinc-100 dark:border-zinc-700'
                   }`}>
                     {msg.text}
                   </div>
@@ -140,17 +151,19 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
               
               {isTyping && (
                 <div className="flex flex-col items-start animate-pulse">
-                  <div className="bg-white dark:bg-zinc-800 p-5 rounded-3xl rounded-tl-none border border-zinc-100 dark:border-zinc-700 flex gap-1.5">
-                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">Pensando...</span>
+                  <div className="bg-white dark:bg-zinc-800 p-5 rounded-[2rem] rounded-tl-none border border-zinc-100 dark:border-zinc-700 flex gap-2">
+                    <div className="size-1.5 bg-primary rounded-full animate-bounce"></div>
+                    <div className="size-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div className="size-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.4s]"></div>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Sugestões e Input */}
-            <footer className="p-6 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 pb-10 lg:pb-6">
-              {!isTyping && messages.length < 4 && (
-                <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6">
+            {/* Rodapé: Sugestões e Input */}
+            <footer className="p-6 bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800 pb-[calc(1.5rem+var(--safe-bottom))]">
+              {!isTyping && (
+                <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 px-1">
                   {quickSuggestions.map((s, i) => (
                     <button 
                       key={i}
@@ -169,13 +182,13 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Como posso ajudar?" 
-                  className="flex-1 h-16 px-6 bg-zinc-50 dark:bg-zinc-950 border-none rounded-2xl text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-zinc-400 dark:text-white"
+                  placeholder="Como posso te ajudar hoje?" 
+                  className="flex-1 h-16 px-6 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl text-sm font-bold focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-zinc-400 dark:text-white"
                 />
                 <button 
                   onClick={() => handleSend()}
                   disabled={isTyping || !input.trim()}
-                  className="size-16 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 active:scale-90 transition-all disabled:opacity-50"
+                  className="size-16 bg-primary text-white rounded-3xl flex items-center justify-center shadow-lg shadow-primary/20 active:scale-90 transition-all disabled:opacity-50 shrink-0"
                 >
                   <span className="material-symbols-outlined text-2xl font-black">send</span>
                 </button>
