@@ -14,7 +14,7 @@ export interface Event {
   time: string;
   location: string;
   imageUrl: string;
-  type: 'Workshop' | 'Palestra' | 'Curso' | 'Congresso';
+  type: 'Workshop' | 'Palestra' | 'Curso' | 'Congresso' | 'Simpósio' | 'Seminário' | 'Mesa Redonda' | 'Fórum' | 'Exposição' | 'Hackathon' | 'Mentoria';
   status: 'Inscrições Abertas' | 'Em Breve' | 'Encerrado' | 'Rascunho';
   price: string;
   certificateHours: number;
