@@ -10,9 +10,10 @@ interface HomeProps {
   events: SIGEAEvent[];
   onNotify: () => void;
   hasUnread?: boolean;
+  isSyncing?: boolean;
 }
 
-const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasUnread }) => {
+const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasUnread, isSyncing }) => {
   const [search, setSearch] = useState('');
   
   const featured = events.slice(0, 3);
@@ -30,7 +31,15 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
             >
               {!profile?.photo && (profile?.name?.charAt(0) || 'U')}
             </div>
-            <Logo size="md" />
+            <div className="flex flex-col">
+              <Logo size="md" />
+              <div className="flex items-center gap-1.5 ml-0.5 mt-0.5">
+                <div className={`size-1.5 rounded-full ${isSyncing ? 'bg-amber-400 animate-pulse' : 'bg-primary'}`}></div>
+                <span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">
+                  {isSyncing ? 'Sincronizando' : 'Live Database'}
+                </span>
+              </div>
+            </div>
           </div>
           <button onClick={onNotify} className="size-11 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 relative active:scale-90 transition-all">
             <span className="material-symbols-outlined text-[26px]">notifications</span>

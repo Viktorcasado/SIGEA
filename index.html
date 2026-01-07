@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -37,11 +37,9 @@
     <style>
         :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
         * { -webkit-tap-highlight-color: transparent; outline: none !important; }
-        body { background: #f8fafc; color: #1e293b; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; transition: background-color 0.5s ease; }
-        .dark body { background: #09090b; color: #f8fafc; }
+        body { background: #09090b; color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
         
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); }
-        .dark .glass { background: rgba(24, 24, 27, 0.8); border: 1px solid rgba(255,255,255,0.05); }
+        .glass { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -54,7 +52,7 @@
         .scan-line { animation: scan 2s linear infinite; }
         
         .premium-shadow {
-          box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
         }
     </style>
 
