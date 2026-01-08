@@ -50,9 +50,19 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
         <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-50 dark:from-zinc-950 via-transparent to-black/40"></div>
         
-        <div className="absolute top-0 left-0 w-full p-6 flex items-center justify-between z-30">
-          <button onClick={() => navigateTo('home')} className="size-14 flex items-center justify-center rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 text-white active:scale-90 transition-all shadow-xl"><span className="material-symbols-outlined font-black">arrow_back</span></button>
-          <button onClick={handleShare} className="size-14 flex items-center justify-center rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 text-white active:scale-90 transition-all shadow-xl"><span className="material-symbols-outlined font-black">share</span></button>
+        <div className="absolute top-0 left-0 w-full p-6 flex items-center justify-between z-30 pt-12 px-8">
+          <button 
+            onClick={() => navigateTo('home')} 
+            className="size-12 flex items-center justify-center rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 text-white active:scale-90 transition-all shadow-xl"
+          >
+            <span className="material-symbols-outlined text-[20px] font-black">arrow_back_ios_new</span>
+          </button>
+          <button 
+            onClick={handleShare} 
+            className="size-12 flex items-center justify-center rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 text-white active:scale-90 transition-all shadow-xl"
+          >
+            <span className="material-symbols-outlined font-black">share</span>
+          </button>
         </div>
 
         <div className="absolute bottom-20 left-6 z-20">

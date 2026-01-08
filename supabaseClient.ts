@@ -21,36 +21,40 @@ export const isSupabaseConfigured = (): boolean => {
   return !!SUPABASE_URL && !!SUPABASE_ANON_KEY && !SUPABASE_URL.includes('your-');
 };
 
+/**
+ * Motor de Tradução de Erros SIGEA
+ * Converte erros técnicos brutos em mensagens institucionais premium.
+ */
 export const handleSupabaseError = (error: any): string => {
-  if (!error) return 'Erro desconhecido.';
+  if (!error) return 'Ocorreu um erro inesperado no sistema institucional.';
   
-  console.error('Database Detailed Error:', error);
+  // Debug amigável no console
+  console.group('%c 🛡️ SIGEA Security & API Handler ', 'background: #10b981; color: white; font-weight: bold; border-radius: 4px;');
+  console.log('Error Type:', typeof error);
+  console.error('Details:', error);
+  console.groupEnd();
 
-  if (typeof error === 'string') return error;
-
-  // Tenta extrair a mensagem de erro de diversas estruturas comuns do Supabase
-  let message = '';
-  
-  if (error.message) message = error.message;
-  else if (error.error_description) message = error.error_description;
-  else if (error.msg) message = error.msg;
-  else if (error.error && typeof error.error === 'string') message = error.error;
-  else if (error.error && error.error.message) message = error.error.message;
-  else if (typeof error === 'object') {
-    try {
-      // Se for um objeto sem as chaves acima, stringifica para depuração
-      const str = JSON.stringify(error);
-      message = str === '{}' ? 'Erro de estrutura de dados' : str;
-    } catch {
-      message = 'Erro de sistema indescritível';
-    }
+  // Tratamento de falha de rede (Failed to fetch)
+  if (error.message === 'Failed to fetch' || (error.status === 0)) {
+    return 'Falha na conexão com a Rede Federal. Verifique sua cobertura de internet ou VPN.';
   }
 
-  if (message.includes('failed to fetch') || message.includes('network')) {
-    return 'Falha na conexão com o servidor do IFAL.';
+  // Mapeamento de Erros Comuns de Auth
+  const errorMap: Record<string, string> = {
+    'Invalid login credentials': 'E-mail ou senha institucionais incorretos.',
+    'User already registered': 'Este e-mail já está vinculado a uma conta SIGEA.',
+    'Email not confirmed': 'Por favor, confirme seu e-mail institucional na sua caixa de entrada.',
+    'Password should be at least 6 characters': 'Sua senha deve conter pelo menos 6 caracteres por segurança.',
+    'Invalid email': 'O formato do e-mail informado não é válido.',
+    'User not found': 'Usuário não localizado em nossa base acadêmica.'
+  };
+
+  // Tenta extrair a mensagem de forma segura
+  const rawMessage = error.message || (typeof error === 'string' ? error : '');
+  
+  if (rawMessage.includes('fetch')) {
+     return 'Conexão interrompida. Tente novamente em alguns segundos.';
   }
 
-  if (message === '[object Object]') return 'O servidor retornou um erro inesperado. Tente novamente.';
-
-  return message;
+  return errorMap[rawMessage] || rawMessage || 'Falha técnica temporária. Tente novamente.';
 };

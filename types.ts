@@ -48,10 +48,16 @@ export interface Registration {
   event_id: string;
   user_id: string;
   status: 'Confirmado' | 'Pendente' | 'Cancelado';
+  campus: string;
+  name: string;
+  email: string;
+  cpf?: string;
+  role: string;
+  registration_number?: string;
+  photo_url?: string;
   created_at: string;
 }
 
-// Added Certificate interface to fix the module error in Certificates.tsx
 export interface Certificate {
   id: string;
   event_id: string;

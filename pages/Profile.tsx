@@ -66,8 +66,13 @@ const Profile: React.FC<ProfileProps> = ({
   return (
     <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-zinc-950 pb-32 animate-in fade-in duration-500 overflow-y-auto no-scrollbar">
       <header className="px-6 pt-12 pb-8 flex items-center justify-between sticky top-0 bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-2xl z-50 border-b border-transparent dark:border-white/5">
-        <button onClick={() => isEditing ? setIsEditing(false) : navigateTo('home')} className="size-12 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-xl text-slate-900 dark:text-white transition-all active:scale-90 border border-slate-100 dark:border-white/5">
-          <span className="material-symbols-outlined">{isEditing ? 'close' : 'arrow_back'}</span>
+        <button 
+          onClick={() => isEditing ? setIsEditing(false) : navigateTo('home')} 
+          className="size-12 flex items-center justify-center rounded-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 text-slate-900 dark:text-white shadow-xl shadow-black/5 active:scale-90 transition-all"
+        >
+          <span className="material-symbols-outlined text-[20px] font-black">
+            {isEditing ? 'close' : 'arrow_back_ios_new'}
+          </span>
         </button>
         <h2 className="text-[12px] font-[900] uppercase tracking-[0.4em] text-slate-400 dark:text-zinc-500">{isEditing ? 'Configurações' : 'Perfil Institucional'}</h2>
         <button onClick={() => isEditing ? handleSave() : setIsEditing(true)} disabled={isSaving} className={`size-12 flex items-center justify-center rounded-2xl transition-all active:scale-90 shadow-2xl ${isEditing ? 'bg-primary text-white shadow-primary/30' : 'bg-primary/10 text-primary border border-primary/20'}`}>
@@ -76,7 +81,7 @@ const Profile: React.FC<ProfileProps> = ({
       </header>
 
       <main className="px-6 flex flex-col items-center">
-        <div className="w-full max-w-sm mb-10 p-2 bg-slate-200/50 dark:bg-zinc-900/50 rounded-[2rem] border border-white/5 shadow-inner">
+        <div className="w-full max-sm mb-10 p-2 bg-slate-200/50 dark:bg-zinc-900/50 rounded-[2rem] border border-white/5 shadow-inner">
            <div className="flex p-1 gap-1">
               <button 
                 onClick={() => role === UserRole.ORGANIZER && toggleRole()}

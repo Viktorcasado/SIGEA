@@ -28,7 +28,11 @@
                         surface: { light: "#ffffff", dark: "#18181b" }
                     },
                     fontFamily: { sans: ["Plus Jakarta Sans", "sans-serif"] },
-                    borderRadius: { '4xl': '2rem', '5xl': '2.5rem' }
+                    borderRadius: { 
+                      '4xl': '2rem', 
+                      '5xl': '2.5rem',
+                      'apple': '3.2rem'
+                    }
                 }
             }
         }
@@ -38,14 +42,12 @@
         :root { 
             --safe-top: env(safe-area-inset-top, 0px); 
             --safe-bottom: env(safe-area-inset-bottom, 0px); 
-            --safe-left: env(safe-area-inset-left, 0px);
-            --safe-right: env(safe-area-inset-right, 0px);
         }
         
         * { 
             -webkit-tap-highlight-color: transparent; 
             outline: none !important;
-            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
+            box-sizing: border-box;
         }
         
         body { 
@@ -55,6 +57,7 @@
             overflow-x: hidden;
             padding-top: var(--safe-top);
             padding-bottom: var(--safe-bottom);
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .dark body {
@@ -62,52 +65,54 @@
             color: #f8fafc;
         }
 
-        /* Fix para ícones do Material Symbols */
-        .material-symbols-outlined {
-            font-weight: normal !important;
-            font-style: normal !important;
-            font-size: 24px;
-            line-height: 1;
-            letter-spacing: normal !important;
-            text-transform: none !important;
-            display: inline-block;
-            white-space: nowrap;
-            word-wrap: normal;
-            direction: ltr;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            text-rendering: optimizeLegibility;
-            font-feature-settings: 'liga';
+        /* Suavização Apple-like para todas as transições de estado */
+        .page-transition {
+          transition: all 0.5s cubic-bezier(0.32, 0.72, 0, 1);
         }
-        
+
+        /* Correção e Refinamento de Ícones */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+            user-select: none;
+        }
+
         .glass { 
-            background: rgba(255, 255, 255, 0.7); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(0,0,0,0.05); 
+            background: rgba(255, 255, 255, 0.65); 
+            backdrop-filter: blur(25px) saturate(180%); 
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 0.5px solid rgba(0,0,0,0.08); 
         }
 
         .dark .glass {
-            background: rgba(24, 24, 27, 0.8); 
-            border: 1px solid rgba(255,255,255,0.08); 
+            background: rgba(24, 24, 27, 0.7); 
+            border: 0.5px solid rgba(255,255,255,0.08); 
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        @media (min-width: 1024px) {
-            ::-webkit-scrollbar { width: 6px; }
-            ::-webkit-scrollbar-track { background: transparent; }
-            ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-            .dark ::-webkit-scrollbar-thumb { background: #27272a; }
+        /* Esqueleto de carregamento premium */
+        .skeleton {
+          background: linear-gradient(90deg, #f1f5f9 25%, #f8fafc 50%, #f1f5f9 75%);
+          background-size: 200% 100%;
+          animation: skeleton-loading 1.5s infinite;
+        }
+        .dark .skeleton {
+          background: linear-gradient(90deg, #18181b 25%, #27272a 50%, #18181b 75%);
+          background-size: 200% 100%;
+        }
+        @keyframes skeleton-loading {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
         }
 
-        @keyframes scan {
-          0% { transform: translateY(-110px); opacity: 0; }
-          50% { opacity: 1; }
-          100% { transform: translateY(110px); opacity: 0; }
+        /* Micro-interações de botões */
+        .btn-ios-active:active {
+          transform: scale(0.96);
+          filter: brightness(0.9);
         }
-        .scan-line { animation: scan 2s linear infinite; }
     </style>
 
     <script type="importmap">

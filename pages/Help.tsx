@@ -26,8 +26,11 @@ const Help: React.FC<HelpProps> = ({ navigateTo }) => {
     <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-zinc-950 pb-32 animate-in slide-in-from-right duration-500 overflow-y-auto no-scrollbar">
       <header className="px-6 pt-12 pb-4 flex flex-col sticky top-0 bg-slate-50/80 dark:bg-zinc-950/80 backdrop-blur-2xl z-50 transition-colors border-b border-zinc-200 dark:border-white/5">
         <div className="flex items-center justify-between mb-6">
-          <button onClick={() => navigateTo('profile')} className="size-12 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 shadow-xl text-slate-900 dark:text-white active:scale-90 transition-all border border-slate-100 dark:border-white/5">
-            <span className="material-symbols-outlined font-black">arrow_back</span>
+          <button 
+            onClick={() => navigateTo('profile')} 
+            className="size-12 flex items-center justify-center rounded-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 text-slate-900 dark:text-white shadow-xl shadow-black/5 active:scale-90 transition-all"
+          >
+            <span className="material-symbols-outlined text-[18px] font-black">arrow_back_ios_new</span>
           </button>
           <div className="flex flex-col items-center">
             <h2 className="text-[12px] font-[900] uppercase tracking-[0.3em] text-slate-900 dark:text-white leading-none">Central de Ajuda</h2>
@@ -36,7 +39,6 @@ const Help: React.FC<HelpProps> = ({ navigateTo }) => {
           <div className="size-12"></div>
         </div>
 
-        {/* Tabs Control with Icons */}
         <div className="flex p-1.5 bg-slate-100 dark:bg-zinc-900/50 rounded-2xl gap-1 mb-2">
           {tabs.map((tab) => (
             <button
@@ -86,7 +88,6 @@ const Help: React.FC<HelpProps> = ({ navigateTo }) => {
                     </div>
                     <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"><span className="material-symbols-outlined text-lg">school</span></div>
                   </div>
-                  
                   <div className="flex gap-3 pt-2">
                     <a href={`mailto:${info.email}`} className="flex-1 h-12 bg-slate-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black text-slate-600 dark:text-zinc-400 uppercase tracking-widest active:scale-95 transition-all">
                       <span className="material-symbols-outlined text-base">mail</span> E-mail
@@ -108,7 +109,6 @@ const Help: React.FC<HelpProps> = ({ navigateTo }) => {
               <h3 className="text-2xl font-[900] text-slate-900 dark:text-white uppercase tracking-tighter leading-tight">Privacidade e LGPD</h3>
               <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight">Compromisso do Instituto Federal com a segurança de seus dados acadêmicos.</p>
             </section>
-
             <div className="space-y-4">
               {[
                 { title: 'Coleta Institucional', desc: 'Apenas nome, e-mail institucional e campus são vinculados para emissão de certificados válidos pelo IFAL.', icon: 'fact_check' },
@@ -130,12 +130,10 @@ const Help: React.FC<HelpProps> = ({ navigateTo }) => {
               <div className="size-24 rounded-[2rem] bg-gradient-to-tr from-primary to-emerald-400 flex items-center justify-center mx-auto shadow-2xl shadow-primary/20">
                 <span className="text-white text-4xl font-[900] tracking-tighter">S</span>
               </div>
-              
               <div>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1">SIGEA Mobile</h3>
                 <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">v2.5.4 Stable Build</p>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl">
                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Plataforma</p>
@@ -150,7 +148,6 @@ const Help: React.FC<HelpProps> = ({ navigateTo }) => {
           </div>
         )}
       </main>
-
       <footer className="py-10 text-center opacity-30 text-[9px] font-black uppercase tracking-[0.5em] dark:text-white">IFAL • SIGEA 2025</footer>
     </div>
   );

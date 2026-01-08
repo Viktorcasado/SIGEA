@@ -18,9 +18,13 @@ import OrganizerDashboard from './pages/OrganizerDashboard.tsx';
 import CreateEvent from './pages/CreateEvent.tsx';
 import ManageEvent from './pages/ManageEvent.tsx';
 import PublishSuccess from './pages/PublishSuccess.tsx';
+import Welcome from './pages/Welcome.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
 
 const App: React.FC = () => {
+  const [hasSeenWelcome, setHasSeenWelcome] = useState<boolean>(() => {
+    return localStorage.getItem('sigea_seen_welcome') === 'true';
+  });
   const [authStatus, setAuthStatus] = useState<boolean | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [role, setRole] = useState<UserRole>(UserRole.PARTICIPANT);
@@ -36,14 +40,16 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('date', { ascending: false });
-      
-      if (!error && data && data.length > 0) {
-        setEvents(data);
-      } else {
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        if (data && data.length > 0) setEvents(data);
+        else setEvents(MOCK_EVENTS);
+      } catch (err) {
         setEvents(MOCK_EVENTS);
       }
     };
@@ -64,50 +70,53 @@ const App: React.FC = () => {
 
   const updateAuthState = (session: any) => {
     if (session) {
+      const metadata = session.user.user_metadata;
       setUserProfile({
         id: session.user.id,
-        name: session.user.user_metadata?.name || 'Usuário SIGEA',
+        name: metadata?.name || 'Usuário SIGEA',
         email: session.user.email,
-        campus: session.user.user_metadata?.campus || localStorage.getItem('sigea_last_campus') || 'IFAL - Campus Maceió',
-        photo: session.user.user_metadata?.photo_url || ''
+        campus: metadata?.campus || localStorage.getItem('sigea_last_campus') || 'IFAL - Campus Maceió',
+        photo: metadata?.photo_url || ''
       });
-      setRole((session.user.user_metadata?.role || UserRole.PARTICIPANT) as UserRole);
+      setRole((metadata?.role || UserRole.PARTICIPANT) as UserRole);
       setAuthStatus(true);
     } else {
-      const isDemo = localStorage.getItem('sigea_demo') === 'true';
-      if (isDemo) {
-        setUserProfile({ 
-          id: 'demo', 
-          name: 'Convidado Institucional', 
-          email: 'demo@ifal.edu.br', 
-          campus: localStorage.getItem('sigea_last_campus') || 'Rede Federal' 
-        });
-        setAuthStatus(true);
-      } else {
-        setAuthStatus(false);
-      }
+      setAuthStatus(false);
     }
+  };
+
+  const handleContinueFromWelcome = () => {
+    localStorage.setItem('sigea_seen_welcome', 'true');
+    setHasSeenWelcome(true);
+  };
+
+  const handleBackToWelcome = () => {
+    localStorage.removeItem('sigea_seen_welcome');
+    setHasSeenWelcome(false);
   };
 
   const handleUpdateProfile = async (updatedData: any) => {
     try {
+      // Persistência Offline
       if (updatedData.campus) localStorage.setItem('sigea_last_campus', updatedData.campus);
       
-      if (userProfile?.id !== 'demo') {
+      // Persistência Supabase (Auth Metadata)
+      if (userProfile?.id) {
         const { error } = await supabase.auth.updateUser({
           data: { 
-            name: updatedData.name, 
-            campus: updatedData.campus, 
-            photo_url: updatedData.photo 
+            name: updatedData.name || userProfile.name, 
+            campus: updatedData.campus || userProfile.campus, 
+            photo_url: updatedData.photo || userProfile.photo 
           }
         });
-        if (error) console.error("Database Update Error:", error);
+        if (error) throw error;
       }
-
+      
       setUserProfile((prev: any) => ({ ...prev, ...updatedData }));
       return true;
-    } catch (error) {
-      console.error("Critical Profile Error:", error);
+    } catch (error: any) {
+      console.error("Erro ao sincronizar campus/perfil:", handleSupabaseError(error));
+      // Mesmo com erro de rede, atualizamos o estado local para fluidez da UI
       setUserProfile((prev: any) => ({ ...prev, ...updatedData }));
       return true; 
     }
@@ -125,8 +134,22 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  if (!hasSeenWelcome) {
+    return <Welcome onContinue={handleContinueFromWelcome} />;
+  }
+
   if (authStatus === null) return null;
-  if (!authStatus) return <Login onLogin={(demo) => { if(demo) localStorage.setItem('sigea_demo', 'true'); updateAuthState(null); }} darkMode={theme === 'dark'} setDarkMode={() => {}} />;
+  
+  if (!authStatus) {
+    return (
+      <Login 
+        onLogin={() => {}} 
+        onBack={handleBackToWelcome}
+        darkMode={theme === 'dark'} 
+        setDarkMode={() => {}} 
+      />
+    );
+  }
 
   const commonProps = { navigateTo, events, profile: userProfile, isSyncing: false };
 
