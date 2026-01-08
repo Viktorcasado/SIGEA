@@ -24,8 +24,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [campus, setCampus] = useState(CAMPUS_LIST[0]);
 
   const handleGovBr = () => {
-    // Redirecionamento para o OAuth do gov.br
-    // Importante: O callback deve estar configurado no dashboard do gov.br e no backend SIGEA
     const redirectUrl = `https://api.sigea.ifal.edu.br/auth/govbr/callback`;
     const GOV_BR_URL = `https://sso.staging.acesso.gov.br/authorize?response_type=code&client_id=sigea.ifal.edu.br&scope=openid+profile+email&redirect_uri=${encodeURIComponent(redirectUrl)}`;
     window.location.href = GOV_BR_URL;
@@ -68,11 +66,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center p-8 bg-[#09090b] text-white animate-in fade-in duration-500 overflow-y-auto no-scrollbar">
+    <div className="fixed inset-0 flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-white animate-in fade-in duration-500 overflow-y-auto no-scrollbar transition-colors duration-500">
       <div className="w-full max-w-sm space-y-10">
         <header className="text-center space-y-2">
-          <h1 className="text-[64px] font-[900] tracking-[-0.08em] leading-none mb-4">Sigea</h1>
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Gestão de Eventos • IFAL</p>
+          <h1 className="text-[64px] font-[900] tracking-[-0.08em] leading-none mb-4 text-slate-900 dark:text-white">Sigea</h1>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-zinc-600">Gestão de Eventos • IFAL</p>
         </header>
 
         {message && (
@@ -87,23 +85,26 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
         )}
 
-        <div className="space-y-4">
-          {/* BOTÃO GOV.BR - PADRÃO OFICIAL */}
+        <div className="space-y-6 flex flex-col items-center">
           <button 
             onClick={handleGovBr}
-            className="w-full h-16 bg-white text-[#004088] font-black rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg hover:bg-zinc-100"
+            className="w-full h-12 bg-white border border-[#004088]/30 rounded-full flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm hover:bg-zinc-50 hover:border-[#004088]"
           >
-            <img src="https://www.gov.br/aquisicoes/pt-br/acesso-a-informacao/logos-govbr/govbr-logo-grande.png" alt="gov.br" className="h-6" />
-            <span className="text-sm">Entrar com gov.br</span>
+            <span className="text-[#004088] font-bold text-sm">Entrar com</span>
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Gov.br_logo.svg/1024px-Gov.br_logo.svg.png" 
+              alt="gov.br" 
+              className="h-5 mt-0.5" 
+            />
           </button>
 
-          <div className="flex items-center gap-4 py-2">
-            <div className="flex-1 h-px bg-zinc-800"></div>
-            <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">ou acesso tradicional</span>
-            <div className="flex-1 h-px bg-zinc-800"></div>
+          <div className="w-full flex items-center gap-4 py-2">
+            <div className="flex-1 h-px bg-slate-200 dark:bg-zinc-800"></div>
+            <span className="text-[9px] font-black text-slate-400 dark:text-zinc-700 uppercase tracking-widest whitespace-nowrap">acesso institucional</span>
+            <div className="flex-1 h-px bg-slate-200 dark:bg-zinc-800"></div>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-4">
+          <form onSubmit={handleAuth} className="w-full space-y-4">
             {view === 'SIGN_UP' && (
               <div className="space-y-4 animate-in slide-in-from-top-2">
                 <input 
@@ -112,12 +113,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   placeholder="NOME COMPLETO" 
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  className="w-full h-14 bg-zinc-900 border border-white/5 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary/50 transition-all text-white"
+                  className="w-full h-14 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary/50 transition-all text-slate-900 dark:text-white shadow-sm"
                 />
                 <select 
                   value={campus}
                   onChange={e => setCampus(e.target.value)}
-                  className="w-full h-14 bg-zinc-900 border border-white/5 rounded-2xl px-6 text-xs font-bold outline-none text-zinc-400 appearance-none"
+                  className="w-full h-14 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl px-6 text-xs font-bold outline-none text-slate-500 dark:text-zinc-400 appearance-none shadow-sm"
                 >
                   {CAMPUS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -127,10 +128,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <input 
               required 
               type="email" 
-              placeholder="E-MAIL INSTITUCIONAL" 
+              placeholder="E-MAIL" 
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full h-14 bg-zinc-900 border border-white/5 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary/50 transition-all text-white"
+              className="w-full h-14 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary/50 transition-all text-slate-900 dark:text-white shadow-sm"
             />
             
             {view !== 'FORGOT_PASSWORD' && (
@@ -140,7 +141,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 placeholder="SENHA" 
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full h-14 bg-zinc-900 border border-white/5 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary/50 transition-all text-white"
+                className="w-full h-14 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary/50 transition-all text-slate-900 dark:text-white shadow-sm"
               />
             )}
 
@@ -150,29 +151,40 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             >
               {loading ? <div className="size-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 
                view === 'SIGN_IN' ? "Entrar" : 
-               view === 'SIGN_UP' ? "Criar Minha Conta" : 
-               "Recuperar Acesso"}
+               view === 'SIGN_UP' ? "Criar Conta" : 
+               "Recuperar Senha"}
             </button>
           </form>
         </div>
 
-        <footer className="flex flex-col gap-5 items-center">
-          {view === 'SIGN_IN' ? (
-            <>
-              <button onClick={() => setView('FORGOT_PASSWORD')} className="text-[10px] font-black text-zinc-500 uppercase tracking-widest hover:text-white transition-colors">Esqueci minha senha</button>
-              <button onClick={() => setView('SIGN_UP')} className="text-[10px] font-black text-primary uppercase tracking-widest">Ainda não tem conta? Cadastre-se</button>
-            </>
-          ) : (
-            <button onClick={() => setView('SIGN_IN')} className="text-[10px] font-black text-primary uppercase tracking-widest">Voltar para o Início</button>
-          )}
+        <footer className="flex flex-col gap-6 items-center">
+          <div className="flex flex-col items-center gap-2">
+            {view === 'SIGN_IN' ? (
+              <>
+                <button onClick={() => setView('FORGOT_PASSWORD')} className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-colors">Esqueci minha senha</button>
+                <button onClick={() => setView('SIGN_UP')} className="text-[10px] font-black text-primary uppercase tracking-widest">Não tem conta? Cadastre-se</button>
+              </>
+            ) : (
+              <button onClick={() => setView('SIGN_IN')} className="text-[10px] font-black text-primary uppercase tracking-widest">Voltar para o Login</button>
+            )}
+          </div>
           
-          <button 
-            onClick={() => onLogin(true)}
-            className="mt-4 text-[9px] font-black text-zinc-700 uppercase tracking-[0.3em] hover:text-zinc-500 flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined text-[14px]">visibility</span>
-            Continuar sem conta (Modo Demo)
-          </button>
+          <div className="flex items-center gap-8 pt-4 border-t border-slate-100 dark:border-white/5 w-full justify-center">
+            <button 
+              onClick={() => onLogin(true)}
+              className="text-[9px] font-black text-slate-400 dark:text-zinc-700 uppercase tracking-[0.3em] hover:text-slate-600 dark:hover:text-zinc-500 flex items-center gap-2 transition-all active:scale-90"
+            >
+              <span className="material-symbols-outlined text-[18px]">visibility</span>
+              Visitante
+            </button>
+            <button 
+              onClick={() => onLogin(true)}
+              className="text-[9px] font-black text-slate-400 dark:text-zinc-700 uppercase tracking-[0.3em] hover:text-primary dark:hover:text-primary flex items-center gap-2 transition-all active:scale-90"
+            >
+              <span className="material-symbols-outlined text-[18px]">key</span>
+              Admin
+            </button>
+          </div>
         </footer>
       </div>
     </div>

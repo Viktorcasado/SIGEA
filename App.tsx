@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserRole, Event as SIGEAEvent } from './types.ts';
-import { supabase } from './supabaseClient.ts';
+import { supabase, handleSupabaseError } from './supabaseClient.ts';
 import { MOCK_EVENTS } from './constants.tsx';
 
 import Home from './pages/Home.tsx';
@@ -10,6 +10,7 @@ import EventDetails from './pages/EventDetails.tsx';
 import Registration from './pages/Registration.tsx';
 import Certificates from './pages/Certificates.tsx';
 import Profile from './pages/Profile.tsx';
+import Help from './pages/Help.tsx';
 import CheckIn from './pages/CheckIn.tsx';
 import MyTicket from './pages/MyTicket.tsx';
 import Login from './pages/Login.tsx';
@@ -20,26 +21,43 @@ import PublishSuccess from './pages/PublishSuccess.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
 
 const App: React.FC = () => {
-  // null = carregando | false = não autenticado | true = autenticado
   const [authStatus, setAuthStatus] = useState<boolean | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [role, setRole] = useState<UserRole>(UserRole.PARTICIPANT);
   const [currentPage, setCurrentPage] = useState('home');
-  const [events, setEvents] = useState<SIGEAEvent[]>(MOCK_EVENTS);
+  const [events, setEvents] = useState<SIGEAEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('dark');
 
   useEffect(() => {
-    // 1. Verificar sessão inicial
+    const root = window.document.documentElement;
+    root.classList.toggle('dark', theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches));
+  }, [theme]);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (!error && data && data.length > 0) {
+        setEvents(data);
+      } else {
+        setEvents(MOCK_EVENTS);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  useEffect(() => {
     const initAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       updateAuthState(session);
     };
-
-    // 2. Escutar mudanças (Login, Logout, Token Refreshed)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       updateAuthState(session);
     });
-
     initAuth();
     return () => subscription.unsubscribe();
   }, []);
@@ -50,15 +68,20 @@ const App: React.FC = () => {
         id: session.user.id,
         name: session.user.user_metadata?.name || 'Usuário SIGEA',
         email: session.user.email,
-        campus: session.user.user_metadata?.campus || 'IFAL',
+        campus: session.user.user_metadata?.campus || localStorage.getItem('sigea_last_campus') || 'IFAL - Campus Maceió',
         photo: session.user.user_metadata?.photo_url || ''
       });
-      setRole((session.user.user_metadata?.role || 'PARTICIPANT') as UserRole);
+      setRole((session.user.user_metadata?.role || UserRole.PARTICIPANT) as UserRole);
       setAuthStatus(true);
     } else {
       const isDemo = localStorage.getItem('sigea_demo') === 'true';
       if (isDemo) {
-        setUserProfile({ id: 'demo', name: 'Convidado Demo', email: 'demo@ifal.edu.br', campus: 'Maceió' });
+        setUserProfile({ 
+          id: 'demo', 
+          name: 'Convidado Institucional', 
+          email: 'demo@ifal.edu.br', 
+          campus: localStorage.getItem('sigea_last_campus') || 'Rede Federal' 
+        });
         setAuthStatus(true);
       } else {
         setAuthStatus(false);
@@ -66,11 +89,34 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogin = (demoMode: boolean = false) => {
-    if (demoMode) {
-      localStorage.setItem('sigea_demo', 'true');
-      updateAuthState({ user: { id: 'demo' } }); // Fake session
+  const handleUpdateProfile = async (updatedData: any) => {
+    try {
+      if (updatedData.campus) localStorage.setItem('sigea_last_campus', updatedData.campus);
+      
+      if (userProfile?.id !== 'demo') {
+        const { error } = await supabase.auth.updateUser({
+          data: { 
+            name: updatedData.name, 
+            campus: updatedData.campus, 
+            photo_url: updatedData.photo 
+          }
+        });
+        if (error) console.error("Database Update Error:", error);
+      }
+
+      setUserProfile((prev: any) => ({ ...prev, ...updatedData }));
+      return true;
+    } catch (error) {
+      console.error("Critical Profile Error:", error);
+      setUserProfile((prev: any) => ({ ...prev, ...updatedData }));
+      return true; 
     }
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    setEvents(prev => prev.filter(e => e.id !== id));
+    setSelectedEventId(null);
+    setCurrentPage('home');
   };
 
   const navigateTo = (page: string, id: string | null = null) => {
@@ -79,19 +125,8 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Previne o loop: Não renderiza nada (ou um loader) até saber se o usuário está logado
-  if (authStatus === null) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#09090b]">
-        <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-4 text-[10px] font-black text-zinc-500 uppercase tracking-widest">Iniciando SIGEA...</p>
-      </div>
-    );
-  }
-
-  if (!authStatus) {
-    return <Login onLogin={handleLogin} darkMode={true} setDarkMode={() => {}} />;
-  }
+  if (authStatus === null) return null;
+  if (!authStatus) return <Login onLogin={(demo) => { if(demo) localStorage.setItem('sigea_demo', 'true'); updateAuthState(null); }} darkMode={theme === 'dark'} setDarkMode={() => {}} />;
 
   const commonProps = { navigateTo, events, profile: userProfile, isSyncing: false };
 
@@ -99,20 +134,22 @@ const App: React.FC = () => {
     switch (currentPage) {
       case 'home': return role === UserRole.ORGANIZER ? <OrganizerDashboard {...commonProps} onNotify={() => {}} /> : <Home {...commonProps} onNotify={() => {}} />;
       case 'events': return <EventsList navigateTo={navigateTo} events={events} />;
-      case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} />;
-      case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={() => {}} />;
+      case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} role={role} />;
+      case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={handleUpdateProfile} />;
       case 'certificates': return <Certificates navigateTo={navigateTo} events={events} />;
-      case 'profile': return <Profile {...commonProps} theme="dark" setTheme={() => {}} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={() => { localStorage.removeItem('sigea_demo'); supabase.auth.signOut(); }} onDeleteAccount={async () => {}} onUpdate={() => {}} />;
+      case 'profile': return <Profile {...commonProps} theme={theme} setTheme={setTheme} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={() => { localStorage.removeItem('sigea_demo'); supabase.auth.signOut(); window.location.reload(); }} onDeleteAccount={async () => {}} onUpdate={handleUpdateProfile} />;
+      case 'help': return <Help navigateTo={navigateTo} />;
       case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId) || events[0]} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} />;
       case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={(e) => setEvents([e, ...events])} />;
+      case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={handleDeleteEvent} onArchive={() => {}} />;
       case 'publish-success': return <PublishSuccess navigateTo={navigateTo} event={events.find(e => e.id === selectedEventId) || events[0]} />;
       default: return <Home {...commonProps} onNotify={() => {}} />;
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#09090b]">
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#09090b]">
       <main className="flex-1 w-full">{renderContent()}</main>
       <AIAssistant events={events} />
     </div>
