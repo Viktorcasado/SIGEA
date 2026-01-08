@@ -20,6 +20,7 @@ import ManageEvent from './pages/ManageEvent.tsx';
 import PublishSuccess from './pages/PublishSuccess.tsx';
 import Welcome from './pages/Welcome.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
+import BottomNav from './components/BottomNav.tsx';
 
 const App: React.FC = () => {
   const [hasSeenWelcome, setHasSeenWelcome] = useState<boolean>(() => {
@@ -97,10 +98,8 @@ const App: React.FC = () => {
 
   const handleUpdateProfile = async (updatedData: any) => {
     try {
-      // Persistência Offline
       if (updatedData.campus) localStorage.setItem('sigea_last_campus', updatedData.campus);
       
-      // Persistência Supabase (Auth Metadata)
       if (userProfile?.id) {
         const { error } = await supabase.auth.updateUser({
           data: { 
@@ -116,7 +115,6 @@ const App: React.FC = () => {
       return true;
     } catch (error: any) {
       console.error("Erro ao sincronizar campus/perfil:", handleSupabaseError(error));
-      // Mesmo com erro de rede, atualizamos o estado local para fluidez da UI
       setUserProfile((prev: any) => ({ ...prev, ...updatedData }));
       return true; 
     }
@@ -173,7 +171,16 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#09090b]">
-      <main className="flex-1 w-full">{renderContent()}</main>
+      <main className="flex-1 w-full pb-[calc(env(safe-area-inset-bottom,0px)+80px)]">
+        {renderContent()}
+      </main>
+      
+      <BottomNav 
+        currentPage={currentPage} 
+        navigateTo={navigateTo} 
+        role={role}
+      />
+      
       <AIAssistant events={events} />
     </div>
   );

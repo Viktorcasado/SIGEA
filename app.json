@@ -1,0 +1,37 @@
+
+{
+  "expo": {
+    "name": "SIGEA",
+    "slug": "sigea-ifal",
+    "version": "2.5.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#09090b"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "br.edu.ifal.sigea",
+      "backgroundColor": "#09090b"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#09090b"
+      },
+      "package": "br.edu.ifal.sigea",
+      "backgroundColor": "#09090b"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "backgroundColor": "#09090b",
+      "themeColor": "#10b981"
+    }
+  }
+}

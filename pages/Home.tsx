@@ -16,7 +16,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
   const featured = events.slice(0, 4);
 
   return (
-    <div className="flex flex-col w-full animate-in fade-in duration-700 bg-slate-50 dark:bg-[#09090b] min-h-screen pb-32">
+    <div className="flex flex-col w-full animate-in fade-in duration-700 bg-slate-50 dark:bg-[#09090b] min-h-screen pb-12">
       <header className="px-6 pt-12 pb-6">
         <div className="flex items-start justify-between mb-8 gap-4 relative z-20">
           <div className="flex flex-col flex-1">
@@ -74,7 +74,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
                <h3 className="text-[14px] font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white">Destaques da Semana</h3>
                <div className="w-12 h-1 bg-primary rounded-full"></div>
             </div>
-            <button onClick={() => navigateTo('events')} className="px-5 py-3 bg-white dark:bg-[#18181b] rounded-full text-primary text-[10px] font-black uppercase tracking-[0.15em] flex items-center gap-3 active:scale-95 transition-all border border-slate-200 dark:border-white/5 shadow-sm">
+            <button onClick={() => navigateTo('events')} className="px-5 py-3 bg-white dark:bg-[#18181b] rounded-full text-primary text-[10px] font-black uppercase tracking-0.15em flex items-center gap-3 active:scale-95 transition-all border border-slate-200 dark:border-white/5 shadow-sm">
                Catálogo
                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
