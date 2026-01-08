@@ -1,33 +1,35 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase, handleSupabaseError } from '../supabaseClient.ts';
-import Logo from '../components/Logo.tsx';
 import { CAMPUS_LIST } from '../constants.tsx';
 
 interface LoginProps {
   onLogin: (demo?: boolean) => void;
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
-  errorMsg?: string | null;
 }
 
-type AuthView = 'LANDING' | 'SIGN_IN' | 'SIGN_UP' | 'FORGOT_PASSWORD';
+type AuthView = 'SIGN_IN' | 'SIGN_UP' | 'FORGOT_PASSWORD';
 
-const Login: React.FC<LoginProps> = ({ onLogin, darkMode, errorMsg }) => {
-  const [view, setView] = useState<AuthView>('LANDING');
+const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  const [view, setView] = useState<AuthView>('SIGN_IN');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(errorMsg || null);
+  const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  
+
+  // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [campus, setCampus] = useState(CAMPUS_LIST[0]);
 
-  useEffect(() => {
-    if (errorMsg) setError(errorMsg);
-  }, [errorMsg]);
+  const handleGovBr = () => {
+    // Redirecionamento para o OAuth do gov.br
+    // Importante: O callback deve estar configurado no dashboard do gov.br e no backend SIGEA
+    const redirectUrl = `https://api.sigea.ifal.edu.br/auth/govbr/callback`;
+    const GOV_BR_URL = `https://sso.staging.acesso.gov.br/authorize?response_type=code&client_id=sigea.ifal.edu.br&scope=openid+profile+email&redirect_uri=${encodeURIComponent(redirectUrl)}`;
+    window.location.href = GOV_BR_URL;
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,142 +39,142 @@ const Login: React.FC<LoginProps> = ({ onLogin, darkMode, errorMsg }) => {
 
     try {
       if (view === 'SIGN_IN') {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) throw signInError;
-        onLogin();
+        const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+        if (err) throw err;
       } else if (view === 'SIGN_UP') {
-        const { data, error: signUpError } = await supabase.auth.signUp({
+        const { error: err } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name, campus, role: 'PARTICIPANT' } }
+          options: { 
+            data: { name, campus, role: 'PARTICIPANT' },
+            emailRedirectTo: window.location.origin
+          }
         });
-        if (signUpError) throw signUpError;
-        
-        if (data.user && data.session === null) {
-          setMessage("Sucesso! Verifique seu e-mail institucional para confirmar o cadastro.");
-        } else if (data.session) {
-          onLogin();
-        }
+        if (err) throw err;
+        setMessage("Conta criada! Verifique seu e-mail institucional para confirmar o acesso.");
+        setView('SIGN_IN');
+      } else if (view === 'FORGOT_PASSWORD') {
+        const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (err) throw err;
+        setMessage("Se o e-mail existir em nossa base, um link de recuperação foi enviado.");
       }
     } catch (err: any) {
-      const errorText = handleSupabaseError(err);
-      setError(errorText);
-      // Sugestão automática de modo demo em caso de erro de rede
-      if (errorText.toLowerCase().includes('rede') || errorText.toLowerCase().includes('servidor')) {
-        setMessage("Dica: O servidor está offline. Você pode clicar em 'Acessar modo demonstração' para testar as telas.");
-      }
+      setError(handleSupabaseError(err));
     } finally {
       setLoading(false);
     }
   };
 
-  const enterDemo = () => {
-    setLoading(true);
-    setTimeout(() => {
-      onLogin(true);
-      setLoading(false);
-    }, 800);
-  };
-
-  const changeView = (newView: AuthView) => {
-    setError(null);
-    setMessage(null);
-    setView(newView);
-  };
-
-  const bgClasses = "bg-slate-50 dark:bg-zinc-950 transition-colors duration-700";
-
-  if (view === 'LANDING') {
-    return (
-      <div className={`fixed inset-0 flex flex-col items-center justify-between p-10 ${bgClasses}`}>
-        <div className="h-12"></div>
-        <div className="flex-1 flex flex-col items-center justify-center text-center z-10 w-full">
-          <Logo dark={window.document.documentElement.classList.contains('dark')} size="huge" className="mb-8 drop-shadow-2xl" />
-          <p className="text-[11px] font-black px-8 uppercase tracking-[0.4em] text-slate-400 dark:text-zinc-500">
-            Portal Unificado de Eventos
-          </p>
-        </div>
-        
-        <div className="w-full max-w-sm flex flex-col items-center gap-4 z-10 pb-12 animate-in slide-in-from-bottom-8 duration-700">
-          <button 
-            onClick={() => changeView('SIGN_IN')} 
-            className="w-full h-16 rounded-2xl font-black text-sm uppercase tracking-[0.2em] bg-primary text-white shadow-2xl shadow-primary/20 transition-all active:scale-95"
-          >
-            Acessar Plataforma
-          </button>
-          
-          <button 
-            onClick={enterDemo}
-            className="w-full h-16 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-white/5 transition-all active:scale-95 flex items-center justify-center gap-3"
-          >
-            {loading ? <div className="size-4 border-2 border-slate-400 dark:border-zinc-700 border-t-primary rounded-full animate-spin"></div> : 'Modo Demonstração'}
-          </button>
-          
-          <p className="text-[9px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-widest mt-4">
-            Uso restrito à comunidade acadêmica
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={`min-h-screen ${bgClasses} flex flex-col p-8 overflow-y-auto no-scrollbar animate-in fade-in duration-500`}>
-      <main className="w-full max-w-md mx-auto flex flex-col items-center pt-8 pb-12">
-        <Logo dark={window.document.documentElement.classList.contains('dark')} size="lg" className="mb-12" />
-        
-        <div className="w-full text-center mb-10">
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none">
-            {view === 'SIGN_IN' ? 'Portal de Acesso' : 'Novo Registro'}
-          </h1>
-          <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-3">Rede Federal | IFAL</p>
-        </div>
+    <div className="fixed inset-0 flex flex-col items-center justify-center p-8 bg-[#09090b] text-white animate-in fade-in duration-500 overflow-y-auto no-scrollbar">
+      <div className="w-full max-w-sm space-y-10">
+        <header className="text-center space-y-2">
+          <h1 className="text-[64px] font-[900] tracking-[-0.08em] leading-none mb-4">Sigea</h1>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">Gestão de Eventos • IFAL</p>
+        </header>
 
-        <form onSubmit={handleAuth} className="w-full space-y-4">
-          {error && (
-            <div className="p-5 rounded-2xl animate-in shake duration-500 border-2 bg-red-900/10 border-red-900/20">
-              <p className="text-[10px] font-black uppercase text-center leading-relaxed text-red-400">{error}</p>
-            </div>
-          )}
-
-          {message && (
-            <div className="p-5 bg-primary/10 border border-primary/20 rounded-2xl animate-in zoom-in duration-300">
-              <p className="text-[10px] font-black text-primary uppercase text-center leading-relaxed">{message}</p>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            {view === 'SIGN_UP' && (
-              <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-14 bg-white dark:bg-zinc-900 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 text-sm font-bold text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600 border-slate-100 dark:border-transparent" placeholder="Seu Nome Completo" />
-            )}
-            <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-14 bg-white dark:bg-zinc-900 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 text-sm font-bold text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600 border-slate-100 dark:border-transparent" placeholder="E-mail Institucional" />
-            <div className="relative">
-              <input required type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} className="w-full h-14 bg-white dark:bg-zinc-900 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 text-sm font-bold text-slate-900 dark:text-white outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600 border-slate-100 dark:border-transparent" placeholder="Senha de Acesso" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-400 hover:text-primary transition-colors">
-                <span className="material-symbols-outlined text-lg">{showPassword ? 'visibility' : 'visibility_off'}</span>
-              </button>
-            </div>
+        {message && (
+          <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl text-[10px] font-black text-primary uppercase text-center animate-in zoom-in">
+            {message}
           </div>
+        )}
 
-          <button type="submit" disabled={loading} className="w-full h-16 bg-primary text-white rounded-2xl font-black uppercase tracking-widest mt-6 shadow-xl shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-50">
-            {loading ? (
-              <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>
-            ) : (
-              view === 'SIGN_IN' ? 'Entrar no Sistema' : 'Criar Cadastro'
-            )}
+        {error && (
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-[10px] font-black text-red-400 uppercase text-center animate-in shake">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {/* BOTÃO GOV.BR - PADRÃO OFICIAL */}
+          <button 
+            onClick={handleGovBr}
+            className="w-full h-16 bg-white text-[#004088] font-black rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg hover:bg-zinc-100"
+          >
+            <img src="https://www.gov.br/aquisicoes/pt-br/acesso-a-informacao/logos-govbr/govbr-logo-grande.png" alt="gov.br" className="h-6" />
+            <span className="text-sm">Entrar com gov.br</span>
           </button>
 
-          <div className="flex flex-col gap-6 mt-10 items-center">
-            <button type="button" onClick={enterDemo} className="text-[10px] font-black text-primary uppercase tracking-[0.2em] border-b border-primary/20 pb-1">
-              Testar em Modo Demonstração
-            </button>
-            <button type="button" onClick={() => changeView(view === 'SIGN_IN' ? 'SIGN_UP' : 'SIGN_IN')} className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.2em] hover:text-primary transition-colors">
-              {view === 'SIGN_IN' ? 'Não possui conta? Registre-se' : 'Já é cadastrado? Acesse aqui'}
-            </button>
-            <button type="button" onClick={() => changeView('LANDING')} className="text-[10px] font-black text-slate-400 dark:text-zinc-700 uppercase tracking-[0.4em] hover:text-primary transition-colors">Voltar</button>
+          <div className="flex items-center gap-4 py-2">
+            <div className="flex-1 h-px bg-zinc-800"></div>
+            <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">ou acesso tradicional</span>
+            <div className="flex-1 h-px bg-zinc-800"></div>
           </div>
-        </form>
-      </main>
+
+          <form onSubmit={handleAuth} className="space-y-4">
+            {view === 'SIGN_UP' && (
+              <div className="space-y-4 animate-in slide-in-from-top-2">
+                <input 
+                  required 
+                  type="text" 
+                  placeholder="NOME COMPLETO" 
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  className="w-full h-14 bg-zinc-900 border border-white/5 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary/50 transition-all text-white"
+                />
+                <select 
+                  value={campus}
+                  onChange={e => setCampus(e.target.value)}
+                  className="w-full h-14 bg-zinc-900 border border-white/5 rounded-2xl px-6 text-xs font-bold outline-none text-zinc-400 appearance-none"
+                >
+                  {CAMPUS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            )}
+
+            <input 
+              required 
+              type="email" 
+              placeholder="E-MAIL INSTITUCIONAL" 
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full h-14 bg-zinc-900 border border-white/5 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary/50 transition-all text-white"
+            />
+            
+            {view !== 'FORGOT_PASSWORD' && (
+              <input 
+                required 
+                type="password" 
+                placeholder="SENHA" 
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full h-14 bg-zinc-900 border border-white/5 rounded-2xl px-6 text-xs font-bold outline-none focus:border-primary/50 transition-all text-white"
+              />
+            )}
+
+            <button 
+              disabled={loading}
+              className="w-full h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center uppercase text-[11px] tracking-widest active:scale-95 transition-all disabled:opacity-50"
+            >
+              {loading ? <div className="size-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : 
+               view === 'SIGN_IN' ? "Entrar" : 
+               view === 'SIGN_UP' ? "Criar Minha Conta" : 
+               "Recuperar Acesso"}
+            </button>
+          </form>
+        </div>
+
+        <footer className="flex flex-col gap-5 items-center">
+          {view === 'SIGN_IN' ? (
+            <>
+              <button onClick={() => setView('FORGOT_PASSWORD')} className="text-[10px] font-black text-zinc-500 uppercase tracking-widest hover:text-white transition-colors">Esqueci minha senha</button>
+              <button onClick={() => setView('SIGN_UP')} className="text-[10px] font-black text-primary uppercase tracking-widest">Ainda não tem conta? Cadastre-se</button>
+            </>
+          ) : (
+            <button onClick={() => setView('SIGN_IN')} className="text-[10px] font-black text-primary uppercase tracking-widest">Voltar para o Início</button>
+          )}
+          
+          <button 
+            onClick={() => onLogin(true)}
+            className="mt-4 text-[9px] font-black text-zinc-700 uppercase tracking-[0.3em] hover:text-zinc-500 flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[14px]">visibility</span>
+            Continuar sem conta (Modo Demo)
+          </button>
+        </footer>
+      </div>
     </div>
   );
 };

@@ -29,6 +29,13 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const bannerSuggestions = [
+    { name: 'Tech', url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800' },
+    { name: 'Natureza', url: 'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800' },
+    { name: 'Workshop', url: 'https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=800' },
+    { name: 'Câmpus', url: 'https://images.unsplash.com/photo-1541339907198-e08756ebafe1?w=800' }
+  ];
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -52,7 +59,6 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
   const handleSubmit = async () => {
     setIsPublishing(true);
 
-    // Lógica para o Modo Demonstração (Evita erro de rede)
     if (isDemoMode) {
       setTimeout(() => {
         const demoEvent: Event = {
@@ -127,7 +133,6 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
   return (
     <div className="relative flex flex-col w-full pb-32 min-h-screen bg-slate-50 dark:bg-zinc-950 animate-in fade-in duration-500">
       
-      {/* Modal de Erro Customizado (Igual à Imagem) */}
       {errorModal.show && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-sm bg-zinc-900/90 backdrop-blur-2xl rounded-[2.5rem] p-8 border border-white/10 shadow-[0_32px_64px_rgba(0,0,0,0.5)] flex flex-col items-center text-center scale-up-center">
@@ -153,7 +158,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
             <span className="material-symbols-outlined font-black">{step === 1 ? 'close' : 'arrow_back'}</span>
           </button>
           <div className="flex flex-col items-center">
-            <h1 className="text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.3em]">Criar Evento</h1>
+            <h1 className="text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.3em]">Editor de Eventos</h1>
             <p className="text-[9px] font-bold text-primary uppercase tracking-widest mt-0.5">Etapa {step} de 3</p>
           </div>
           <div className="size-11"></div>
@@ -295,51 +300,86 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
         {step === 3 && (
           <section className="space-y-8 animate-in zoom-in-95 duration-500">
             <div className="space-y-1">
-              <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase text-zinc-900 dark:text-white">Apresentação</h3>
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Imagem de capa e descrição do evento.</p>
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase">Apresentação</h3>
+              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Identidade Visual do Evento</p>
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">BANNER (URL OU UPLOAD)</label>
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full aspect-[21/9] rounded-[2.5rem] bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-white/10 flex flex-col items-center justify-center cursor-pointer group overflow-hidden relative shadow-2xl transition-all hover:border-primary/50"
-                >
-                  {formData.imageUrl ? (
-                    <>
-                      <img 
-                        src={formData.imageUrl} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" 
-                        alt="Preview"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                         <span className="material-symbols-outlined text-white text-4xl">add_a_photo</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center text-zinc-300">
-                      <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-3">
-                        <span className="material-symbols-outlined text-3xl">image</span>
-                      </div>
-                      <span className="text-[9px] font-black uppercase tracking-widest">Carregar Capa do Evento</span>
-                    </div>
-                  )}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Banner (Link Direto ou Upload)</label>
+                  <div className="relative group">
+                    <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary group-focus-within:scale-110 transition-transform">link</span>
+                    <input 
+                      type="text" 
+                      value={formData.imageUrl}
+                      onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                      className="w-full h-16 pl-14 pr-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-3xl outline-none text-sm font-bold dark:text-white shadow-sm focus:ring-4 focus:ring-primary/10 transition-all" 
+                      placeholder="Cole a URL da imagem aqui..." 
+                    />
+                  </div>
                 </div>
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Ou escolha uma sugestão</label>
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                    {bannerSuggestions.map((banner) => (
+                      <button 
+                        key={banner.name}
+                        onClick={() => setFormData({...formData, imageUrl: banner.url})}
+                        className={`shrink-0 h-14 px-5 rounded-2xl border-2 transition-all flex items-center gap-3 active:scale-95 ${
+                          formData.imageUrl === banner.url 
+                          ? 'border-primary bg-primary/10 text-primary font-black shadow-lg' 
+                          : 'border-zinc-100 dark:border-white/5 bg-white dark:bg-zinc-900 text-zinc-400 font-bold'
+                        }`}
+                      >
+                        <img src={banner.url} className="size-8 rounded-lg object-cover" alt={banner.name} />
+                        <span className="text-[10px] uppercase tracking-widest">{banner.name}</span>
+                      </button>
+                    ))}
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="shrink-0 h-14 px-5 rounded-2xl border-2 border-dashed border-zinc-300 dark:border-white/10 text-zinc-400 font-black text-[10px] uppercase tracking-widest hover:border-primary hover:text-primary transition-all flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">upload</span>
+                      Upload
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 mb-2 block">Visualização Prévia</label>
+                  <div 
+                    className="w-full aspect-[21/9] rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-white/5 overflow-hidden relative shadow-2xl group cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <img 
+                      src={formData.imageUrl} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" 
+                      alt="Preview"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <div className="flex flex-col items-center gap-2">
+                          <span className="material-symbols-outlined text-white text-4xl">add_a_photo</span>
+                          <span className="text-[9px] font-black text-white uppercase tracking-widest">Alterar Imagem</span>
+                       </div>
+                    </div>
+                  </div>
+                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Descrição Detalhada</label>
+              <div className="space-y-2 pt-4">
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Descrição do Evento</label>
                 <textarea 
                   rows={6}
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})}
                   className="w-full p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-[2.5rem] outline-none text-sm font-bold placeholder:text-zinc-400 resize-none dark:text-white shadow-sm focus:ring-4 focus:ring-primary/10 transition-all" 
-                  placeholder="Informações sobre palestrantes, pautas e requisitos para participação..." 
+                  placeholder="Informações sobre pautas, palestrantes e pré-requisitos..." 
                 />
               </div>
             </div>
@@ -362,11 +402,12 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
           {isPublishing ? (
             <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           ) : (
-            <div className="flex items-center gap-3">
+            <>
+              {step < 3 ? 'Continuar' : 'Confirmar e Publicar'}
               <span className="material-symbols-outlined text-xl">
                 {step < 3 ? 'arrow_forward' : 'rocket_launch'}
               </span>
-            </div>
+            </>
           )}
         </button>
       </footer>
