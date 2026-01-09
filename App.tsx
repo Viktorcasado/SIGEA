@@ -61,7 +61,15 @@ const App: React.FC = () => {
         .from('events')
         .select('*')
         .order('created_at', { ascending: false });
-      if (!error && data) setEvents(data);
+      
+      if (!error && data) {
+        // Normaliza os dados do banco para a interface (image_url -> imageUrl)
+        const normalizedEvents = data.map(e => ({
+          ...e,
+          imageUrl: e.imageUrl || e.image_url || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000'
+        }));
+        setEvents(normalizedEvents);
+      }
     } catch (err) {
       console.error("Erro ao carregar banco real:", err);
     }
@@ -75,15 +83,21 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initApp = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        updateAuthState(session);
-        if (isRecoveryRoute()) setCurrentPage('reset-password');
-      } else {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          updateAuthState(session);
+          if (isRecoveryRoute()) setCurrentPage('reset-password');
+        } else {
+          setAuthStatus(false);
+        }
+        await fetchEvents();
+      } catch (err) {
+        console.error("Erro crítico na inicialização:", err);
         setAuthStatus(false);
+      } finally {
+        setIsHydrating(false);
       }
-      await fetchEvents();
-      setIsHydrating(false);
     };
 
     initApp();
@@ -153,10 +167,14 @@ const App: React.FC = () => {
     }
   };
 
-  // Garante que o evento recém criado seja adicionado ao estado local imediatamente
   const handleAddEvent = (newEvent: SIGEAEvent) => {
-    setEvents(prev => [newEvent, ...prev]);
-    fetchEvents(); // Atualiza em background para garantir sincronia com IDs do banco
+    // Garante que o novo evento tenha imageUrl mapeado corretamente antes de entrar no estado
+    const sanitized = {
+      ...newEvent,
+      imageUrl: newEvent.imageUrl || (newEvent as any).image_url
+    };
+    setEvents(prev => [sanitized, ...prev]);
+    // Não precisamos chamar fetchEvents() imediatamente aqui para evitar sobrescrever o estado local rápido demais
   };
 
   if (isHydrating) {
@@ -197,7 +215,9 @@ const App: React.FC = () => {
           onUpdate={handleUpdateProfile} 
         />
       );
-      case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId) || events[0]} />;
+      case 'ticket': 
+        const ticketEvent = events.find(e => e.id === selectedEventId);
+        return <MyTicket navigateTo={navigateTo} profile={userProfile} event={ticketEvent} />;
       case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={handleAddEvent} />;
       case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={() => fetchEvents()} onArchive={() => {}} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} eventId={selectedEventId} />;

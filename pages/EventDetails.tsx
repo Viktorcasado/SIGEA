@@ -11,7 +11,7 @@ interface EventDetailsProps {
 }
 
 const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events, role = UserRole.PARTICIPANT }) => {
-  const event = events.find(e => e.id === eventId) || events[0];
+  const event = events.find(e => e.id === eventId);
   const [tab, setTab] = useState<'sobre' | 'programacao'>('sobre');
   const [showToast, setShowToast] = useState(false);
   const [activitiesList, setActivitiesList] = useState<Activity[]>([]);
@@ -37,7 +37,24 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
     setLoadingActivities(false);
   };
 
-  if (!event) return null;
+  // Prevenção de Tela Preta: Fallback visual amigável
+  if (!event) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-zinc-950 p-6 text-center">
+        <div className="size-20 rounded-full bg-slate-100 dark:bg-zinc-900 flex items-center justify-center text-slate-400 mb-6">
+          <span className="material-symbols-outlined text-4xl">event_busy</span>
+        </div>
+        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Evento Não Encontrado</h2>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-8">O evento que você procura pode ter sido removido ou o link expirou.</p>
+        <button 
+          onClick={() => navigateTo('home')}
+          className="px-10 py-4 bg-primary text-white font-black rounded-2xl uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20"
+        >
+          Voltar ao Início
+        </button>
+      </div>
+    );
+  }
 
   const handleDeleteActivity = async (id: string) => {
     if (confirm("Deseja realmente remover esta atividade do cronograma oficial?")) {

@@ -37,31 +37,50 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
 
     setIsPublishing(true);
     
-    const dbEvent = {
+    // Objeto formatado para o banco de dados (Snake Case)
+    const dbEventPayload = {
       title: formData.title.toUpperCase(),
       description: formData.description,
       campus: formData.campus,
       date: formData.date.toUpperCase(),
       time: formData.time,
       location: formData.location,
-      imageUrl: formData.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000',
+      image_url: formData.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000',
       type: formData.type,
       status: 'Inscrições Abertas',
       price: 'Gratuito',
-      certificateHours: formData.certificateHours
+      certificate_hours: formData.certificateHours
     };
 
     try {
-      const { data, error } = await supabase.from('events').insert([dbEvent]).select();
+      const { data, error } = await supabase.from('events').insert([dbEventPayload]).select();
+      
       if (error) throw error;
+      
       if (data && data[0]) {
-        onAddEvent(data[0] as Event);
-        navigateTo('publish-success', data[0].id);
+        // Mapeia de volta para o formato da interface Event antes de adicionar ao estado
+        const newEvent: Event = {
+          ...data[0],
+          imageUrl: data[0].image_url,
+          certificateHours: data[0].certificate_hours
+        } as Event;
+
+        // Salva temporariamente no localStorage para garantir que a tela de sucesso encontre o dado
+        localStorage.setItem(`last_published_${newEvent.id}`, JSON.stringify(newEvent));
+        
+        onAddEvent(newEvent);
+        navigateTo('publish-success', newEvent.id);
       }
     } catch (err: any) {
-      console.warn("API Offline, criando evento localmente para demo.");
+      console.warn("API Offline ou erro de rede, criando evento localmente para demo.");
       const mockId = "demo-" + Math.random().toString(36).substr(2, 5);
-      const demoEvent = { ...dbEvent, id: mockId } as Event;
+      const demoEvent = { 
+        ...dbEventPayload, 
+        id: mockId,
+        imageUrl: dbEventPayload.image_url,
+        certificateHours: dbEventPayload.certificate_hours
+      } as unknown as Event;
+      
       onAddEvent(demoEvent);
       navigateTo('publish-success', mockId);
     } finally {

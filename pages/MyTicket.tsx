@@ -6,15 +6,27 @@ import IfalLogo from '../components/IfalLogo.tsx';
 interface MyTicketProps {
   navigateTo: (page: string) => void;
   profile: { id: string; name: string; email: string; campus: string };
-  event: Event;
+  event: Event | undefined;
 }
 
 const MyTicket: React.FC<MyTicketProps> = ({ navigateTo, profile, event }) => {
   const timestamp = useMemo(() => new Date().getTime(), []);
+  
   const ticketId = useMemo(() => {
+    if (!event) return 'N/A';
     const raw = `SIGEA|${event.id}|${profile.id}|${timestamp}`;
     return btoa(raw).substring(0, 12).toUpperCase();
-  }, [event.id, profile.id, timestamp]);
+  }, [event?.id, profile.id, timestamp]);
+
+  // Prevenção de Tela Preta: Fallback visual amigável
+  if (!event) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-zinc-950 p-6 text-center">
+        <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-6"></div>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Gerando Seu Ticket...</p>
+      </div>
+    );
+  }
 
   const qrColor = "10b981";
   const qrData = `SIGEA|EVENT:${event.id}|USER:${profile.id}|AUTH:${ticketId}`;

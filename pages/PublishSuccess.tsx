@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Event } from '../types';
 
 interface PublishSuccessProps {
@@ -7,20 +7,42 @@ interface PublishSuccessProps {
   event: Event | undefined;
 }
 
-const PublishSuccess: React.FC<PublishSuccessProps> = ({ navigateTo, event }) => {
+const PublishSuccess: React.FC<PublishSuccessProps> = ({ navigateTo, event: eventFromProps }) => {
+  // Tenta encontrar o evento nos props ou no localStorage como plano B
+  const event = useMemo(() => {
+    if (eventFromProps) return eventFromProps;
+    
+    // Procura por qualquer evento recém-publicado no cache local
+    const lastId = localStorage.getItem('sigea_last_event_id');
+    if (lastId) {
+      const cached = localStorage.getItem(`last_published_${lastId}`);
+      if (cached) return JSON.parse(cached) as Event;
+    }
+    return undefined;
+  }, [eventFromProps]);
+
   const copyLink = () => {
     if (!event) return;
     const link = `https://sigea.ifal.edu.br/evento/${event.id}`;
     navigator.clipboard.writeText(link);
-    alert("Link copiado para a área de transferência!");
+    alert("Link institucional copiado!");
   };
 
-  // Previne tela branca se o evento ainda não estiver no estado
+  // Se mesmo com o fallback não encontrarmos, exibimos um estado de erro/ação manual
   if (!event) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-[#09090b] p-8">
-        <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-6"></div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Finalizando Publicação...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-[#09090b] p-8 text-center">
+        <div className="size-20 rounded-full bg-slate-100 dark:bg-zinc-900 flex items-center justify-center text-slate-400 mb-6">
+          <span className="material-symbols-outlined text-4xl">sync_problem</span>
+        </div>
+        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Processando Evento</h2>
+        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-8">Seu evento foi enviado, mas os dados estão sendo sincronizados. Você pode voltar ao dashboard para acompanhá-lo.</p>
+        <button 
+          onClick={() => navigateTo('home')}
+          className="px-10 py-5 bg-primary text-white font-black rounded-2xl uppercase text-[10px] tracking-widest shadow-xl shadow-primary/20"
+        >
+          Voltar ao Início
+        </button>
       </div>
     );
   }
