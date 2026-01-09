@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [role, setRole] = useState<UserRole>(UserRole.PARTICIPANT);
   const [activePortal, setActivePortal] = useState<{ url: string; name: string } | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const isRecoveryRoute = () => {
     const hash = window.location.hash;
@@ -209,7 +210,7 @@ const App: React.FC = () => {
     return <Login onLogin={() => setAuthStatus(true)} onBack={() => setHasSeenWelcome(false)} darkMode={theme === 'dark'} setDarkMode={() => {}} />;
   }
 
-  const commonProps = { navigateTo, events, profile: userProfile, openPortal, role };
+  const commonProps = { navigateTo, events, profile: userProfile, openPortal, role, toggleSidebar: () => setIsSidebarOpen(true) };
 
   const renderContent = () => {
     if (currentPage === 'reset-password') return <ResetPassword navigateTo={navigateTo} />;
@@ -263,6 +264,8 @@ const App: React.FC = () => {
           profile={userProfile} 
           onLogout={handleLogout}
           openPortal={openPortal}
+          isOpenMobile={isSidebarOpen}
+          setOpenMobile={setIsSidebarOpen}
         />
       )}
       

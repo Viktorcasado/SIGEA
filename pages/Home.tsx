@@ -12,9 +12,10 @@ interface HomeProps {
   onNotify: () => void;
   hasUnread?: boolean;
   openPortal: (url: string, name: string) => void;
+  toggleSidebar: () => void;
 }
 
-const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasUnread, openPortal }) => {
+const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasUnread, openPortal, toggleSidebar }) => {
   const [search, setSearch] = useState('');
   const [selectedCampus, setSelectedCampus] = useState('Todos');
   
@@ -39,7 +40,20 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
     <div className="flex flex-col w-full animate-in fade-in duration-700 bg-slate-50 dark:bg-[#09090b] min-h-screen pb-24">
       <header className="px-6 lg:px-12 pt-12 lg:pt-16 pb-8">
         <div className="flex items-center justify-between mb-8 lg:mb-10 relative z-20">
-          <div className="flex flex-col">
+          <div className="flex items-center gap-4 lg:hidden">
+            <button 
+              onClick={toggleSidebar}
+              className="size-12 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 active:scale-90 transition-all shadow-lg"
+            >
+              <span className="material-symbols-outlined font-black">menu</span>
+            </button>
+            <div className="flex flex-col leading-none">
+               <span className="text-slate-900 dark:text-white font-[1000] text-sm uppercase tracking-tighter">Portal</span>
+               <span className="text-primary font-black text-[10px] uppercase">SIGEA</span>
+            </div>
+          </div>
+
+          <div className="hidden lg:flex flex-col">
             <div className="flex items-center gap-2 mb-1 lg:mb-4">
                <span className="text-slate-900 dark:text-white font-[1000] text-xl lg:text-2xl tracking-tighter uppercase">Si<span className="text-primary">gea</span></span>
                <div className="size-1 bg-primary rounded-full"></div>
@@ -52,22 +66,28 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
           <div className="flex items-center gap-3 lg:gap-4 shrink-0">
              <button 
                 onClick={onNotify} 
-                className="size-14 lg:size-14 flex items-center justify-center rounded-2xl lg:rounded-[1.5rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-400 dark:text-zinc-400 active:scale-90 transition-all shadow-lg hover:border-primary/30"
+                className="size-12 lg:size-14 flex items-center justify-center rounded-2xl lg:rounded-[1.5rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-400 dark:text-zinc-400 active:scale-90 transition-all shadow-lg hover:border-primary/30"
               >
-                <span className="material-symbols-outlined text-[28px] lg:text-[28px]">notifications</span>
-                {hasUnread && <span className="absolute top-3.5 right-3.5 size-2.5 bg-primary rounded-full ring-2 ring-white dark:ring-[#09090b]"></span>}
+                <span className="material-symbols-outlined text-[24px] lg:text-[28px]">notifications</span>
+                {hasUnread && <span className="absolute top-3 right-3 size-2 bg-primary rounded-full ring-2 ring-white dark:ring-[#09090b]"></span>}
              </button>
              <div 
                 onClick={() => navigateTo('profile')}
-                className="size-14 lg:size-14 rounded-2xl lg:rounded-[1.5rem] bg-primary flex items-center justify-center text-white font-black text-sm cursor-pointer active:scale-90 transition-all shadow-lg overflow-hidden ring-2 ring-white dark:ring-white/5"
+                className="size-12 lg:size-14 rounded-2xl lg:rounded-[1.5rem] bg-primary flex items-center justify-center text-white font-black text-sm cursor-pointer active:scale-90 transition-all shadow-lg overflow-hidden ring-2 ring-white dark:ring-white/5"
               >
                 {profile?.photo ? (
                   <img src={profile.photo} className="w-full h-full object-cover" alt="Profile" />
                 ) : (
-                  <span className="text-sm uppercase font-black">{profile?.name?.charAt(0) || 'U'}</span>
+                  <span className="text-xs lg:text-sm uppercase font-black">{profile?.name?.charAt(0) || 'U'}</span>
                 )}
               </div>
           </div>
+        </div>
+
+        <div className="lg:hidden mb-8">
+           <h1 className="text-[34px] font-[1000] text-slate-900 dark:text-white uppercase tracking-tighter leading-[0.9]">
+              Olá,<br /><span className="text-primary">{profile?.name?.split(' ')[0]}</span>
+            </h1>
         </div>
 
         <div className="relative group max-w-2xl z-10 lg:ml-0 space-y-6">
