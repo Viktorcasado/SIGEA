@@ -18,7 +18,7 @@ const Help: React.FC<HelpProps> = ({ navigateTo }) => {
   );
 
   const tabs: {id: HelpTab, label: string, icon: string}[] = [
-    { id: 'support', label: 'Suporte', icon: 'contact_support' },
+    { id: 'support', label: 'Suporte', icon: 'support_agent' },
     { id: 'privacy', label: 'Privacidade', icon: 'gavel' },
     { id: 'about', label: 'Sobre', icon: 'info' }
   ];

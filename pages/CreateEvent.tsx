@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Event } from '../types';
 import { CAMPUS_LIST } from '../constants';
-import { supabase } from '../supabaseClient';
+import { supabase, handleSupabaseError } from '../supabaseClient';
 
 interface CreateEventProps {
   navigateTo: (page: string, id?: string) => void;
@@ -37,14 +37,13 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
     }
 
     if (!profile?.id) {
-      setErrorModal({ show: true, msg: 'Erro de autenticação. Por favor, faça login novamente.' });
+      setErrorModal({ show: true, msg: 'Erro de autenticação: Usuário não identificado. Faça login novamente.' });
       return;
     }
 
     setIsPublishing(true);
     
-    // Objeto formatado para o banco de dados (Snake Case)
-    // Incluindo o organizer_id para garantir que apareça no dashboard do organizador
+    // Objeto formatado para o Supabase (Snake Case)
     const dbEventPayload = {
       title: formData.title.toUpperCase(),
       description: formData.description,
@@ -57,10 +56,11 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
       status: 'Inscrições Abertas',
       price: 'Gratuito',
       certificate_hours: formData.certificateHours,
-      organizer_id: profile.id
+      organizer_id: profile.id // Vinculamos o evento ao seu usuário logado
     };
 
     try {
+      // Tentamos inserir no banco real
       const { data, error } = await supabase.from('events').insert([dbEventPayload]).select();
       
       if (error) throw error;
@@ -72,23 +72,18 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
           certificateHours: data[0].certificate_hours
         } as Event;
 
+        // Cache local temporário para a tela de sucesso
         localStorage.setItem(`last_published_${newEvent.id}`, JSON.stringify(newEvent));
         
         onAddEvent(newEvent);
         navigateTo('publish-success', newEvent.id);
       }
     } catch (err: any) {
-      console.warn("API Offline ou erro de rede, criando evento localmente para demo.");
-      const mockId = "demo-" + Math.random().toString(36).substr(2, 5);
-      const demoEvent = { 
-        ...dbEventPayload, 
-        id: mockId,
-        imageUrl: dbEventPayload.image_url,
-        certificateHours: (dbEventPayload as any).certificate_hours
-      } as unknown as Event;
-      
-      onAddEvent(demoEvent);
-      navigateTo('publish-success', mockId);
+      console.error("Erro na persistência do evento:", err);
+      setErrorModal({ 
+        show: true, 
+        msg: "FALHA CRÍTICA NO BANCO DE DADOS: O evento não pôde ser salvo permanentemente. " + handleSupabaseError(err) 
+      });
     } finally {
       setIsPublishing(false);
     }
@@ -101,7 +96,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
           <div className="bg-zinc-900 border border-white/10 p-10 rounded-[3rem] text-center max-w-sm shadow-2xl">
             <span className="material-symbols-outlined text-red-500 text-5xl mb-6">warning</span>
             <p className="text-white text-xs font-black uppercase tracking-tight mb-8 leading-relaxed">{errorModal.msg}</p>
-            <button onClick={() => setErrorModal({show:false, msg:''})} className="w-full h-16 bg-white/10 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all">OK, ENTENDI</button>
+            <button onClick={() => setErrorModal({show:false, msg:''})} className="w-full h-16 bg-white/10 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all">Tentar Novamente</button>
           </div>
         </div>
       )}

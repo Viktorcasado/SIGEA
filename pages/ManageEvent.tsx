@@ -4,7 +4,7 @@ import { Event } from '../types.ts';
 import { supabase, handleSupabaseError, isSupabaseConfigured } from '../supabaseClient.ts';
 
 interface ManageEventProps {
-  navigateTo: (page: string) => void;
+  navigateTo: (page: string, id?: string) => void;
   eventId: string | null;
   events: Event[];
   onDelete: (id: string) => void;
@@ -37,7 +37,7 @@ const ManageEvent: React.FC<ManageEventProps> = ({ navigateTo, eventId, events, 
             checkins: Math.floor(regCount * 0.85)
           });
         } else {
-          setStats({ participants: 125, checkins: 88 });
+          setStats({ participants: 0, checkins: 0 });
         }
       } catch (err) {
         console.warn("Métricas em modo offline:", handleSupabaseError(err));
@@ -53,7 +53,7 @@ const ManageEvent: React.FC<ManageEventProps> = ({ navigateTo, eventId, events, 
     setIsDeleting(true);
     
     try {
-      const isDemoMode = localStorage.getItem('sigea_demo') === 'true' || event.id.startsWith('demo-');
+      const isDemoMode = event.id.startsWith('demo-');
 
       if (!isDemoMode && isSupabaseConfigured()) {
         const { error } = await supabase
@@ -66,14 +66,10 @@ const ManageEvent: React.FC<ManageEventProps> = ({ navigateTo, eventId, events, 
 
       onDelete(event.id);
       setShowDeleteModal(false);
+      navigateTo('home');
     } catch (err: any) {
       const msg = handleSupabaseError(err);
-      if (err.message?.includes('fetch') || localStorage.getItem('sigea_demo') === 'true') {
-        onDelete(event.id);
-        setShowDeleteModal(false);
-      } else {
-        alert(`FALHA NA EXCLUSÃO INSTITUCIONAL:\n\n${msg}`);
-      }
+      alert(`FALHA NA EXCLUSÃO INSTITUCIONAL:\n\n${msg}`);
     } finally {
       setIsDeleting(false);
     }
@@ -100,43 +96,64 @@ const ManageEvent: React.FC<ManageEventProps> = ({ navigateTo, eventId, events, 
         </button>
         <div className="flex flex-col items-center">
           <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-900 dark:text-white">Gerenciamento</h2>
-          <p className="text-[9px] font-bold text-primary uppercase mt-1 tracking-widest">ID: {event.id.slice(0,8)}</p>
+          <p className="text-[9px] font-bold text-primary uppercase mt-1 tracking-widest">Atividade ID: {event.id.slice(0,8)}</p>
         </div>
         <button onClick={() => setShowDeleteModal(true)} className="size-12 flex items-center justify-center rounded-2xl bg-red-500/10 text-red-500 active:scale-90 transition-all border border-red-500/10 shadow-sm">
           <span className="material-symbols-outlined">delete</span>
         </button>
       </header>
 
-      <main className="p-6 space-y-8">
-        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-6 shadow-2xl border border-slate-200 dark:border-white/5 space-y-6">
-          <div className="aspect-video w-full rounded-3xl overflow-hidden relative shadow-inner">
+      <main className="p-6 lg:p-12 space-y-8 max-w-4xl mx-auto w-full">
+        <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 shadow-2xl border border-slate-200 dark:border-white/5 flex flex-col md:flex-row gap-8 items-start">
+          <div className="w-full md:w-1/3 aspect-video md:aspect-square rounded-3xl overflow-hidden relative shadow-inner shrink-0">
              <img src={event.imageUrl} className="w-full h-full object-cover" alt={event.title} />
             <div className="absolute top-4 right-4 px-4 py-2 bg-primary/90 text-white text-[9px] font-black rounded-full uppercase backdrop-blur-md">
               {event.status}
             </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight">{event.title}</h1>
-            <p className="text-[10px] font-black text-slate-400 mt-2 uppercase tracking-widest">{event.campus}</p>
+          <div className="flex-1 space-y-4 pt-2">
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-4">{event.title}</h1>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">{event.campus}</p>
+            </div>
+            
+            <div className="flex flex-wrap gap-3 pt-4">
+               <button 
+                onClick={() => navigateTo('edit-event', event.id)}
+                className="px-6 h-14 bg-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 active:scale-95 transition-all shadow-lg shadow-primary/20"
+               >
+                 <span className="material-symbols-outlined text-lg">edit</span>
+                 Editar Evento
+               </button>
+               <button 
+                onClick={() => navigateTo('check-in', event.id)}
+                className="px-6 h-14 bg-zinc-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 active:scale-95 transition-all border border-slate-200 dark:border-white/5"
+               >
+                 <span className="material-symbols-outlined text-lg">qr_code_scanner</span>
+                 Scanner
+               </button>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-xl text-center">
-            <p className="text-[9px] font-black uppercase text-slate-400 mb-2">Inscritos</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-10 bg-white dark:bg-zinc-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl text-center group transition-all hover:border-primary/30">
+            <p className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">Total Inscritos</p>
             {loadingStats ? (
-              <div className="animate-pulse h-10 bg-slate-100 dark:bg-zinc-800 rounded-lg"></div>
+              <div className="animate-pulse h-12 bg-slate-50 dark:bg-zinc-800 rounded-2xl mx-auto w-24"></div>
             ) : (
-              <p className="text-4xl font-black text-slate-900 dark:text-white">{stats.participants}</p>
+              <p className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">{stats.participants}</p>
             )}
+            <p className="text-[8px] font-black text-primary uppercase mt-4 tracking-widest opacity-60">Sincronizado via Supabase</p>
           </div>
-          <div className="p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-xl text-center">
-            <p className="text-[9px] font-black uppercase text-slate-400 mb-2">Check-ins</p>
+          <div className="p-10 bg-white dark:bg-zinc-900 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-xl text-center group transition-all hover:border-primary/30">
+            <p className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">Check-ins Validados</p>
             {loadingStats ? (
-              <div className="animate-pulse h-10 bg-slate-100 dark:bg-zinc-800 rounded-lg"></div>
+              <div className="animate-pulse h-12 bg-slate-50 dark:bg-zinc-800 rounded-2xl mx-auto w-24"></div>
             ) : (
-              <p className="text-4xl font-black text-slate-900 dark:text-white">{stats.checkins}</p>
+              <p className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">{stats.checkins}</p>
             )}
+            <p className="text-[8px] font-black text-emerald-500 uppercase mt-4 tracking-widest opacity-60">Auditado</p>
           </div>
         </div>
       </main>

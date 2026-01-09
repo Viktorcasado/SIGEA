@@ -35,7 +35,6 @@ const Profile: React.FC<ProfileProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sincroniza o formulário quando o perfil mudar (ex: após login ou atualização)
   useEffect(() => { 
     if (profile && !isEditing) {
       setFormData({ 
@@ -67,24 +66,22 @@ const Profile: React.FC<ProfileProps> = ({
     setSaveSuccess(false);
     
     try {
-      // Envia os dados para a função de atualização no App.tsx
+      // Enviamos tanto photo quanto photo_url para garantir compatibilidade com o metadata
       const success = await onUpdate({ 
         name: formData.name, 
         campus: formData.campus, 
-        photo_url: formData.photo 
+        photo_url: formData.photo,
+        photo: formData.photo
       });
       
       if (success !== false) {
         setSaveSuccess(true);
         setIsEditing(false);
         if (window.navigator.vibrate) window.navigator.vibrate([10, 30, 10]);
-        
-        // Remove mensagem de sucesso após 3 segundos
         setTimeout(() => setSaveSuccess(false), 3000);
       }
     } catch (error) { 
-      console.error("Erro ao salvar:", error);
-      alert("Erro ao conectar com o servidor SIGEA. Verifique sua conexão.");
+      console.error("Erro ao salvar perfil:", error);
     } finally { 
       setIsSaving(false); 
     }
@@ -95,14 +92,12 @@ const Profile: React.FC<ProfileProps> = ({
   return (
     <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-zinc-950 pb-32 animate-in fade-in duration-500 overflow-y-auto no-scrollbar">
       
-      {/* Toast de Sucesso */}
       {saveSuccess && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl animate-in slide-in-from-top-4">
           Perfil Atualizado com Sucesso!
         </div>
       )}
 
-      {/* Modal de Confirmação de Exclusão */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in">
           <div className="w-full max-w-sm bg-zinc-900 border border-white/10 rounded-[2.5rem] p-10 text-center shadow-2xl scale-up-center">
@@ -226,8 +221,13 @@ const Profile: React.FC<ProfileProps> = ({
         <div className="w-full max-w-sm space-y-4 pt-10 pb-10">
           <button onClick={() => navigateTo('help')} className="w-full p-8 bg-white dark:bg-zinc-900/40 rounded-[3rem] border border-slate-100 dark:border-white/5 flex items-center justify-between group active:scale-95 transition-all shadow-xl">
             <div className="flex items-center gap-5">
-              <div className="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><span className="material-symbols-outlined text-3xl">help_center</span></div>
-              <div className="text-left"><p className="text-[15px] font-black text-slate-900 dark:text-white uppercase tracking-tight">Suporte Técnico</p><p className="text-[10px] font-bold text-slate-400 dark:text-zinc-600 uppercase tracking-widest">Ajuda e LGPD</p></div>
+              <div className="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-3xl">contact_support</span>
+              </div>
+              <div className="text-left">
+                <p className="text-[15px] font-black text-slate-900 dark:text-white uppercase tracking-tight">Suporte Técnico</p>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-zinc-600 uppercase tracking-widest">Ajuda e LGPD</p>
+              </div>
             </div>
             <span className="material-symbols-outlined text-slate-300">chevron_right</span>
           </button>
@@ -266,7 +266,6 @@ const Profile: React.FC<ProfileProps> = ({
         </div>
       </main>
 
-      {/* Campus Selector - Modal Estilo Material 3 Bottom Sheet */}
       {showCampusSelector && (
         <div className="fixed inset-0 z-[1000] flex items-end justify-center animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCampusSelector(false)}></div>
@@ -293,7 +292,6 @@ const Profile: React.FC<ProfileProps> = ({
                     onClick={() => {
                       if (window.navigator.vibrate) window.navigator.vibrate(5);
                       setFormData(prev => ({ ...prev, campus: c }));
-                      // Fecha o seletor para melhorar o fluxo UX
                       setShowCampusSelector(false);
                     }} 
                     className={`flex items-center justify-between p-6 rounded-[2rem] border transition-all cursor-pointer ${isSelected ? 'bg-primary/10 border-primary shadow-sm' : 'bg-slate-50 dark:bg-zinc-900/50 border-slate-100 dark:border-white/5 hover:border-slate-200'}`}

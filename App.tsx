@@ -15,6 +15,7 @@ import Login from './pages/Login.tsx';
 import ResetPassword from './pages/ResetPassword.tsx';
 import OrganizerDashboard from './pages/OrganizerDashboard.tsx';
 import CreateEvent from './pages/CreateEvent.tsx';
+import EditEvent from './pages/EditEvent.tsx';
 import ManageEvent from './pages/ManageEvent.tsx';
 import CheckIn from './pages/CheckIn.tsx';
 import PublishSuccess from './pages/PublishSuccess.tsx';
@@ -67,7 +68,9 @@ const App: React.FC = () => {
       if (!error && data) {
         const normalizedEvents = data.map(e => ({
           ...e,
-          imageUrl: e.imageUrl || e.image_url || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000'
+          // Mapeamos colunas do banco para as propriedades do app
+          imageUrl: e.image_url || e.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000',
+          certificateHours: e.certificate_hours || e.certificateHours || 0
         }));
         setEvents(normalizedEvents);
       }
@@ -174,7 +177,7 @@ const App: React.FC = () => {
       }
       return false;
     } catch (err) {
-      console.error("Erro na atualização:", err);
+      console.error("Erro na atualização do perfil:", err);
       return false;
     }
   };
@@ -192,12 +195,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddEvent = (newEvent: SIGEAEvent) => {
-    const sanitized = {
-      ...newEvent,
-      imageUrl: newEvent.imageUrl || (newEvent as any).image_url
-    };
-    setEvents(prev => [sanitized, ...prev]);
+  const handleRefreshEvents = () => {
+    fetchEvents();
   };
 
   if (isHydrating) {
@@ -241,7 +240,8 @@ const App: React.FC = () => {
       case 'ticket': 
         const ticketEvent = events.find(e => e.id === selectedEventId);
         return <MyTicket navigateTo={navigateTo} profile={userProfile} event={ticketEvent} />;
-      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={handleAddEvent} profile={userProfile} />;
+      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={handleRefreshEvents} profile={userProfile} />;
+      case 'edit-event': return <EditEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onUpdate={handleRefreshEvents} />;
       case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={() => fetchEvents()} onArchive={() => {}} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} eventId={selectedEventId} />;
       case 'publish-success': 
@@ -254,7 +254,7 @@ const App: React.FC = () => {
     }
   };
 
-  const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'reports', 'help', 'create-event', 'check-in', 'integrations'].includes(currentPage);
+  const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'reports', 'help', 'create-event', 'edit-event', 'check-in', 'integrations'].includes(currentPage);
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-[#09090b]">
