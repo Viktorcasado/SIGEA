@@ -4,18 +4,29 @@ import { Event } from '../types';
 
 interface PublishSuccessProps {
   navigateTo: (page: string, id?: string) => void;
-  event: Event;
+  event: Event | undefined;
 }
 
 const PublishSuccess: React.FC<PublishSuccessProps> = ({ navigateTo, event }) => {
   const copyLink = () => {
+    if (!event) return;
     const link = `https://sigea.ifal.edu.br/evento/${event.id}`;
     navigator.clipboard.writeText(link);
     alert("Link copiado para a área de transferência!");
   };
 
+  // Previne tela branca se o evento ainda não estiver no estado
+  if (!event) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-[#09090b] p-8">
+        <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-6"></div>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Finalizando Publicação...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background-light dark:bg-background-dark p-8 animate-in fade-in duration-700">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-[#09090b] p-8 animate-in fade-in duration-700">
       {/* Background Decor */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] size-96 bg-primary/10 rounded-full blur-[120px]"></div>
@@ -42,7 +53,7 @@ const PublishSuccess: React.FC<PublishSuccessProps> = ({ navigateTo, event }) =>
 
         {/* Share Card Preview */}
         <div className="w-full bg-white dark:bg-zinc-900 rounded-[2.5rem] p-6 shadow-xl border border-zinc-100 dark:border-zinc-800 animate-in slide-in-from-bottom-10 duration-700 delay-500">
-          <div className="aspect-video w-full rounded-2xl bg-cover bg-center mb-4" style={{backgroundImage: `url(${event.imageUrl})`}}></div>
+          <div className="aspect-video w-full rounded-2xl bg-cover bg-center mb-4 border border-slate-100 dark:border-white/5" style={{backgroundImage: `url(${event.imageUrl})`}}></div>
           <div className="text-left space-y-1 mb-6">
             <p className="text-[9px] font-black text-primary uppercase tracking-widest">{event.type}</p>
             <h4 className="text-sm font-black text-zinc-900 dark:text-white truncate uppercase tracking-tight">{event.title}</h4>

@@ -24,6 +24,7 @@ const Profile: React.FC<ProfileProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   
   const [formData, setFormData] = useState({ 
     name: profile?.name || '', 
@@ -34,8 +35,9 @@ const Profile: React.FC<ProfileProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sincroniza o formulário quando o perfil mudar (ex: após login ou atualização)
   useEffect(() => { 
-    if (profile) {
+    if (profile && !isEditing) {
       setFormData({ 
         name: profile.name, 
         photo: profile.photo, 
@@ -43,7 +45,7 @@ const Profile: React.FC<ProfileProps> = ({
         email: profile.email
       }); 
     }
-  }, [profile]);
+  }, [profile, isEditing]);
 
   if (!profile) return null;
 
@@ -51,27 +53,38 @@ const Profile: React.FC<ProfileProps> = ({
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => { setFormData(prev => ({ ...prev, photo: reader.result as string })); };
+      reader.onloadend = () => { 
+        setFormData(prev => ({ ...prev, photo: reader.result as string })); 
+      };
       reader.readAsDataURL(file);
     }
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+    
     setIsSaving(true);
+    setSaveSuccess(false);
+    
     try {
-      // Sincroniza os dados com o Supabase Auth Metadata
+      // Envia os dados para a função de atualização no App.tsx
       const success = await onUpdate({ 
         name: formData.name, 
         campus: formData.campus, 
-        photo_url: formData.photo // Mantendo photo_url para compatibilidade com App.tsx
+        photo_url: formData.photo 
       });
       
       if (success !== false) {
+        setSaveSuccess(true);
         setIsEditing(false);
         if (window.navigator.vibrate) window.navigator.vibrate([10, 30, 10]);
+        
+        // Remove mensagem de sucesso após 3 segundos
+        setTimeout(() => setSaveSuccess(false), 3000);
       }
     } catch (error) { 
-      alert("Erro ao salvar perfil no SIGEA.");
+      console.error("Erro ao salvar:", error);
+      alert("Erro ao conectar com o servidor SIGEA. Verifique sua conexão.");
     } finally { 
       setIsSaving(false); 
     }
@@ -82,6 +95,13 @@ const Profile: React.FC<ProfileProps> = ({
   return (
     <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-zinc-950 pb-32 animate-in fade-in duration-500 overflow-y-auto no-scrollbar">
       
+      {/* Toast de Sucesso */}
+      {saveSuccess && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl animate-in slide-in-from-top-4">
+          Perfil Atualizado com Sucesso!
+        </div>
+      )}
+
       {/* Modal de Confirmação de Exclusão */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in">
@@ -132,7 +152,13 @@ const Profile: React.FC<ProfileProps> = ({
           disabled={isSaving} 
           className={`size-12 flex items-center justify-center rounded-2xl transition-all active:scale-90 shadow-2xl ${isEditing ? 'bg-primary text-white shadow-primary/30' : 'bg-primary/10 text-primary border border-primary/20'}`}
         >
-          {isSaving ? <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{isEditing ? 'check' : 'edit_square'}</span>}
+          {isSaving ? (
+            <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          ) : (
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
+              {isEditing ? 'check' : 'edit_square'}
+            </span>
+          )}
         </button>
       </header>
 
@@ -167,13 +193,18 @@ const Profile: React.FC<ProfileProps> = ({
             <div className="w-full space-y-6 animate-in slide-in-from-bottom-4 max-w-sm">
               <div className="space-y-1.5 px-2">
                 <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Nome Completo</label>
-                <input type="text" value={formData.name} onChange={e => setFormData(prev => ({...prev, name: e.target.value}))} className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl text-sm font-bold outline-none text-slate-900 dark:text-white" />
+                <input 
+                  type="text" 
+                  value={formData.name} 
+                  onChange={e => setFormData(prev => ({...prev, name: e.target.value}))} 
+                  className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl text-sm font-bold outline-none text-slate-900 dark:text-white focus:border-primary/50 transition-all" 
+                />
               </div>
               <div className="space-y-1.5 px-2">
                 <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Campus Oficial</label>
                 <div 
                   onClick={() => setShowCampusSelector(true)} 
-                  className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl text-sm font-bold flex items-center justify-between cursor-pointer text-slate-900 dark:text-white shadow-sm hover:border-primary/30 transition-all"
+                  className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl text-sm font-bold flex items-center justify-between cursor-pointer text-slate-900 dark:text-white shadow-sm hover:border-primary transition-all"
                 >
                   <span className="truncate">{formData.campus || "Selecionar Campus"}</span>
                   <span className="material-symbols-outlined text-primary">expand_more</span>
@@ -262,8 +293,8 @@ const Profile: React.FC<ProfileProps> = ({
                     onClick={() => {
                       if (window.navigator.vibrate) window.navigator.vibrate(5);
                       setFormData(prev => ({ ...prev, campus: c }));
-                      // Se estiver editando, apenas atualiza o form. Se não, salva direto? 
-                      // No padrão de perfil, melhor deixar o usuário clicar no "Check" geral de salvar.
+                      // Fecha o seletor para melhorar o fluxo UX
+                      setShowCampusSelector(false);
                     }} 
                     className={`flex items-center justify-between p-6 rounded-[2rem] border transition-all cursor-pointer ${isSelected ? 'bg-primary/10 border-primary shadow-sm' : 'bg-slate-50 dark:bg-zinc-900/50 border-slate-100 dark:border-white/5 hover:border-slate-200'}`}
                   >

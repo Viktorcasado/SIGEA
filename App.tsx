@@ -134,6 +134,31 @@ const App: React.FC = () => {
     await supabase.auth.signOut();
   };
 
+  const handleUpdateProfile = async (data: any) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ data });
+      if (!error) {
+        setUserProfile((prev: any) => ({
+          ...prev, 
+          name: data.name || prev.name,
+          campus: data.campus || prev.campus,
+          photo: data.photo_url || data.photo || prev.photo
+        }));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Erro na atualização:", err);
+      return false;
+    }
+  };
+
+  // Garante que o evento recém criado seja adicionado ao estado local imediatamente
+  const handleAddEvent = (newEvent: SIGEAEvent) => {
+    setEvents(prev => [newEvent, ...prev]);
+    fetchEvents(); // Atualiza em background para garantir sincronia com IDs do banco
+  };
+
   if (isHydrating) {
     return (
       <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center">
@@ -158,28 +183,27 @@ const App: React.FC = () => {
       case 'home': return role === UserRole.ORGANIZER ? <OrganizerDashboard {...commonProps} onNotify={() => {}} /> : <Home {...commonProps} onNotify={() => {}} />;
       case 'events': return <EventsList navigateTo={navigateTo} events={events} />;
       case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} role={role} />;
-      case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={async (data) => {
-        const { error } = await supabase.auth.updateUser({ data });
-        if (!error) {
-          setUserProfile((prev: any) => ({...prev, ...data}));
-          return true;
-        }
-        return false;
-      }} />;
+      case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={handleUpdateProfile} />;
       case 'certificates': return <Certificates navigateTo={navigateTo} events={events} user={userProfile} />;
-      case 'profile': return <Profile {...commonProps} theme={theme} setTheme={setTheme} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={handleLogout} onDeleteAccount={async () => {}} onUpdate={async (data) => {
-        const { error } = await supabase.auth.updateUser({ data });
-        if (!error) {
-          setUserProfile((prev: any) => ({...prev, ...data}));
-          return true;
-        }
-        return false;
-      }} />;
+      case 'profile': return (
+        <Profile 
+          {...commonProps} 
+          theme={theme} 
+          setTheme={setTheme} 
+          role={role} 
+          toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} 
+          onLogout={handleLogout} 
+          onDeleteAccount={async () => {}} 
+          onUpdate={handleUpdateProfile} 
+        />
+      );
       case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId) || events[0]} />;
-      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={() => fetchEvents()} />;
+      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={handleAddEvent} />;
       case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={() => fetchEvents()} onArchive={() => {}} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} eventId={selectedEventId} />;
-      case 'publish-success': return <PublishSuccess navigateTo={navigateTo} event={events.find(e => e.id === selectedEventId) || events[0]} />;
+      case 'publish-success': 
+        const successEvent = events.find(e => e.id === selectedEventId);
+        return <PublishSuccess navigateTo={navigateTo} event={successEvent} />;
       case 'reports': return <Reports navigateTo={navigateTo} />;
       case 'integrations': return <Integrations navigateTo={navigateTo} />;
       case 'help': return <Help navigateTo={navigateTo} />;
