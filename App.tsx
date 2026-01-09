@@ -19,6 +19,7 @@ import ManageEvent from './pages/ManageEvent.tsx';
 import CheckIn from './pages/CheckIn.tsx';
 import PublishSuccess from './pages/PublishSuccess.tsx';
 import Welcome from './pages/Welcome.tsx';
+import Reports from './pages/Reports.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
 import BottomNav from './components/BottomNav.tsx';
 import Sidebar from './components/Sidebar.tsx';
@@ -178,11 +179,13 @@ const App: React.FC = () => {
       case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={() => fetchEvents()} onArchive={() => {}} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} eventId={selectedEventId} />;
       case 'publish-success': return <PublishSuccess navigateTo={navigateTo} event={events.find(e => e.id === selectedEventId) || events[0]} />;
+      case 'reports': return <Reports navigateTo={navigateTo} />;
+      case 'help': return <Help navigateTo={navigateTo} />;
       default: return <Home {...commonProps} onNotify={() => {}} />;
     }
   };
 
-  const isNavigationVisible = ['home', 'events', 'certificates', 'profile'].includes(currentPage);
+  const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'reports', 'help', 'create-event', 'check-in'].includes(currentPage);
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-[#09090b]">
