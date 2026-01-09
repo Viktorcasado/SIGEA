@@ -22,32 +22,30 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
   const featured = filteredEvents.slice(0, 4);
 
   return (
-    <div className="flex flex-col w-full animate-in fade-in duration-1000 bg-slate-50 dark:bg-[#09090b] min-h-screen pb-20">
-      <header className="px-6 lg:px-12 pt-16 pb-10">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-10 gap-8 relative z-20">
-          <div className="flex flex-col flex-1">
-            <div className="mb-4">
-               <span className="text-slate-900 dark:text-white font-[1000] text-2xl tracking-tighter uppercase">Si<span className="text-primary">gea</span></span>
+    <div className="flex flex-col w-full animate-in fade-in duration-700 bg-slate-50 dark:bg-[#09090b] min-h-screen pb-24">
+      <header className="px-6 lg:px-12 pt-12 lg:pt-16 pb-8">
+        <div className="flex items-center justify-between mb-8 lg:mb-10 relative z-20">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-1 lg:mb-4">
+               <span className="text-slate-900 dark:text-white font-[1000] text-xl lg:text-2xl tracking-tighter uppercase">Si<span className="text-primary">gea</span></span>
+               <div className="size-1 bg-primary rounded-full"></div>
             </div>
-            <h1 className="text-[44px] lg:text-[72px] font-[1000] text-slate-900 dark:text-white uppercase tracking-[-0.05em] leading-[0.85] mt-2">
+            <h1 className="text-[34px] lg:text-[72px] font-[1000] text-slate-900 dark:text-white uppercase tracking-tighter leading-[0.9] mt-1">
               Olá,<br /><span className="text-primary truncate block lg:max-w-xl">{profile?.name?.split(' ')[0]}</span>
             </h1>
-            <div className="flex items-center gap-3 mt-6">
-              <div className="size-2 rounded-full bg-primary shadow-[0_0_15px_#10b981]"></div>
-              <span className="text-[10px] font-[900] uppercase tracking-[0.3em] text-slate-400 dark:text-zinc-600 truncate max-w-[240px] lg:max-w-none">
-                {profile?.campus || 'INSTITUCIONAL'}
-              </span>
-            </div>
           </div>
           
-          <div className="flex gap-4 shrink-0">
-             <button onClick={onNotify} className="size-16 lg:size-14 flex items-center justify-center rounded-[2rem] lg:rounded-[1.5rem] bg-white dark:bg-[#121214] border border-slate-200 dark:border-white/5 text-slate-400 dark:text-zinc-400 active:scale-90 transition-all shadow-xl shadow-black/5 hover:border-primary/30">
-                <span className="material-symbols-outlined text-[32px] lg:text-[28px]">notifications</span>
-                {hasUnread && <span className="absolute top-4 right-4 size-2.5 bg-primary rounded-full ring-4 ring-white dark:ring-[#09090b]"></span>}
+          <div className="flex items-center gap-3 lg:gap-4 shrink-0">
+             <button 
+                onClick={onNotify} 
+                className="size-14 lg:size-14 flex items-center justify-center rounded-2xl lg:rounded-[1.5rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-400 dark:text-zinc-400 active:scale-90 transition-all shadow-lg hover:border-primary/30"
+              >
+                <span className="material-symbols-outlined text-[28px] lg:text-[28px]">notifications</span>
+                {hasUnread && <span className="absolute top-3.5 right-3.5 size-2.5 bg-primary rounded-full ring-2 ring-white dark:ring-[#09090b]"></span>}
              </button>
              <div 
                 onClick={() => navigateTo('profile')}
-                className="size-16 lg:size-14 rounded-[2rem] lg:rounded-[1.5rem] bg-primary flex items-center justify-center text-white font-black text-sm cursor-pointer active:scale-90 transition-all shadow-xl shadow-primary/20 overflow-hidden ring-4 ring-white dark:ring-white/5 hover:scale-105"
+                className="size-14 lg:size-14 rounded-2xl lg:rounded-[1.5rem] bg-primary flex items-center justify-center text-white font-black text-sm cursor-pointer active:scale-90 transition-all shadow-lg overflow-hidden ring-2 ring-white dark:ring-white/5"
               >
                 {profile?.photo ? (
                   <img src={profile.photo} className="w-full h-full object-cover" alt="Profile" />
@@ -59,56 +57,56 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
         </div>
 
         <div className="relative group max-w-2xl z-10 lg:ml-0">
-          <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
-             <span className="material-symbols-outlined text-primary text-[32px] lg:text-[28px]">search</span>
+          <div className="absolute left-5 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+             <span className="material-symbols-outlined text-primary text-[28px] lg:text-[28px]">search</span>
           </div>
           <input 
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-20 lg:h-18 pl-16 pr-8 bg-white dark:bg-[#121214] border border-slate-200 dark:border-white/5 rounded-[2.5rem] lg:rounded-[2rem] outline-none text-sm font-black focus:ring-8 focus:ring-primary/5 transition-all placeholder:text-slate-300 dark:placeholder:text-zinc-800 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-[0.3em] text-slate-900 dark:text-white shadow-xl shadow-black/5"
-            placeholder="Descobrir Congressos e Oficinas"
+            className="w-full h-16 lg:h-18 pl-14 pr-6 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl lg:rounded-[2rem] outline-none text-[15px] font-bold focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-700 text-slate-900 dark:text-white shadow-xl shadow-black/5"
+            placeholder="Congressos e Oficinas"
           />
         </div>
       </header>
 
-      <main className="space-y-14 lg:space-y-24">
+      <main className="space-y-12 lg:space-y-24">
         <section>
-          <div className="px-6 lg:px-12 flex items-center justify-between mb-8">
-            <div className="flex flex-col gap-2">
-               <h3 className="text-[14px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Destaques Semanais</h3>
-               <div className="w-12 h-1 bg-primary rounded-full shadow-[0_0_8px_#10b981]"></div>
+          <div className="px-6 lg:px-12 flex items-center justify-between mb-6">
+            <div className="flex flex-col gap-1">
+               <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Destaques</h3>
+               <div className="w-6 h-1 bg-primary rounded-full"></div>
             </div>
-            <button onClick={() => navigateTo('events')} className="px-8 py-4 lg:px-6 lg:py-3.5 bg-white dark:bg-[#121214] rounded-full text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-3 active:scale-95 transition-all border border-slate-200 dark:border-white/5 shadow-xl shadow-black/5 hover:bg-primary/5">
+            <button onClick={() => navigateTo('events')} className="px-5 py-2.5 bg-white dark:bg-zinc-900 rounded-xl text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all border border-slate-100 dark:border-white/5 shadow-sm">
                Ver Tudo
-               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+               <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
             </button>
           </div>
           
-          <div className="flex gap-8 overflow-x-auto no-scrollbar px-6 lg:px-12 pb-10">
+          <div className="flex gap-6 overflow-x-auto no-scrollbar px-6 lg:px-12 pb-6">
             {featured.length > 0 ? featured.map(event => (
               <EventCard key={event.id} event={event} horizontal onClick={() => navigateTo('details', event.id)} />
             )) : (
-              <div className="w-full py-24 text-center bg-white dark:bg-zinc-900/50 rounded-[3rem] border-2 border-dashed border-slate-100 dark:border-white/5 flex flex-col items-center justify-center gap-4">
-                <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-zinc-700">event_busy</span>
-                <p className="text-[10px] font-black text-slate-300 dark:text-zinc-700 uppercase tracking-widest">Nenhum evento registrado</p>
+              <div className="w-full py-20 text-center bg-white dark:bg-zinc-900/50 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-white/5 flex flex-col items-center justify-center gap-4">
+                <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-zinc-800">event_busy</span>
+                <p className="text-[10px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-widest">Nenhum evento registrado</p>
               </div>
             )}
           </div>
         </section>
 
         <section className="px-6 lg:px-12 pb-12">
-           <div className="flex flex-col gap-2 mb-8">
-               <h3 className="text-[14px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Recentemente Publicados</h3>
-               <div className="w-12 h-1 bg-primary rounded-full shadow-[0_0_8px_#10b981]"></div>
+           <div className="flex flex-col gap-1 mb-6">
+               <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Recentes</h3>
+               <div className="w-6 h-1 bg-primary rounded-full"></div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-8">
               {filteredEvents.slice(4, 13).map(event => (
                 <EventCard key={event.id} event={event} onClick={() => navigateTo('details', event.id)} />
               ))}
               {filteredEvents.length === 0 && search && (
-                <div className="col-span-full py-20 text-center text-[11px] font-black text-slate-300 dark:text-zinc-700 uppercase tracking-widest bg-white dark:bg-zinc-900/30 rounded-[3rem] border border-dashed border-slate-100 dark:border-white/5">
-                  Não encontramos nada para "{search}"
+                <div className="col-span-full py-16 text-center text-[10px] font-black text-slate-400 dark:text-zinc-700 uppercase tracking-widest bg-white dark:bg-zinc-900/30 rounded-[2rem] border border-dashed border-slate-100 dark:border-white/5">
+                  Nada encontrado para "{search}"
                 </div>
               )}
             </div>
