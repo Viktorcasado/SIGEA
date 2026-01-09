@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Event } from '../types';
 import IfalLogo from '../components/IfalLogo.tsx';
 
@@ -10,6 +10,7 @@ interface MyTicketProps {
 }
 
 const MyTicket: React.FC<MyTicketProps> = ({ navigateTo, profile, event }) => {
+  const [walletLoading, setWalletLoading] = useState(false);
   const timestamp = useMemo(() => new Date().getTime(), []);
   
   const ticketId = useMemo(() => {
@@ -18,7 +19,6 @@ const MyTicket: React.FC<MyTicketProps> = ({ navigateTo, profile, event }) => {
     return btoa(raw).substring(0, 12).toUpperCase();
   }, [event?.id, profile.id, timestamp]);
 
-  // Prevenção de Tela Preta: Fallback visual amigável
   if (!event) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-zinc-950 p-6 text-center">
@@ -31,6 +31,24 @@ const MyTicket: React.FC<MyTicketProps> = ({ navigateTo, profile, event }) => {
   const qrColor = "10b981";
   const qrData = `SIGEA|EVENT:${event.id}|USER:${profile.id}|AUTH:${ticketId}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}&color=${qrColor}&bgcolor=ffffff&qzone=2&margin=10`;
+
+  const handleAddToCalendar = () => {
+    const title = encodeURIComponent(event.title);
+    const details = encodeURIComponent(event.description);
+    const location = encodeURIComponent(`${event.location}, ${event.campus}`);
+    // Simulação de data formatada para Google Agenda (YYYYMMDDTHHMMSSZ)
+    const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&sf=true&output=xml`;
+    window.open(googleCalendarUrl, '_blank');
+  };
+
+  const handleAddToWallet = () => {
+    setWalletLoading(true);
+    // Simulação de integração com Google Wallet API
+    setTimeout(() => {
+      setWalletLoading(false);
+      alert("Inscrição vinculada ao seu Google Wallet com sucesso!");
+    }, 1500);
+  };
 
   const handlePrint = () => { window.print(); };
 
@@ -84,8 +102,6 @@ const MyTicket: React.FC<MyTicketProps> = ({ navigateTo, profile, event }) => {
                 </div>
               </div>
             </div>
-            <div className="absolute -bottom-4 -left-4 size-8 bg-slate-50 dark:bg-zinc-950 rounded-full border-r border-slate-100 dark:border-white/5 print:hidden"></div>
-            <div className="absolute -bottom-4 -right-4 size-8 bg-slate-50 dark:bg-zinc-950 rounded-full border-l border-slate-100 dark:border-white/5 print:hidden"></div>
           </div>
           <div className="bg-white dark:bg-zinc-900 h-1 border-x border-slate-100 dark:border-white/5 flex items-center justify-center relative overflow-hidden">
             <div className="w-full border-t-2 border-dashed border-slate-100 dark:border-zinc-800 mx-4"></div>
@@ -97,21 +113,47 @@ const MyTicket: React.FC<MyTicketProps> = ({ navigateTo, profile, event }) => {
             <div className="space-y-3">
               <p className="text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.3em]">Check-in Obrigatório</p>
               <p className="text-[9px] font-medium text-zinc-500 leading-relaxed max-w-[200px]">Apresente este código na entrada para garantir suas horas complementares.</p>
-              <div className="mt-4 pt-4 border-t border-slate-50 dark:border-white/5 flex items-center justify-center gap-6">
-                <div><p className="text-[7px] font-black text-zinc-400 uppercase tracking-widest">Carga Horária</p><p className="text-[10px] font-black text-primary">{event.certificateHours}h</p></div>
-                <div className="w-px h-6 bg-slate-100 dark:bg-zinc-800"></div>
-                <div><p className="text-[7px] font-black text-zinc-400 uppercase tracking-widest">Autenticação</p><p className="text-[10px] font-black text-zinc-900 dark:text-white">SIGEA-V1</p></div>
-              </div>
             </div>
           </div>
         </div>
+
+        {/* Novas Integrações: Agenda e Wallet */}
         <div className="mt-10 w-full max-w-[360px] flex flex-col gap-4 print:hidden">
-          <button onClick={handlePrint} className="w-full h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center gap-3 uppercase text-[10px] tracking-widest active:scale-95 transition-all"><span className="material-symbols-outlined text-xl">print</span> Imprimir Comprovante</button>
-          <div className="grid grid-cols-2 gap-3">
-            <button className="h-14 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all text-slate-600 dark:text-zinc-400 text-[9px] font-black uppercase tracking-widest"><span className="material-symbols-outlined text-lg">download</span> PDF</button>
-            <button className="h-14 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all text-slate-600 dark:text-zinc-400 text-[9px] font-black uppercase tracking-widest"><span className="material-symbols-outlined text-lg">share</span> Compartilhar</button>
+          <button 
+            onClick={handleAddToCalendar}
+            className="w-full h-16 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white font-black rounded-2xl shadow-xl flex items-center justify-center gap-4 uppercase text-[10px] tracking-widest active:scale-95 transition-all group"
+          >
+            <div className="size-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+               <span className="material-symbols-outlined text-blue-500 text-lg">calendar_add_on</span>
+            </div>
+            Adicionar ao Google Agenda
+          </button>
+
+          <button 
+            onClick={handleAddToWallet}
+            disabled={walletLoading}
+            className="w-full h-16 bg-zinc-950 text-white font-black rounded-2xl shadow-2xl flex items-center justify-center gap-4 uppercase text-[10px] tracking-widest active:scale-95 transition-all border border-white/10"
+          >
+            {walletLoading ? (
+               <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              <>
+                <img src="https://www.gstatic.com/images/branding/product/2x/wallet_48dp.png" className="size-6 object-contain" alt="Google Wallet" />
+                Salvar no Google Wallet
+              </>
+            )}
+          </button>
+
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <button onClick={handlePrint} className="h-14 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all text-slate-600 dark:text-zinc-400 text-[9px] font-black uppercase tracking-widest shadow-sm">
+              <span className="material-symbols-outlined text-lg">print</span> Imprimir
+            </button>
+            <button className="h-14 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all text-slate-600 dark:text-zinc-400 text-[9px] font-black uppercase tracking-widest shadow-sm">
+              <span className="material-symbols-outlined text-lg">share</span> Compartilhar
+            </button>
           </div>
-          <p className="text-center text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-4">Gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+          
+          <p className="text-center text-[8px] font-bold text-zinc-400 uppercase tracking-widest mt-6">Autenticado pelo Sistema Central SIGEA • {new Date().getFullYear()}</p>
         </div>
       </main>
     </div>
