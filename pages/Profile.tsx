@@ -74,7 +74,7 @@ const Profile: React.FC<ProfileProps> = ({
         photo: formData.photo
       });
       
-      if (success !== false) {
+      if (success) {
         setSaveSuccess(true);
         setIsEditing(false);
         if (window.navigator.vibrate) window.navigator.vibrate([10, 30, 10]);

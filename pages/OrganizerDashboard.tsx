@@ -24,13 +24,6 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ navigateTo, onN
     <div className="flex flex-col w-full pb-32 min-h-screen bg-slate-50 dark:bg-[#09090b] animate-in fade-in duration-700">
       <header className="px-6 lg:px-8 pt-12 lg:pt-16 pb-10 flex items-center justify-between sticky top-0 bg-slate-50/80 dark:bg-[#09090b]/80 backdrop-blur-3xl z-50 transition-colors">
         <div className="flex items-center gap-3 lg:gap-5">
-          <button 
-            onClick={toggleSidebar}
-            className="lg:hidden size-12 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 active:scale-90 transition-all shadow-lg"
-          >
-            <span className="material-symbols-outlined font-black">menu</span>
-          </button>
-          
           <div className="hidden lg:block">
             <div 
               onClick={() => navigateTo('profile')}

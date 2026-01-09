@@ -54,7 +54,6 @@ const NavButton: React.FC<NavButtonProps> = ({ id, label, icon, isActive, isColl
             <button 
               key={sub.id}
               onClick={() => {
-                // Aqui você pode adicionar navegação para subitens se necessário
                 onClick();
               }}
               className="w-full text-left py-2 px-3 text-[12px] font-medium text-slate-500 hover:text-primary transition-colors flex items-center gap-2"
@@ -93,6 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { id: 'home', label: 'Início', icon: 'home' },
         { id: 'participants', label: 'Pessoas', icon: 'person' },
+        { id: 'profile', label: 'Meu Perfil', icon: 'account_circle' },
       ]
     },
     {
@@ -141,7 +141,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Backdrop */}
       {isOpenMobile && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] lg:hidden animate-in fade-in duration-300"
@@ -185,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   key={item.id}
                   {...item}
                   isActive={currentPage === item.id}
-                  isCollapsed={false} // Sempre expandido no mobile para facilitar leitura
+                  isCollapsed={false}
                   onClick={() => handleNav(item.id)}
                 />
               ))}

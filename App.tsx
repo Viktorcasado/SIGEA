@@ -111,8 +111,9 @@ const App: React.FC = () => {
       if (session) {
         updateAuthState(session);
         if (event === 'SIGNED_IN') {
-          setCurrentPage('home');
-          localStorage.setItem('sigea_last_page', 'home');
+          if (currentPage === 'home' || !localStorage.getItem('sigea_last_page')) {
+            setCurrentPage('home');
+          }
         }
       } else if (event === 'SIGNED_OUT') {
         handleLogoutCleanUp();
@@ -129,7 +130,7 @@ const App: React.FC = () => {
 
     const profileData = {
       id: session.user.id,
-      name: (isAdmin && !metadata?.name) ? 'Viktor Casado' : (metadata?.name || 'Usuário SIGEA'),
+      name: metadata?.name || (isAdmin ? 'Viktor Casado' : 'Usuário SIGEA'),
       email: session.user.email,
       campus: metadata?.campus || 'IFAL - Campus Maceió',
       photo: metadata?.photo_url || metadata?.photo || ''
@@ -193,7 +194,9 @@ const App: React.FC = () => {
     }
   };
 
-  const handleRefreshEvents = () => fetchEvents();
+  const handleRefreshEvents = async () => {
+    await fetchEvents();
+  };
 
   if (isHydrating) {
     return (
@@ -269,9 +272,14 @@ const App: React.FC = () => {
         />
       )}
       
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative">
         <main className="flex-1 pb-24 lg:pb-0">{renderContent()}</main>
-        <BottomNav currentPage={currentPage} navigateTo={navigateTo} role={role} />
+        <BottomNav 
+          currentPage={currentPage} 
+          navigateTo={navigateTo} 
+          role={role} 
+          toggleSidebar={() => setIsSidebarOpen(true)}
+        />
         <AIAssistant events={events} />
       </div>
 

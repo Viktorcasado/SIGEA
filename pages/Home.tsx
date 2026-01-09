@@ -40,13 +40,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
     <div className="flex flex-col w-full animate-in fade-in duration-700 bg-slate-50 dark:bg-[#09090b] min-h-screen pb-24">
       <header className="px-6 lg:px-12 pt-12 lg:pt-16 pb-8">
         <div className="flex items-center justify-between mb-8 lg:mb-10 relative z-20">
-          <div className="flex items-center gap-4 lg:hidden">
-            <button 
-              onClick={toggleSidebar}
-              className="size-12 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 active:scale-90 transition-all shadow-lg"
-            >
-              <span className="material-symbols-outlined font-black">menu</span>
-            </button>
+          <div className="flex items-center gap-4">
             <div className="flex flex-col leading-none">
                <span className="text-slate-900 dark:text-white font-[1000] text-sm uppercase tracking-tighter">Portal</span>
                <span className="text-primary font-black text-[10px] uppercase">SIGEA</span>
@@ -58,9 +52,6 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
                <span className="text-slate-900 dark:text-white font-[1000] text-xl lg:text-2xl tracking-tighter uppercase">Si<span className="text-primary">gea</span></span>
                <div className="size-1 bg-primary rounded-full"></div>
             </div>
-            <h1 className="text-[34px] lg:text-[72px] font-[1000] text-slate-900 dark:text-white uppercase tracking-tighter leading-[0.9] mt-1">
-              Olá,<br /><span className="text-primary truncate block lg:max-w-xl">{profile?.name?.split(' ')[0]}</span>
-            </h1>
           </div>
           
           <div className="flex items-center gap-3 lg:gap-4 shrink-0">
@@ -84,9 +75,9 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
           </div>
         </div>
 
-        <div className="lg:hidden mb-8">
-           <h1 className="text-[34px] font-[1000] text-slate-900 dark:text-white uppercase tracking-tighter leading-[0.9]">
-              Olá,<br /><span className="text-primary">{profile?.name?.split(' ')[0]}</span>
+        <div className="mb-8">
+           <h1 className="text-[34px] lg:text-[72px] font-[1000] text-slate-900 dark:text-white uppercase tracking-tighter leading-[0.9]">
+              Olá,<br /><span className="text-primary truncate block lg:max-w-xl">{profile?.name?.split(' ')[0]}</span>
             </h1>
         </div>
 
@@ -123,7 +114,6 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
       </header>
 
       <main className="space-y-12 lg:space-y-24">
-        {/* Quick Links Section */}
         <section className="px-6 lg:px-12">
           <div className="flex flex-col gap-1 mb-6">
              <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Portais Institucionais</h3>

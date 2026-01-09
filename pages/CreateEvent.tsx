@@ -6,7 +6,7 @@ import { supabase, handleSupabaseError, uploadFile } from '../supabaseClient';
 
 interface CreateEventProps {
   navigateTo: (page: string, id?: string) => void;
-  onAddEvent: (event: Event) => void;
+  onAddEvent: (event: Event) => Promise<void> | void;
   profile: any;
 }
 
@@ -61,10 +61,16 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
       // 1. Upload da imagem se houver um arquivo selecionado
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        const fileName = `banner-${Math.random().toString(36).substring(2, 10)}-${Date.now()}.${fileExt}`;
         const filePath = `events/${profile.id}/${fileName}`;
         
-        finalImageUrl = await uploadFile('assets', filePath, selectedFile);
+        try {
+          finalImageUrl = await uploadFile('assets', filePath, selectedFile);
+        } catch (uploadErr) {
+          console.error("Erro no Storage:", uploadErr);
+          // Fallback para URL padrão se o storage falhar por permissão
+          finalImageUrl = 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000';
+        }
       }
 
       // 2. Inserção no Banco de Dados
@@ -90,22 +96,24 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
       if (data && data[0]) {
         const newEvent: Event = {
           ...data[0],
+          id: data[0].id,
           imageUrl: data[0].image_url,
           certificateHours: data[0].certificate_hours
         } as Event;
 
         localStorage.setItem(`last_published_${newEvent.id}`, JSON.stringify(newEvent));
-        onAddEvent(newEvent);
+        
+        // Aguarda a sincronização global antes de navegar
+        await onAddEvent(newEvent);
         navigateTo('publish-success', newEvent.id);
       }
     } catch (err: any) {
       console.error("Erro na publicação:", err);
+      setIsPublishing(false);
       setErrorModal({ 
         show: true, 
         msg: "Falha ao salvar evento ou imagem: " + handleSupabaseError(err) 
       });
-    } finally {
-      setIsPublishing(false);
     }
   };
 
@@ -125,7 +133,8 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <button 
             onClick={handleBack} 
-            className="size-14 lg:size-12 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 active:scale-90 transition-all border border-transparent dark:border-white/5"
+            disabled={isPublishing}
+            className="size-14 lg:size-12 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 active:scale-90 transition-all border border-transparent dark:border-white/5 disabled:opacity-50"
           >
             <span className="material-symbols-outlined font-black">arrow_back</span>
           </button>
@@ -220,8 +229,8 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
 
             <div className="space-y-8">
               <div 
-                onClick={() => fileInputRef.current?.click()}
-                className="aspect-video w-full rounded-[3rem] bg-slate-100 dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-white/5 overflow-hidden shadow-inner relative group cursor-pointer transition-all hover:border-primary/50"
+                onClick={() => !isPublishing && fileInputRef.current?.click()}
+                className={`aspect-video w-full rounded-[3rem] bg-slate-100 dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-white/5 overflow-hidden shadow-inner relative group cursor-pointer transition-all hover:border-primary/50 ${isPublishing ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <input 
                   type="file" 
@@ -243,7 +252,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
                   </div>
                 )}
 
-                {previewUrl && (
+                {previewUrl && !isPublishing && (
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
                     <span className="material-symbols-outlined text-white text-4xl">edit</span>
                   </div>
@@ -269,7 +278,8 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
         <div className="max-w-3xl mx-auto w-full flex gap-5">
           <button 
             onClick={handleBack} 
-            className="flex-1 h-16 lg:h-14 bg-slate-100 dark:bg-zinc-900 text-slate-500 font-black rounded-3xl uppercase text-[10px] tracking-widest active:scale-95 transition-all hover:bg-slate-200 dark:hover:bg-zinc-800"
+            disabled={isPublishing}
+            className="flex-1 h-16 lg:h-14 bg-slate-100 dark:bg-zinc-900 text-slate-500 font-black rounded-3xl uppercase text-[10px] tracking-widest active:scale-95 transition-all hover:bg-slate-200 dark:hover:bg-zinc-800 disabled:opacity-50"
           >
             Anterior
           </button>
