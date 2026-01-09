@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Event } from '../types';
 import { CAMPUS_LIST } from '../constants';
-import { supabase, handleSupabaseError } from '../supabaseClient';
+import { supabase, handleSupabaseError, uploadFile } from '../supabaseClient';
 
 interface EditEventProps {
   navigateTo: (page: string, id?: string) => void;
@@ -15,6 +15,9 @@ const EditEvent: React.FC<EditEventProps> = ({ navigateTo, eventId, events, onUp
   const [step, setStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const [errorModal, setErrorModal] = useState<{show: boolean, msg: string}>({ show: false, msg: '' });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const event = events.find(e => e.id === eventId);
 
@@ -43,6 +46,7 @@ const EditEvent: React.FC<EditEventProps> = ({ navigateTo, eventId, events, onUp
         imageUrl: event.imageUrl,
         certificateHours: event.certificateHours
       });
+      setPreviewUrl(event.imageUrl);
     }
   }, [event]);
 
@@ -50,6 +54,16 @@ const EditEvent: React.FC<EditEventProps> = ({ navigateTo, eventId, events, onUp
 
   const handleNext = () => step < 3 && setStep(s => s + 1);
   const handleBack = () => step > 1 ? setStep(s => s - 1) : navigateTo('manage-event', eventId!);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewUrl(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!formData.title || !formData.date) {
@@ -59,19 +73,30 @@ const EditEvent: React.FC<EditEventProps> = ({ navigateTo, eventId, events, onUp
 
     setIsSaving(true);
     
-    const dbUpdatePayload = {
-      title: formData.title.toUpperCase(),
-      description: formData.description,
-      campus: formData.campus,
-      date: formData.date.toUpperCase(),
-      time: formData.time,
-      location: formData.location,
-      image_url: formData.imageUrl,
-      type: formData.type,
-      certificate_hours: formData.certificateHours
-    };
-
     try {
+      let finalImageUrl = formData.imageUrl;
+
+      // 1. Upload se houver nova imagem
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        // Assumindo que o organizer_id está disponível ou usamos o eventId
+        const filePath = `events/updates/${eventId}/${fileName}`;
+        finalImageUrl = await uploadFile('assets', filePath, selectedFile);
+      }
+
+      const dbUpdatePayload = {
+        title: formData.title.toUpperCase(),
+        description: formData.description,
+        campus: formData.campus,
+        date: formData.date.toUpperCase(),
+        time: formData.time,
+        location: formData.location,
+        image_url: finalImageUrl,
+        type: formData.type,
+        certificate_hours: formData.certificateHours
+      };
+
       const { error } = await supabase
         .from('events')
         .update(dbUpdatePayload)
@@ -110,7 +135,7 @@ const EditEvent: React.FC<EditEventProps> = ({ navigateTo, eventId, events, onUp
           </button>
           <div className="text-center">
             <h1 className="text-[12px] font-[900] uppercase tracking-[0.3em] text-zinc-900 dark:text-white">Editar Evento</h1>
-            <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-1">Sincronizando Etapa {step}/3</p>
+            <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-1">Etapa {step}/3</p>
           </div>
           <div className="size-12"></div>
         </div>
@@ -195,14 +220,30 @@ const EditEvent: React.FC<EditEventProps> = ({ navigateTo, eventId, events, onUp
             </div>
 
             <div className="space-y-8">
-              <div className="space-y-3">
-                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">URL do Banner</label>
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="aspect-video w-full rounded-[3rem] bg-slate-100 dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-white/5 overflow-hidden shadow-inner relative group cursor-pointer transition-all hover:border-primary/50"
+              >
                 <input 
-                  type="text" 
-                  value={formData.imageUrl}
-                  onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                  className="w-full h-18 px-6 bg-white dark:bg-[#121214] border border-zinc-200 dark:border-white/5 rounded-3xl font-bold text-sm dark:text-white outline-none"
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleFileChange} 
                 />
+                
+                {previewUrl ? (
+                  <img src={previewUrl} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Banner Preview" />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400 space-y-4">
+                    <span className="material-symbols-outlined text-6xl opacity-20">image</span>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Clique para trocar banner</p>
+                  </div>
+                )}
+                
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
+                  <span className="material-symbols-outlined text-white text-4xl">edit</span>
+                </div>
               </div>
               
               <div className="space-y-3">

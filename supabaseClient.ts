@@ -17,6 +17,19 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 });
 
+// Helper para Upload de Arquivos
+export const uploadFile = async (bucket: string, path: string, file: File) => {
+  const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
+    upsert: true,
+    cacheControl: '3600'
+  });
+  
+  if (error) throw error;
+  
+  const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(data.path);
+  return publicUrl;
+};
+
 // O sistema agora opera exclusivamente via Supabase
 export const isSupabaseConfigured = (): boolean => true;
 

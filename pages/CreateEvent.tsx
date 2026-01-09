@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Event } from '../types';
 import { CAMPUS_LIST } from '../constants';
-import { supabase, handleSupabaseError } from '../supabaseClient';
+import { supabase, handleSupabaseError, uploadFile } from '../supabaseClient';
 
 interface CreateEventProps {
   navigateTo: (page: string, id?: string) => void;
@@ -14,6 +14,9 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
   const [step, setStep] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
   const [errorModal, setErrorModal] = useState<{show: boolean, msg: string}>({ show: false, msg: '' });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -23,12 +26,21 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
     time: '08:00 - 18:00',
     location: 'Auditório Principal',
     type: 'Congresso',
-    imageUrl: '', 
     certificateHours: 10
   });
 
   const handleNext = () => step < 3 && setStep(s => s + 1);
   const handleBack = () => step > 1 ? setStep(s => s - 1) : navigateTo('home');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewUrl(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!formData.title || !formData.date) {
@@ -37,30 +49,40 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
     }
 
     if (!profile?.id) {
-      setErrorModal({ show: true, msg: 'Erro de autenticação: Usuário não identificado. Faça login novamente.' });
+      setErrorModal({ show: true, msg: 'Erro de autenticação: Usuário não identificado.' });
       return;
     }
 
     setIsPublishing(true);
     
-    // Objeto formatado para o Supabase (Snake Case)
-    const dbEventPayload = {
-      title: formData.title.toUpperCase(),
-      description: formData.description,
-      campus: formData.campus,
-      date: formData.date.toUpperCase(),
-      time: formData.time,
-      location: formData.location,
-      image_url: formData.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000',
-      type: formData.type,
-      status: 'Inscrições Abertas',
-      price: 'Gratuito',
-      certificate_hours: formData.certificateHours,
-      organizer_id: profile.id // Vinculamos o evento ao seu usuário logado
-    };
-
     try {
-      // Tentamos inserir no banco real
+      let finalImageUrl = 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000';
+
+      // 1. Upload da imagem se houver um arquivo selecionado
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        const filePath = `events/${profile.id}/${fileName}`;
+        
+        finalImageUrl = await uploadFile('assets', filePath, selectedFile);
+      }
+
+      // 2. Inserção no Banco de Dados
+      const dbEventPayload = {
+        title: formData.title.toUpperCase(),
+        description: formData.description,
+        campus: formData.campus,
+        date: formData.date.toUpperCase(),
+        time: formData.time,
+        location: formData.location,
+        image_url: finalImageUrl,
+        type: formData.type,
+        status: 'Inscrições Abertas',
+        price: 'Gratuito',
+        certificate_hours: formData.certificateHours,
+        organizer_id: profile.id
+      };
+
       const { data, error } = await supabase.from('events').insert([dbEventPayload]).select();
       
       if (error) throw error;
@@ -72,17 +94,15 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
           certificateHours: data[0].certificate_hours
         } as Event;
 
-        // Cache local temporário para a tela de sucesso
         localStorage.setItem(`last_published_${newEvent.id}`, JSON.stringify(newEvent));
-        
         onAddEvent(newEvent);
         navigateTo('publish-success', newEvent.id);
       }
     } catch (err: any) {
-      console.error("Erro na persistência do evento:", err);
+      console.error("Erro na publicação:", err);
       setErrorModal({ 
         show: true, 
-        msg: "FALHA CRÍTICA NO BANCO DE DADOS: O evento não pôde ser salvo permanentemente. " + handleSupabaseError(err) 
+        msg: "Falha ao salvar evento ou imagem: " + handleSupabaseError(err) 
       });
     } finally {
       setIsPublishing(false);
@@ -111,7 +131,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
           </button>
           <div className="text-center">
             <h1 className="text-[12px] font-[900] uppercase tracking-[0.3em] text-zinc-900 dark:text-white">Novo Evento</h1>
-            <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-1">Sincronizando Etapa {step}/3</p>
+            <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-1">Etapa {step}/3</p>
           </div>
           <div className="size-14 lg:size-12"></div>
         </div>
@@ -195,28 +215,37 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
           <div className="space-y-10 animate-in zoom-in-95 duration-500">
              <div className="space-y-3">
               <h2 className="text-[36px] lg:text-[48px] font-[1000] text-zinc-900 dark:text-white tracking-tighter uppercase leading-[0.9]">Mídia e <br /> <span className="text-primary">Descrição</span></h2>
-              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Adicione o banner e detalhe os objetivos.</p>
+              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Adicione o banner oficial do evento.</p>
             </div>
 
             <div className="space-y-8">
-              <div className="space-y-3">
-                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">URL da Imagem de Capa</label>
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="aspect-video w-full rounded-[3rem] bg-slate-100 dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-white/5 overflow-hidden shadow-inner relative group cursor-pointer transition-all hover:border-primary/50"
+              >
                 <input 
-                  type="text" 
-                  placeholder="https://images.unsplash.com/..." 
-                  value={formData.imageUrl}
-                  onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                  className="w-full h-20 lg:h-18 px-6 bg-white dark:bg-[#121214] border border-zinc-200 dark:border-white/5 rounded-3xl font-bold text-sm dark:text-white outline-none focus:border-primary transition-all"
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleFileChange} 
                 />
-              </div>
-              
-              <div className="aspect-video w-full rounded-[3rem] bg-slate-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 overflow-hidden shadow-inner relative group">
-                {formData.imageUrl ? (
-                  <img src={formData.imageUrl} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Banner Preview" />
+                
+                {previewUrl ? (
+                  <img src={previewUrl} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Banner Preview" />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400 space-y-4">
-                    <span className="material-symbols-outlined text-6xl opacity-20">image</span>
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Preview do Banner</p>
+                    <span className="material-symbols-outlined text-6xl opacity-20">cloud_upload</span>
+                    <div className="text-center">
+                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Clique para enviar banner</p>
+                      <p className="text-[8px] font-bold uppercase tracking-widest opacity-30 mt-1">PNG, JPG ou WEBP (Max 5MB)</p>
+                    </div>
+                  </div>
+                )}
+
+                {previewUrl && (
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
+                    <span className="material-symbols-outlined text-white text-4xl">edit</span>
                   </div>
                 )}
               </div>
