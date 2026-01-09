@@ -106,7 +106,6 @@ const App: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         updateAuthState(session);
-        // Ao logar, forçamos a ida para a home, onde a role decidirá o dashboard
         if (event === 'SIGNED_IN') {
           setCurrentPage('home');
           localStorage.setItem('sigea_last_page', 'home');
@@ -121,15 +120,18 @@ const App: React.FC = () => {
 
   const updateAuthState = (session: any) => {
     const metadata = session.user.user_metadata;
+    const userEmail = session.user.email?.toLowerCase();
+    const isAdmin = userEmail === 'viktorcasado@gmail.com';
+
     const profileData = {
       id: session.user.id,
-      name: metadata?.name || 'Usuário SIGEA',
+      name: (isAdmin && !metadata?.name) ? 'Viktor Casado' : (metadata?.name || 'Usuário SIGEA'),
       email: session.user.email,
       campus: metadata?.campus || 'IFAL - Campus Maceió',
       photo: metadata?.photo_url || metadata?.photo || ''
     };
     setUserProfile(profileData);
-    setRole((metadata?.role || UserRole.PARTICIPANT) as UserRole);
+    setRole((isAdmin ? UserRole.ORGANIZER : (metadata?.role || UserRole.PARTICIPANT)) as UserRole);
     setAuthStatus(true);
   };
 
@@ -181,7 +183,6 @@ const App: React.FC = () => {
     const newRole = role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT;
     setRole(newRole);
     
-    // Persiste a mudança de role no Supabase para que o próximo login lembre a escolha
     try {
       await supabase.auth.updateUser({
         data: { role: newRole }

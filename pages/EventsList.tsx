@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import EventCard from '../components/EventCard';
 import { Event } from '../types';
 import { CAMPUS_LIST } from '../constants';
+import Logo from '../components/Logo.tsx';
 
 interface EventsListProps {
   navigateTo: (page: string, id?: string) => void;
@@ -53,14 +54,16 @@ const EventsList: React.FC<EventsListProps> = ({ navigateTo, events }) => {
         </div>
 
         <div className="relative">
+          <div className="absolute left-5 top-1/2 -translate-y-1/2 z-10 pointer-events-none opacity-80 scale-90">
+            <Logo size="sm" />
+          </div>
           <input 
             type="text"
-            className="w-full h-16 pl-14 pr-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl font-bold text-sm outline-none focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-zinc-600 dark:text-white shadow-sm"
+            className="w-full h-16 pl-18 lg:pl-20 pr-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl font-bold text-sm outline-none focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-zinc-600 dark:text-white shadow-sm"
             placeholder="Pesquisar por título ou tema..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary text-2xl font-black">search</span>
         </div>
       </header>
 

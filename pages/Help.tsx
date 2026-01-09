@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { INSTITUTION_CONTACTS } from '../constants';
+import Logo from '../components/Logo.tsx';
 
 interface HelpProps {
   navigateTo: (page: string) => void;
@@ -67,13 +68,15 @@ const Help: React.FC<HelpProps> = ({ navigateTo }) => {
             <div className="flex flex-col gap-1">
               <h3 className="text-[10px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-widest ml-2 mb-4">Contatos das Unidades</h3>
               <div className="relative group">
-                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary">search</span>
+                <div className="absolute left-5 top-1/2 -translate-y-1/2 z-10 pointer-events-none opacity-80 scale-90">
+                  <Logo size="sm" />
+                </div>
                 <input 
                   type="text" 
                   value={search} 
                   onChange={e => setSearch(e.target.value)} 
                   placeholder="PESQUISAR CAMPUS OU UFAL..." 
-                  className="w-full h-16 pl-14 pr-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl outline-none text-xs font-black text-slate-900 dark:text-white shadow-sm focus:ring-4 focus:ring-primary/10 transition-all uppercase tracking-widest" 
+                  className="w-full h-16 pl-18 pr-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl outline-none text-xs font-black text-slate-900 dark:text-white shadow-sm focus:ring-4 focus:ring-primary/10 transition-all uppercase tracking-widest" 
                 />
               </div>
             </div>

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import EventCard from '../components/EventCard.tsx';
 import { Event as SIGEAEvent } from '../types.ts';
 import { CAMPUS_LIST } from '../constants';
+import Logo from '../components/Logo.tsx';
 
 interface HomeProps {
   navigateTo: (page: string, id?: string) => void;
@@ -71,14 +72,14 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
 
         <div className="relative group max-w-2xl z-10 lg:ml-0 space-y-6">
           <div className="relative">
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
-              <span className="material-symbols-outlined text-primary text-[28px] lg:text-[28px]">search</span>
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 z-10 pointer-events-none opacity-80 scale-90">
+              <Logo size="sm" />
             </div>
             <input 
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-16 lg:h-18 pl-14 pr-6 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl lg:rounded-[2rem] outline-none text-[15px] font-bold focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-700 text-slate-900 dark:text-white shadow-xl shadow-black/5"
+              className="w-full h-16 lg:h-18 pl-18 lg:pl-20 pr-6 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl lg:rounded-[2rem] outline-none text-[15px] font-bold focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-700 text-slate-900 dark:text-white shadow-xl shadow-black/5"
               placeholder="Congressos e Oficinas"
             />
           </div>
