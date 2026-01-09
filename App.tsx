@@ -167,26 +167,22 @@ const App: React.FC = () => {
 
   const handleUpdateProfile = async (data: any) => {
     try {
-      // 1. Forçar refresh da sessão para evitar erro de conexão por JWT expirado
       await supabase.auth.refreshSession();
       
       let finalPhotoUrl = userProfile?.photo;
 
-      // 2. Upload real se houver arquivo
       if (data.imageFile) {
         const fileExt = data.imageFile.name.split('.').pop();
         const fileName = `avatar-${userProfile.id}-${Date.now()}.${fileExt}`;
         const filePath = `profiles/${userProfile.id}/${fileName}`;
         try {
-          // Fix: Declaring finalImageUrl with const to resolve scope error
-          const finalImageUrl = await uploadFile('assets', filePath, data.imageFile);
-          finalPhotoUrl = finalImageUrl;
+          const uploadedUrl = await uploadFile('assets', filePath, data.imageFile);
+          finalPhotoUrl = uploadedUrl;
         } catch (uploadErr: any) {
           return { success: false, error: uploadErr.message };
         }
       }
 
-      // 3. Atualizar Metadata
       const updateData = {
         name: data.name || userProfile.name,
         campus: data.campus || userProfile.campus,
@@ -195,7 +191,6 @@ const App: React.FC = () => {
       };
 
       const { error } = await supabase.auth.updateUser({ data: updateData });
-      
       if (error) throw error;
 
       setUserProfile((prev: any) => ({ ...prev, ...updateData }));
@@ -276,7 +271,7 @@ const App: React.FC = () => {
     }
   };
 
-  const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'reports', 'help', 'create-event', 'edit-event', 'check-in', 'integrations', 'schedule', 'participants'].includes(currentPage);
+  const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'reports', 'help', 'create-event', 'edit-event', 'check-in', 'integrations', 'schedule', 'participants', 'manage-event', 'details', 'register'].includes(currentPage);
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#09090b]">
@@ -290,11 +285,14 @@ const App: React.FC = () => {
           openPortal={openPortal}
           isOpenMobile={isSidebarOpen}
           setOpenMobile={setIsSidebarOpen}
+          selectedEventId={selectedEventId}
         />
       )}
       
-      <div className="flex-1 flex flex-col min-w-0 relative">
-        <main className="flex-1 pb-24 lg:pb-0">{renderContent()}</main>
+      <div className="flex-1 flex flex-col min-w-0 relative h-screen overflow-hidden">
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-24 lg:pb-0">
+          {renderContent()}
+        </div>
         <BottomNav 
           currentPage={currentPage} 
           navigateTo={navigateTo} 

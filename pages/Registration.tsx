@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Event } from '../types';
-import { supabase, isSupabaseConfigured, handleSupabaseError } from '../supabaseClient';
+import { supabase, isSupabaseConfigured, handleSupabaseError, uploadFile } from '../supabaseClient';
 import { CAMPUS_LIST } from '../constants';
 
 interface RegistrationProps {
@@ -19,6 +19,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
   const [role, setRole] = useState<UserRoleOption>('Estudante');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCampusModal, setShowCampusModal] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
@@ -28,7 +29,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
     campus: profile.campus || CAMPUS_LIST[0],
     matricula: '',
     siape: '',
-    photo: profile.photo || '',
+    photoPreview: profile.photo || '',
     terms: false
   });
 
@@ -38,7 +39,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
         ...prev,
         name: profile.name || prev.name,
         email: profile.email || prev.email,
-        photo: profile.photo || prev.photo,
+        photoPreview: profile.photo || prev.photoPreview,
         campus: profile.campus || prev.campus || CAMPUS_LIST[0]
       }));
     }
@@ -50,25 +51,41 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("A foto é muito pesada (máx 2MB). Escolha outra.");
+        return;
+      }
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, photo: reader.result as string });
+        setFormData({ ...formData, photoPreview: reader.result as string });
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleConfirmRegistration = async () => {
+    if (!formData.terms) return;
     setIsSubmitting(true);
+    
     try {
-      // 1. Sincroniza Perfil/Campus no Auth Metadata para persistência
+      let finalPhotoUrl = profile.photo;
+
+      // Primeiro faz o upload da foto se houver uma nova
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `reg-${profile.id}-${Date.now()}.${fileExt}`;
+        const filePath = `profiles/${profile.id}/${fileName}`;
+        finalPhotoUrl = await uploadFile('assets', filePath, selectedFile);
+      }
+
+      // Atualiza o perfil sem mandar o base64 (manda a URL do storage ou a antiga)
       await onUpdateProfile({
         name: formData.name,
-        photo_url: formData.photo, // Usando photo_url para consistência
+        photo_url: finalPhotoUrl,
         campus: formData.campus
       });
 
-      // 2. Salva na Tabela de Inscrições
       if (isSupabaseConfigured()) {
         const { error: regError } = await supabase
           .from('registrations')
@@ -81,7 +98,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
             role: role,
             campus: formData.campus,
             registration_number: role === 'Estudante' ? formData.matricula : formData.siape,
-            photo_url: formData.photo,
+            photo_url: finalPhotoUrl,
             status: 'Confirmado'
           }]);
 
@@ -91,9 +108,8 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
       if (window.navigator.vibrate) window.navigator.vibrate([20, 50, 20]);
       navigateTo('ticket', event.id);
     } catch (err: any) {
-      console.warn("Inscrição offline/error:", handleSupabaseError(err));
-      // Fallback para demonstração se houver erro de rede (PWA mode)
-      navigateTo('ticket', event.id);
+      const errorMsg = handleSupabaseError(err);
+      alert(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -112,7 +128,6 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
   return (
     <div className="relative flex flex-col w-full pb-32 min-h-screen bg-slate-50 dark:bg-zinc-950 animate-in fade-in duration-500 overflow-x-hidden">
       
-      {/* Campus Selector Modal - Material 3 Style */}
       {showCampusModal && (
         <div className="fixed inset-0 z-[1000] flex items-end justify-center animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCampusModal(false)}></div>
@@ -176,8 +191,8 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
                 onClick={() => fileInputRef.current?.click()}
                 className="relative size-32 rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-900 mx-auto border-2 border-dashed border-zinc-200 dark:border-white/10 flex items-center justify-center cursor-pointer overflow-hidden group shadow-inner transition-all hover:border-primary/50"
               >
-                {formData.photo ? (
-                  <img src={formData.photo} className="w-full h-full object-cover" alt="Perfil" />
+                {formData.photoPreview ? (
+                  <img src={formData.photoPreview} className="w-full h-full object-cover" alt="Perfil" />
                 ) : (
                   <span className="material-symbols-outlined text-4xl text-zinc-300">add_a_photo</span>
                 )}
@@ -191,7 +206,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
 
             <div className="space-y-4">
               <div className="space-y-1.5 px-2">
-                <label className="text-[9px] font-black text-zinc-500 uppercase ml-2 tracking-widest">Nome Completo</label>
+                <label className="text-[11px] font-black text-zinc-500 uppercase ml-2 tracking-widest">Nome Completo</label>
                 <input 
                   type="text" 
                   value={formData.name}
@@ -200,7 +215,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
                 />
               </div>
               <div className="space-y-1.5 px-2">
-                <label className="text-[9px] font-black text-zinc-500 uppercase ml-2 tracking-widest">E-mail Institucional</label>
+                <label className="text-[11px] font-black text-zinc-500 uppercase ml-2 tracking-widest">E-mail Institucional</label>
                 <input 
                   type="email" 
                   value={formData.email}
@@ -254,7 +269,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
               <div className="absolute top-0 right-0 p-6">
                 <div className="px-3 py-1 bg-primary/10 text-primary text-[8px] font-black uppercase rounded-full">Verificado</div>
               </div>
-              <div className="size-24 rounded-full bg-cover bg-center mx-auto mb-6 ring-4 ring-primary/20 shadow-lg" style={{backgroundImage: `url(${formData.photo || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=200'})`}}></div>
+              <div className="size-24 rounded-full bg-cover bg-center mx-auto mb-6 ring-4 ring-primary/20 shadow-lg" style={{backgroundImage: `url(${formData.photoPreview || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=200'})`}}></div>
               <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight leading-tight">{formData.name}</h3>
               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">{role} • {formData.campus}</p>
               
