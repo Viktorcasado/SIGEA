@@ -24,12 +24,14 @@ const Profile: React.FC<ProfileProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
   const [formData, setFormData] = useState({ 
     name: profile?.name || '', 
     photo: profile?.photo || '', 
-    campus: profile?.campus || '',
+    campus: profile?.campus || CAMPUS_LIST[0],
     email: profile?.email || ''
   });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { 
@@ -37,7 +39,7 @@ const Profile: React.FC<ProfileProps> = ({
       setFormData({ 
         name: profile.name, 
         photo: profile.photo, 
-        campus: profile.campus,
+        campus: profile.campus || CAMPUS_LIST[0],
         email: profile.email
       }); 
     }
@@ -54,52 +56,24 @@ const Profile: React.FC<ProfileProps> = ({
     }
   };
 
-  const handleSelectCampus = (campus: string) => {
-    setFormData(prev => ({ ...prev, campus }));
-    setShowCampusSelector(false);
-  };
-
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Sincroniza os dados com o Supabase Auth Metadata
       const success = await onUpdate({ 
         name: formData.name, 
         campus: formData.campus, 
-        photo_url: formData.photo 
+        photo_url: formData.photo // Mantendo photo_url para compatibilidade com App.tsx
       });
+      
       if (success !== false) {
         setIsEditing(false);
+        if (window.navigator.vibrate) window.navigator.vibrate([10, 30, 10]);
       }
     } catch (error) { 
       alert("Erro ao salvar perfil no SIGEA.");
     } finally { 
       setIsSaving(false); 
-    }
-  };
-
-  const handleSignOut = async () => {
-    if (isLoggingOut) return;
-    setIsLoggingOut(true);
-    try {
-      await onLogout();
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao sair da sessão.");
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (isDeleting) return;
-    setIsDeleting(true);
-    try {
-      await onDeleteAccount();
-      setShowDeleteModal(false);
-    } catch (err) {
-      alert("Falha ao processar exclusão.");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
@@ -121,7 +95,12 @@ const Profile: React.FC<ProfileProps> = ({
             </p>
             <div className="flex flex-col gap-3">
               <button 
-                onClick={handleDelete}
+                onClick={async () => {
+                   setIsDeleting(true);
+                   await onDeleteAccount();
+                   setIsDeleting(false);
+                   setShowDeleteModal(false);
+                }}
                 disabled={isDeleting}
                 className="w-full h-16 bg-red-500 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
               >
@@ -148,7 +127,11 @@ const Profile: React.FC<ProfileProps> = ({
           </span>
         </button>
         <h2 className="text-[12px] font-[900] uppercase tracking-[0.4em] text-slate-400 dark:text-zinc-500">{isEditing ? 'Configurações' : 'Perfil SIGEA'}</h2>
-        <button onClick={() => isEditing ? handleSave() : setIsEditing(true)} disabled={isSaving} className={`size-12 flex items-center justify-center rounded-2xl transition-all active:scale-90 shadow-2xl ${isEditing ? 'bg-primary text-white shadow-primary/30' : 'bg-primary/10 text-primary border border-primary/20'}`}>
+        <button 
+          onClick={() => isEditing ? handleSave() : setIsEditing(true)} 
+          disabled={isSaving} 
+          className={`size-12 flex items-center justify-center rounded-2xl transition-all active:scale-90 shadow-2xl ${isEditing ? 'bg-primary text-white shadow-primary/30' : 'bg-primary/10 text-primary border border-primary/20'}`}
+        >
           {isSaving ? <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{isEditing ? 'check' : 'edit_square'}</span>}
         </button>
       </header>
@@ -188,7 +171,10 @@ const Profile: React.FC<ProfileProps> = ({
               </div>
               <div className="space-y-1.5 px-2">
                 <label className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Campus Oficial</label>
-                <div onClick={() => setShowCampusSelector(true)} className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl text-sm font-bold flex items-center justify-between cursor-pointer text-slate-900 dark:text-white shadow-sm hover:border-primary/30 transition-all">
+                <div 
+                  onClick={() => setShowCampusSelector(true)} 
+                  className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-3xl text-sm font-bold flex items-center justify-between cursor-pointer text-slate-900 dark:text-white shadow-sm hover:border-primary/30 transition-all"
+                >
                   <span className="truncate">{formData.campus || "Selecionar Campus"}</span>
                   <span className="material-symbols-outlined text-primary">expand_more</span>
                 </div>
@@ -216,13 +202,13 @@ const Profile: React.FC<ProfileProps> = ({
           </button>
 
           <button 
-            onClick={handleSignOut} 
+            onClick={onLogout} 
             disabled={isLoggingOut}
             className="w-full p-6 bg-white dark:bg-zinc-900/40 rounded-[2.5rem] border border-slate-100 dark:border-white/5 flex items-center justify-between active:scale-95 transition-all disabled:opacity-50 group"
           >
             <div className="flex items-center gap-4">
               <div className="size-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-slate-400 group-hover:text-red-500 transition-colors">
-                {isLoggingOut ? <div className="size-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div> : <span className="material-symbols-outlined">logout</span>}
+                <span className="material-symbols-outlined">logout</span>
               </div>
               <div className="text-left"><p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Sair da Conta</p><p className="text-[9px] font-bold text-slate-400 dark:text-zinc-600 uppercase">Encerrar sessão atual</p></div>
             </div>
@@ -249,31 +235,45 @@ const Profile: React.FC<ProfileProps> = ({
         </div>
       </main>
 
-      {/* Campus Selector - Modal */}
+      {/* Campus Selector - Modal Estilo Material 3 Bottom Sheet */}
       {showCampusSelector && (
         <div className="fixed inset-0 z-[1000] flex items-end justify-center animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCampusSelector(false)}></div>
           <div className="relative w-full max-w-lg bg-white dark:bg-[#121214] rounded-t-[3rem] p-8 max-h-[85vh] overflow-hidden flex flex-col shadow-2xl border-t border-primary/20">
-            <header className="flex items-center justify-between mb-8 px-2">
+            <header className="flex items-center justify-between mb-8 px-2 shrink-0">
               <div className="flex flex-col">
                 <h3 className="text-lg font-black uppercase text-slate-900 dark:text-white tracking-tight">Campus Institucional</h3>
                 <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">Selecione sua unidade oficial</p>
               </div>
-              <button onClick={() => setShowCampusSelector(false)} className="size-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-xl active:scale-90 transition-all"><span className="material-symbols-outlined">check</span></button>
+              <button 
+                onClick={() => setShowCampusSelector(false)} 
+                className="size-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-xl active:scale-90 transition-all"
+              >
+                <span className="material-symbols-outlined">check</span>
+              </button>
             </header>
+            
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pb-20 px-2">
-              {CAMPUS_LIST.map((c) => (
-                <div 
-                  key={c} 
-                  onClick={() => handleSelectCampus(c)} 
-                  className={`flex items-center justify-between p-6 rounded-[2rem] border transition-all cursor-pointer ${formData.campus === c ? 'bg-primary/10 border-primary shadow-sm' : 'bg-slate-50 dark:bg-zinc-900/50 border-slate-100 dark:border-white/5 hover:border-slate-200'}`}
-                >
-                  <span className={`text-sm font-bold uppercase tracking-tight ${formData.campus === c ? 'text-primary font-black' : 'text-slate-600 dark:text-zinc-400'}`}>{c}</span>
-                  <div className={`size-6 rounded-full border-2 flex items-center justify-center transition-all ${formData.campus === c ? 'border-primary bg-primary' : 'border-slate-300 dark:border-zinc-700'}`}>
-                    {formData.campus === c && <div className="size-2 bg-white rounded-full"></div>}
+              {CAMPUS_LIST.map((c) => {
+                const isSelected = formData.campus === c;
+                return (
+                  <div 
+                    key={c} 
+                    onClick={() => {
+                      if (window.navigator.vibrate) window.navigator.vibrate(5);
+                      setFormData(prev => ({ ...prev, campus: c }));
+                      // Se estiver editando, apenas atualiza o form. Se não, salva direto? 
+                      // No padrão de perfil, melhor deixar o usuário clicar no "Check" geral de salvar.
+                    }} 
+                    className={`flex items-center justify-between p-6 rounded-[2rem] border transition-all cursor-pointer ${isSelected ? 'bg-primary/10 border-primary shadow-sm' : 'bg-slate-50 dark:bg-zinc-900/50 border-slate-100 dark:border-white/5 hover:border-slate-200'}`}
+                  >
+                    <span className={`text-sm font-bold uppercase tracking-tight ${isSelected ? 'text-primary font-black' : 'text-slate-600 dark:text-zinc-400'}`}>{c}</span>
+                    <div className={`size-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'border-primary bg-primary' : 'border-slate-300 dark:border-zinc-700'}`}>
+                      {isSelected && <div className="size-2 bg-white rounded-full"></div>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

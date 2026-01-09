@@ -21,6 +21,13 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
 
   const featured = filteredEvents.slice(0, 4);
 
+  const portals = [
+    { name: 'SUAP', icon: 'account_balance', color: 'bg-emerald-500', url: 'https://suap.ifal.edu.br' },
+    { name: 'SIGAA', icon: 'school', color: 'bg-blue-500', url: 'https://sigaa.ifal.edu.br' },
+    { name: 'SIGRH', icon: 'badge', color: 'bg-red-500', url: 'https://sigrh.ifal.edu.br' },
+    { name: 'SIPAC', icon: 'inventory_2', color: 'bg-amber-500', url: 'https://sipac.ifal.edu.br' },
+  ];
+
   return (
     <div className="flex flex-col w-full animate-in fade-in duration-700 bg-slate-50 dark:bg-[#09090b] min-h-screen pb-24">
       <header className="px-6 lg:px-12 pt-12 lg:pt-16 pb-8">
@@ -71,6 +78,39 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
       </header>
 
       <main className="space-y-12 lg:space-y-24">
+        {/* Quick Links Section */}
+        <section className="px-6 lg:px-12">
+          <div className="flex flex-col gap-1 mb-6">
+             <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Acessos Rápidos</h3>
+             <div className="w-6 h-1 bg-primary rounded-full"></div>
+          </div>
+          <div className="grid grid-cols-4 gap-4 lg:grid-cols-8">
+            {portals.map((portal) => (
+              <a 
+                key={portal.name}
+                href={portal.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-2 group transition-all"
+              >
+                <div className={`size-14 lg:size-16 rounded-[1.5rem] ${portal.color} flex items-center justify-center text-white shadow-lg group-active:scale-90 transition-transform group-hover:rotate-6`}>
+                  <span className="material-symbols-outlined text-2xl">{portal.icon}</span>
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-600 group-hover:text-primary transition-colors tracking-widest">{portal.name}</span>
+              </a>
+            ))}
+            <button 
+                onClick={() => navigateTo('integrations')}
+                className="flex flex-col items-center gap-2 group transition-all"
+              >
+                <div className="size-14 lg:size-16 rounded-[1.5rem] bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/5 flex items-center justify-center text-slate-400 group-active:scale-90 transition-transform shadow-sm group-hover:border-primary">
+                  <span className="material-symbols-outlined text-2xl">sync</span>
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-600 group-hover:text-primary transition-colors tracking-widest">Sinc</span>
+              </button>
+          </div>
+        </section>
+
         <section>
           <div className="px-6 lg:px-12 flex items-center justify-between mb-6">
             <div className="flex flex-col gap-1">

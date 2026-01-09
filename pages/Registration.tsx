@@ -39,7 +39,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
         name: profile.name || prev.name,
         email: profile.email || prev.email,
         photo: profile.photo || prev.photo,
-        campus: profile.campus || prev.campus
+        campus: profile.campus || prev.campus || CAMPUS_LIST[0]
       }));
     }
   }, [profile]);
@@ -61,10 +61,10 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
   const handleConfirmRegistration = async () => {
     setIsSubmitting(true);
     try {
-      // 1. Sincroniza Perfil/Campus no Auth Metadata
+      // 1. Sincroniza Perfil/Campus no Auth Metadata para persistência
       await onUpdateProfile({
         name: formData.name,
-        photo: formData.photo,
+        photo_url: formData.photo, // Usando photo_url para consistência
         campus: formData.campus
       });
 
@@ -88,10 +88,11 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
         if (regError) throw regError;
       }
 
+      if (window.navigator.vibrate) window.navigator.vibrate([20, 50, 20]);
       navigateTo('ticket', event.id);
     } catch (err: any) {
       console.warn("Inscrição offline/error:", handleSupabaseError(err));
-      // Fallback para demonstração se houver erro de rede
+      // Fallback para demonstração se houver erro de rede (PWA mode)
       navigateTo('ticket', event.id);
     } finally {
       setIsSubmitting(false);
@@ -111,29 +112,38 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
   return (
     <div className="relative flex flex-col w-full pb-32 min-h-screen bg-slate-50 dark:bg-zinc-950 animate-in fade-in duration-500 overflow-x-hidden">
       
-      {/* Campus Selector Modal - iOS Style */}
+      {/* Campus Selector Modal - Material 3 Style */}
       {showCampusModal && (
         <div className="fixed inset-0 z-[1000] flex items-end justify-center animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCampusModal(false)}></div>
           <div className="relative w-full max-w-lg bg-white dark:bg-[#121214] rounded-t-[3rem] p-8 max-h-[70vh] overflow-hidden flex flex-col shadow-2xl border-t border-primary/20">
-            <header className="flex items-center justify-between mb-8">
+            <header className="flex items-center justify-between mb-8 shrink-0">
               <div className="flex flex-col">
                 <h3 className="text-lg font-black uppercase text-slate-900 dark:text-white tracking-tight">Instituições</h3>
                 <p className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">Selecione sua unidade oficial</p>
               </div>
-              <button onClick={() => setShowCampusModal(false)} className="size-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center"><span className="material-symbols-outlined text-sm">close</span></button>
+              <button onClick={() => setShowCampusModal(false)} className="size-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
             </header>
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pb-10">
-              {CAMPUS_LIST.map((c) => (
-                <div 
-                  key={c} 
-                  onClick={() => { setFormData({...formData, campus: c}); setShowCampusModal(false); }} 
-                  className={`flex items-center justify-between p-6 rounded-[2rem] border transition-all cursor-pointer ${formData.campus === c ? 'bg-primary/10 border-primary' : 'bg-slate-50 dark:bg-zinc-900 border-transparent'}`}
-                >
-                  <span className={`text-xs font-bold uppercase ${formData.campus === c ? 'text-primary font-black' : 'text-slate-600 dark:text-zinc-400'}`}>{c}</span>
-                  {formData.campus === c && <span className="material-symbols-outlined text-primary">check_circle</span>}
-                </div>
-              ))}
+              {CAMPUS_LIST.map((c) => {
+                const isSelected = formData.campus === c;
+                return (
+                  <div 
+                    key={c} 
+                    onClick={() => { 
+                      if (window.navigator.vibrate) window.navigator.vibrate(5);
+                      setFormData({...formData, campus: c}); 
+                      setShowCampusModal(false); 
+                    }} 
+                    className={`flex items-center justify-between p-6 rounded-[2rem] border transition-all cursor-pointer ${isSelected ? 'bg-primary/10 border-primary shadow-sm' : 'bg-slate-50 dark:bg-zinc-900 border-transparent hover:border-slate-200'}`}
+                  >
+                    <span className={`text-xs font-bold uppercase ${isSelected ? 'text-primary font-black' : 'text-slate-600 dark:text-zinc-400'}`}>{c}</span>
+                    {isSelected && <span className="material-symbols-outlined text-primary">check_circle</span>}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -210,7 +220,10 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
                 {(['Estudante', 'Servidor', 'Externo'] as UserRoleOption[]).map((opt) => (
                   <button 
                     key={opt}
-                    onClick={() => setRole(opt)}
+                    onClick={() => {
+                      if (window.navigator.vibrate) window.navigator.vibrate(5);
+                      setRole(opt);
+                    }}
                     className={`flex items-center justify-between p-6 rounded-3xl border-2 transition-all ${
                       role === opt ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-white/5'
                     }`}
