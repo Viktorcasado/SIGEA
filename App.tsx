@@ -219,7 +219,7 @@ const App: React.FC = () => {
       case 'events': return <EventsList navigateTo={navigateTo} events={events} />;
       case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} role={role} />;
       case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={handleUpdateProfile} />;
-      case 'certificates': return <Certificates navigateTo={navigateTo} events={events} user={userProfile} role={role} />;
+      case 'certificates': return <Certificates navigateTo={navigateTo} eventId={selectedEventId} events={events} user={userProfile} role={role} />;
       case 'profile': return (
         <Profile 
           {...commonProps} 
@@ -239,7 +239,7 @@ const App: React.FC = () => {
       case 'edit-event': return <EditEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onUpdate={handleRefreshEvents} />;
       case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={() => fetchEvents()} onArchive={() => {}} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} eventId={selectedEventId} />;
-      case 'schedule': return <Schedule navigateTo={navigateTo} role={role} />;
+      case 'schedule': return <Schedule navigateTo={navigateTo} eventId={selectedEventId} role={role} />;
       case 'participants': return <ParticipantsAdmin navigateTo={navigateTo} eventId={selectedEventId || undefined} />;
       case 'publish-success': 
         const successEvent = events.find(e => e.id === selectedEventId);
