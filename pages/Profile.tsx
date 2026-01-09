@@ -10,7 +10,7 @@ interface ProfileProps {
   setTheme: (val: 'light' | 'dark' | 'system') => void;
   role: UserRole;
   profile: { id: string; name: string; photo: string; campus: string; email: string } | null;
-  onUpdate: (data: any) => Promise<boolean> | void;
+  onUpdate: (data: any) => Promise<{success: boolean, error?: string}>;
   onLogout: () => void;
   onDeleteAccount: () => Promise<void>;
 }
@@ -25,6 +25,7 @@ const Profile: React.FC<ProfileProps> = ({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorModal, setErrorModal] = useState<{show: boolean, msg: string}>({ show: false, msg: '' });
   
   const [formData, setFormData] = useState({ 
     name: '', 
@@ -37,7 +38,6 @@ const Profile: React.FC<ProfileProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sincroniza dados iniciais apenas quando não estiver editando
   useEffect(() => { 
     if (profile && !isEditing) {
       setFormData({ 
@@ -55,6 +55,10 @@ const Profile: React.FC<ProfileProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorModal({ show: true, msg: 'A imagem é muito grande. O limite máximo é 5MB.' });
+        return;
+      }
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => { 
@@ -71,24 +75,22 @@ const Profile: React.FC<ProfileProps> = ({
     setSaveSuccess(false);
     
     try {
-      // Passamos os dados de texto E o arquivo para upload real no App.tsx
-      const success = await onUpdate({ 
+      const result = await onUpdate({ 
         name: formData.name, 
         campus: formData.campus, 
-        imageFile: selectedFile // Envia o arquivo real para upload real via Storage
+        imageFile: selectedFile 
       });
       
-      if (success) {
+      if (result.success) {
         setSaveSuccess(true);
         setIsEditing(false);
         if (window.navigator.vibrate) window.navigator.vibrate([10, 30, 10]);
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {
-        alert("Erro ao salvar as alterações. Verifique sua conexão.");
+        setErrorModal({ show: true, msg: result.error || 'Não foi possível salvar os dados. Verifique sua internet.' });
       }
     } catch (error) { 
-      console.error("Erro ao salvar perfil:", error);
-      alert("Falha técnica ao tentar salvar.");
+      setErrorModal({ show: true, msg: 'Ocorreu um erro técnico inesperado ao tentar salvar seu perfil.' });
     } finally { 
       setIsSaving(false); 
     }
@@ -99,6 +101,24 @@ const Profile: React.FC<ProfileProps> = ({
   return (
     <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-zinc-950 pb-32 animate-in fade-in duration-500 overflow-y-auto no-scrollbar">
       
+      {/* Modal de Erro Institucional */}
+      {errorModal.show && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-8 bg-black/90 backdrop-blur-md animate-in zoom-in">
+          <div className="bg-zinc-900 border border-white/10 p-10 rounded-[3rem] text-center max-w-sm shadow-2xl">
+            <span className="material-symbols-outlined text-red-500 text-5xl mb-6">warning</span>
+            <p className="text-white text-xs font-black uppercase tracking-tight mb-8 leading-relaxed">
+              {errorModal.msg}
+            </p>
+            <button 
+              onClick={() => setErrorModal({show:false, msg:''})} 
+              className="w-full h-16 bg-white/10 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all"
+            >
+              OK, Tentar Novamente
+            </button>
+          </div>
+        </div>
+      )}
+
       {saveSuccess && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[1000] bg-primary text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl animate-in slide-in-from-top-4">
           Perfil Atualizado com Sucesso!

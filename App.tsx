@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserRole, Event as SIGEAEvent } from './types.ts';
-import { supabase, uploadFile } from './supabaseClient.ts';
+import { supabase, uploadFile, handleSupabaseError } from './supabaseClient.ts';
 
 import Home from './pages/Home.tsx';
 import EventsList from './pages/EventsList.tsx';
@@ -167,17 +167,26 @@ const App: React.FC = () => {
 
   const handleUpdateProfile = async (data: any) => {
     try {
-      let finalPhotoUrl = data.photo_url || data.photo || userProfile?.photo;
+      // 1. Forçar refresh da sessão para evitar erro de conexão por JWT expirado
+      await supabase.auth.refreshSession();
+      
+      let finalPhotoUrl = userProfile?.photo;
 
-      // Se houver um arquivo de imagem novo (objeto File), fazemos o upload real
+      // 2. Upload real se houver arquivo
       if (data.imageFile) {
         const fileExt = data.imageFile.name.split('.').pop();
-        const fileName = `profile-${userProfile.id}-${Date.now()}.${fileExt}`;
+        const fileName = `avatar-${userProfile.id}-${Date.now()}.${fileExt}`;
         const filePath = `profiles/${userProfile.id}/${fileName}`;
-        finalPhotoUrl = await uploadFile('assets', filePath, data.imageFile);
+        try {
+          // Fix: Declaring finalImageUrl with const to resolve scope error
+          const finalImageUrl = await uploadFile('assets', filePath, data.imageFile);
+          finalPhotoUrl = finalImageUrl;
+        } catch (uploadErr: any) {
+          return { success: false, error: uploadErr.message };
+        }
       }
 
-      // Atualiza apenas campos de texto no metadata para evitar estourar o limite de tamanho
+      // 3. Atualizar Metadata
       const updateData = {
         name: data.name || userProfile.name,
         campus: data.campus || userProfile.campus,
@@ -187,19 +196,12 @@ const App: React.FC = () => {
 
       const { error } = await supabase.auth.updateUser({ data: updateData });
       
-      if (!error) {
-        // Atualiza estado local para refletir mudança imediatamente
-        setUserProfile((prev: any) => ({
-          ...prev, 
-          ...updateData
-        }));
-        return true;
-      }
-      console.error("Erro Supabase Update:", error);
-      return false;
-    } catch (err) {
-      console.error("Erro crítico na atualização do perfil:", err);
-      return false;
+      if (error) throw error;
+
+      setUserProfile((prev: any) => ({ ...prev, ...updateData }));
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: handleSupabaseError(err) };
     }
   };
 
