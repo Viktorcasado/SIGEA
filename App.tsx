@@ -16,10 +16,13 @@ import Login from './pages/Login.tsx';
 import ResetPassword from './pages/ResetPassword.tsx';
 import OrganizerDashboard from './pages/OrganizerDashboard.tsx';
 import CreateEvent from './pages/CreateEvent.tsx';
+import ManageEvent from './pages/ManageEvent.tsx';
+import CheckIn from './pages/CheckIn.tsx';
 import PublishSuccess from './pages/PublishSuccess.tsx';
 import Welcome from './pages/Welcome.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
 import BottomNav from './components/BottomNav.tsx';
+import Sidebar from './components/Sidebar.tsx';
 
 const App: React.FC = () => {
   const [hasSeenWelcome, setHasSeenWelcome] = useState<boolean>(() => {
@@ -34,11 +37,7 @@ const App: React.FC = () => {
   const isRecoveryRoute = () => {
     const hash = window.location.hash;
     const search = window.location.search;
-    const path = window.location.pathname;
-    return path.includes('reset-password') || 
-           hash.includes('type=recovery') || 
-           hash.includes('access_token') || 
-           search.includes('type=recovery');
+    return window.location.pathname.includes('reset-password') || hash.includes('type=recovery') || search.includes('reset-password');
   };
 
   const [currentPage, setCurrentPage] = useState<string>(() => {
@@ -55,6 +54,18 @@ const App: React.FC = () => {
     return (localStorage.getItem('sigea_theme') as any) || 'dark';
   });
 
+  const fetchEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) setEvents(data);
+    } catch (err) {
+      console.warn("Modo demo ativo - Falha ao conectar ao Supabase.");
+    }
+  };
+
   useEffect(() => {
     const root = window.document.documentElement;
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -63,29 +74,15 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initApp = async () => {
-      // 1. Verifica sessão inicial
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (session) {
         updateAuthState(session);
         if (isRecoveryRoute()) setCurrentPage('reset-password');
       } else {
         setAuthStatus(false);
       }
-      
-      // 2. Tenta carregar eventos, mas não trava se falhar (Usa Mocks)
-      try {
-        const { data, error } = await supabase
-          .from('events')
-          .select('*')
-          .order('created_at', { ascending: false });
-          
-        if (!error && data) setEvents(data);
-      } catch (err) {
-        console.warn("Usando modo de demonstração devido a falha de conexão.");
-      } finally {
-        setIsHydrating(false);
-      }
+      await fetchEvents();
+      setIsHydrating(false);
     };
 
     initApp();
@@ -93,10 +90,6 @@ const App: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         updateAuthState(session);
-        if (event === 'PASSWORD_RECOVERY' || isRecoveryRoute()) {
-          setCurrentPage('reset-password');
-          localStorage.setItem('sigea_last_page', 'reset-password');
-        }
       } else if (event === 'SIGNED_OUT') {
         handleLogoutCleanUp();
       }
@@ -107,13 +100,14 @@ const App: React.FC = () => {
 
   const updateAuthState = (session: any) => {
     const metadata = session.user.user_metadata;
-    setUserProfile({
+    const profileData = {
       id: session.user.id,
       name: metadata?.name || 'Usuário SIGEA',
       email: session.user.email,
       campus: metadata?.campus || 'IFAL - Campus Maceió',
-      photo: metadata?.photo_url || ''
-    });
+      photo: metadata?.photo_url || metadata?.photo || ''
+    };
+    setUserProfile(profileData);
     setRole((metadata?.role || UserRole.PARTICIPANT) as UserRole);
     setAuthStatus(true);
   };
@@ -121,40 +115,44 @@ const App: React.FC = () => {
   const handleLogoutCleanUp = () => {
     setAuthStatus(false);
     setUserProfile(null);
-    localStorage.removeItem('sigea-auth-token');
     localStorage.removeItem('sigea_last_page');
-    localStorage.removeItem('sigea_last_event_id');
     setCurrentPage('home');
-  };
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error("Erro ao sair:", error);
-    } finally {
-      handleLogoutCleanUp();
-    }
   };
 
   const navigateTo = (page: string, id: string | null = null) => {
     setCurrentPage(page);
-    setSelectedEventId(id);
+    if (id) {
+      setSelectedEventId(id);
+      localStorage.setItem('sigea_last_event_id', id);
+    }
     localStorage.setItem('sigea_last_page', page);
-    if (id) localStorage.setItem('sigea_last_event_id', id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleUpdateUserMetadata = async (data: any) => {
+    const { error } = await supabase.auth.updateUser({ 
+      data: {
+        ...data,
+        photo_url: data.photo || data.photo_url // Garante compatibilidade
+      } 
+    });
+    if (!error) {
+      setUserProfile((prev: any) => ({ ...prev, ...data }));
+      return true;
+    }
+    return false;
   };
 
   if (isHydrating) {
     return (
       <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center">
-        <div className="size-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-[0.4em]">Sincronizando SIGEA...</p>
+        <div className="size-16 border-[5px] border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <p className="mt-8 text-[11px] font-black text-primary uppercase tracking-[0.5em]">SIGEA</p>
       </div>
     );
   }
 
-  if (!hasSeenWelcome) return <Welcome onContinue={() => { localStorage.setItem('sigea_seen_welcome', 'true'); setHasSeenWelcome(true); }} />;
+  if (!hasSeenWelcome && !isRecoveryRoute()) return <Welcome onContinue={() => { localStorage.setItem('sigea_seen_welcome', 'true'); setHasSeenWelcome(true); }} />;
   
   if (!authStatus && currentPage !== 'reset-password') {
     return <Login onLogin={() => setAuthStatus(true)} onBack={() => setHasSeenWelcome(false)} darkMode={theme === 'dark'} setDarkMode={() => {}} />;
@@ -163,42 +161,42 @@ const App: React.FC = () => {
   const commonProps = { navigateTo, events, profile: userProfile };
 
   const renderContent = () => {
-    // Força o ResetPassword se a rota for detectada
-    if (currentPage === 'reset-password' || isRecoveryRoute()) return <ResetPassword navigateTo={navigateTo} />;
+    if (currentPage === 'reset-password') return <ResetPassword navigateTo={navigateTo} />;
 
     switch (currentPage) {
       case 'home': return role === UserRole.ORGANIZER ? <OrganizerDashboard {...commonProps} onNotify={() => {}} /> : <Home {...commonProps} onNotify={() => {}} />;
       case 'events': return <EventsList navigateTo={navigateTo} events={events} />;
       case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} role={role} />;
-      case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={async (data) => {
-        const { error } = await supabase.auth.updateUser({ data });
-        if (!error) {
-          setUserProfile((prev: any) => ({...prev, ...data}));
-          return true;
-        }
-        return false;
-      }} />;
-      case 'certificates': return <Certificates navigateTo={navigateTo} events={events} />;
-      case 'profile': return <Profile {...commonProps} theme={theme} setTheme={setTheme} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={handleLogout} onDeleteAccount={async () => {}} onUpdate={async (data) => {
-        const { error } = await supabase.auth.updateUser({ data });
-        if (!error) {
-          setUserProfile((prev: any) => ({...prev, ...data}));
-          return true;
-        }
-        return false;
-      }} />;
+      case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={handleUpdateUserMetadata} />;
+      case 'certificates': return <Certificates navigateTo={navigateTo} events={events} user={userProfile} />;
+      case 'profile': return <Profile {...commonProps} theme={theme} setTheme={setTheme} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={async () => { await supabase.auth.signOut(); }} onDeleteAccount={async () => {}} onUpdate={handleUpdateUserMetadata} />;
       case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId) || events[0]} />;
-      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={(ev) => setEvents([ev, ...events])} />;
+      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={() => fetchEvents()} />;
+      case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={() => fetchEvents()} onArchive={() => {}} />;
+      case 'check-in': return <CheckIn navigateTo={navigateTo} />;
       case 'publish-success': return <PublishSuccess navigateTo={navigateTo} event={events.find(e => e.id === selectedEventId) || events[0]} />;
       default: return <Home {...commonProps} onNotify={() => {}} />;
     }
   };
 
+  const isDesktopNavigationVisible = ['home', 'events', 'certificates', 'profile'].includes(currentPage);
+
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#09090b]">
-      <main className="flex-1 pb-24">{renderContent()}</main>
-      <BottomNav currentPage={currentPage} navigateTo={navigateTo} role={role} />
-      <AIAssistant events={events} />
+    <div className="flex min-h-screen bg-slate-50 dark:bg-[#09090b]">
+      {isDesktopNavigationVisible && (
+        <Sidebar 
+          currentPage={currentPage} 
+          navigateTo={navigateTo} 
+          role={role} 
+          profile={userProfile} 
+          onLogout={async () => { await supabase.auth.signOut(); }} 
+        />
+      )}
+      <div className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1 pb-24 lg:pb-8">{renderContent()}</main>
+        <BottomNav currentPage={currentPage} navigateTo={navigateTo} role={role} />
+        <AIAssistant events={events} />
+      </div>
     </div>
   );
 };

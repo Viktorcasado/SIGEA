@@ -20,14 +20,20 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
   useEffect(() => {
     const checkAuthFlow = async () => {
       // Pequeno delay para garantir que o Supabase processou o token da URL
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r => setTimeout(r, 1200));
+      
       const { data: { session } } = await supabase.auth.getSession();
       
-      const hasToken = window.location.hash.includes('access_token') || 
-                       window.location.search.includes('type=recovery');
+      // Verifica no hash e na query string se há indícios de token
+      const hash = window.location.hash;
+      const search = window.location.search;
+      const hasToken = hash.includes('access_token') || 
+                       search.includes('type=recovery') ||
+                       search.includes('reset-password');
 
+      // Se não houver sessão nem token, o link é provavelmente inválido
       if (!session && !hasToken) {
-        setError("O link de recuperação expirou ou é inválido. Por favor, solicite um novo acesso.");
+        setError("O link de recuperação expirou ou é inválido. Por favor, solicite um novo acesso no Login.");
       }
       setIsVerifying(false);
     };
@@ -54,6 +60,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
       if (resetError) throw resetError;
 
       setSuccess(true);
+      // Redireciona para o login após sucesso
       setTimeout(() => {
         window.location.href = window.location.origin;
       }, 3000);
@@ -68,7 +75,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
     return (
       <div className="fixed inset-0 bg-white dark:bg-[#09090b] flex flex-col items-center justify-center">
         <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-widest">Validating session...</p>
+        <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-widest">Validando credenciais...</p>
       </div>
     );
   }
@@ -89,10 +96,10 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
         <div className="space-y-12">
           <header className="space-y-4">
             <h1 className="text-[44px] font-[1000] tracking-tighter uppercase leading-none">
-              Create new <span className="text-primary">password</span>
+              Criar nova <span className="text-primary">senha</span>
             </h1>
             <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight max-w-[280px]">
-              Your new password must be different from previous used passwords.
+              Sua nova senha deve ser diferente das anteriores por segurança.
             </p>
           </header>
 
@@ -116,7 +123,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
 
               <div className="space-y-6">
                 <div className="space-y-2 relative group">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Password</label>
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nova Senha</label>
                   <div className="relative">
                     <input 
                       required 
@@ -137,11 +144,11 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
                       </span>
                     </button>
                   </div>
-                  <p className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${password.length >= 8 ? 'text-primary' : 'text-zinc-400'}`}>Must be at least 8 characters.</p>
+                  <p className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${password.length >= 8 ? 'text-primary' : 'text-zinc-400'}`}>Mínimo de 8 caracteres.</p>
                 </div>
 
                 <div className="space-y-2 relative group">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Confirm Password</label>
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Confirmar Senha</label>
                   <div className="relative">
                     <input 
                       required 
@@ -161,7 +168,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
                       </span>
                     </button>
                   </div>
-                  <p className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${confirmPassword && password === confirmPassword ? 'text-primary' : 'text-zinc-400'}`}>Both passwords must match.</p>
+                  <p className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${confirmPassword && password === confirmPassword ? 'text-primary' : 'text-zinc-400'}`}>As senhas devem coincidir.</p>
                 </div>
               </div>
 
@@ -172,7 +179,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
                 {loading ? (
                   <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
-                  'Reset Password'
+                  'Redefinir Senha'
                 )}
               </button>
             </form>

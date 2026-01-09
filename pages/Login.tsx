@@ -27,7 +27,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
     setError(null);
     setLoading(true);
 
-    const siteUrl = `${window.location.origin}/reset-password`;
+    // Garante que a URL de redirecionamento seja absoluta e limpa
+    const origin = window.location.origin;
+    const siteUrl = `${origin}/reset-password`;
 
     try {
       if (view === 'SIGN_IN') {
@@ -43,7 +45,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
           password,
           options: { 
             data: { name, campus, role: 'PARTICIPANT' },
-            emailRedirectTo: window.location.origin
+            emailRedirectTo: origin
           }
         });
         if (err) throw err;
@@ -62,7 +64,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
     }
   };
 
-  // TELA: CHECK YOUR MAIL (Referência: Imagem 1, centro)
   if (view === 'CHECK_EMAIL') {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center p-8 bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in zoom-in-95 duration-500">
@@ -72,7 +73,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-[34px] font-black tracking-tight uppercase leading-none">Check your mail</h2>
+            <h2 className="text-[34px] font-black tracking-tight uppercase leading-none">Verifique seu e-mail</h2>
             <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight px-6">
               Enviamos as instruções de recuperação para o seu e-mail institucional.
             </p>
@@ -83,25 +84,24 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
               onClick={() => window.open('mailto:', '_blank')}
               className="w-full h-18 bg-primary text-white font-black rounded-3xl shadow-2xl shadow-primary/30 active:scale-95 transition-all uppercase text-[11px] tracking-[0.2em]"
             >
-              Open email app
+              Abrir E-mail
             </button>
             <button 
               onClick={() => setView('SIGN_IN')}
               className="w-full py-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-primary transition-colors"
             >
-              Skip, I'll confirm later
+              Voltar ao Login
             </button>
           </div>
 
           <footer className="pt-20 text-[9px] font-black text-zinc-300 dark:text-zinc-800 uppercase tracking-[0.3em] leading-loose">
-            Did not receive the email? Check your spam, <br /> or <button onClick={() => setView('FORGOT_PASSWORD')} className="text-primary hover:underline">try another email address</button>
+            Não recebeu? Verifique o spam, <br /> ou <button onClick={() => setView('FORGOT_PASSWORD')} className="text-primary hover:underline">tente outro e-mail</button>
           </footer>
         </div>
       </div>
     );
   }
 
-  // TELA: RESET PASSWORD / LOGIN (Referência: Imagem 1, esquerda)
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in fade-in overflow-y-auto no-scrollbar">
       <header className="p-8 flex items-center justify-between sticky top-0 z-10">
@@ -118,11 +118,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
         <div className="space-y-12">
           <header className="space-y-4">
             <h1 className="text-[44px] font-black tracking-tighter uppercase leading-none">
-              {view === 'SIGN_IN' ? 'Login' : (view === 'SIGN_UP' ? 'Sign up' : 'Reset password')}
+              {view === 'SIGN_IN' ? 'Login' : (view === 'SIGN_UP' ? 'Cadastro' : 'Recuperar')}
             </h1>
             <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight max-w-[280px]">
               {view === 'FORGOT_PASSWORD' 
-                ? 'Enter the email associated with your account and we\'ll send an email with instructions to reset your password.' 
+                ? 'Insira o e-mail associado à sua conta institucional e enviaremos as instruções para redefinir sua senha.' 
                 : 'Acesse o portal institucional SIGEA do IFAL para gerenciar seus eventos acadêmicos.'}
             </p>
           </header>
@@ -137,19 +137,19 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
             <div className="space-y-6">
               {view === 'SIGN_UP' && (
                 <div className="space-y-2 relative group">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Full Name</label>
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome Completo</label>
                   <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all uppercase" />
                 </div>
               )}
 
               <div className="space-y-2 relative group">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Email address</label>
-                <input required type="email" placeholder="mcraigw@outlook.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all lowercase placeholder:text-zinc-300 dark:placeholder:text-zinc-700" />
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">E-mail Institucional</label>
+                <input required type="email" placeholder="nome@ifal.edu.br" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all lowercase placeholder:text-zinc-300 dark:placeholder:text-zinc-700" />
               </div>
               
               {view !== 'FORGOT_PASSWORD' && (
                 <div className="space-y-2 relative group">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Password</label>
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Senha</label>
                   <input required type="password" placeholder="********" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all" />
                 </div>
               )}
@@ -162,7 +162,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
               {loading ? (
                 <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                view === 'SIGN_IN' ? 'Entrar no Sistema' : (view === 'SIGN_UP' ? 'Create Account' : 'Send Instructions')
+                view === 'SIGN_IN' ? 'Entrar no Sistema' : (view === 'SIGN_UP' ? 'Criar Conta' : 'Enviar Instruções')
               )}
             </button>
           </form>

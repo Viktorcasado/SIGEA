@@ -11,6 +11,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SIGEA">
     
+    <!-- Windows & Desktop PWA Tags -->
+    <meta name="application-name" content="SIGEA | IFAL">
+    <meta name="msapplication-TileColor" content="#09090b">
+    
     <!-- Link para Ativos Institucionais -->
     <link rel="apple-touch-icon" href="/assets/icon.png">
     <link rel="icon" type="image/png" href="/assets/favicon.png">
@@ -64,17 +68,12 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             overflow-x: hidden;
             padding-top: var(--safe-top);
-            /* Padding bottom handled in App.tsx to account for BottomNav */
             transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .dark body {
             background: #09090b;
             color: #f8fafc;
-        }
-
-        .page-transition {
-          transition: all 0.5s cubic-bezier(0.32, 0.72, 0, 1);
         }
 
         .material-symbols-outlined {
@@ -99,26 +98,11 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .skeleton {
-          background: linear-gradient(90deg, #f1f5f9 25%, #f8fafc 50%, #f1f5f9 75%);
-          background-size: 200% 100%;
-          animation: skeleton-loading 1.5s infinite;
-        }
-        .dark .skeleton {
-          background: linear-gradient(90deg, #18181b 25%, #27272a 50%, #18181b 75%);
-          background-size: 200% 100%;
-        }
-        @keyframes skeleton-loading {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-
         .btn-ios-active:active {
           transform: scale(0.96);
           filter: brightness(0.9);
         }
 
-        /* Animação de entrada suave para ícones ativos */
         @keyframes nav-pop {
           0% { transform: scale(0.8); opacity: 0; }
           100% { transform: scale(1.1); opacity: 1; }

@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
-import { Event, UserRole } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Event, UserRole, Activity } from '../types';
+import { supabase } from '../supabaseClient';
 
 interface EventDetailsProps {
   navigateTo: (page: string, eventId?: string) => void;
@@ -13,20 +14,37 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
   const event = events.find(e => e.id === eventId) || events[0];
   const [tab, setTab] = useState<'sobre' | 'programacao'>('sobre');
   const [showToast, setShowToast] = useState(false);
-  const [activitiesList, setActivitiesList] = useState([
-    { id: 'act-1', time: '08:00', title: 'Credenciamento e Welcome Coffee', loc: 'Hall de Entrada', type: 'Recepção', icon: 'badge' },
-    { id: 'act-2', time: '09:30', title: 'Cerimônia de Abertura Oficial', loc: 'Auditório Central', type: 'Palestra', icon: 'mic_external_on' },
-    { id: 'act-3', time: '11:00', title: 'Keynote: O Futuro da Educação', loc: 'Auditório Central', type: 'Conferência', icon: 'bolt' },
-    { id: 'act-4', time: '14:00', title: 'Workshop de Práticas Ágeis', loc: 'Lab de Inovação', type: 'Prática', icon: 'build' },
-    { id: 'act-5', time: '16:30', title: 'Mesa Redonda: Tecnologia no IFAL', loc: 'Sala de Conferências', type: 'Debate', icon: 'forum' }
-  ]);
+  const [activitiesList, setActivitiesList] = useState<Activity[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(false);
+
+  useEffect(() => {
+    if (tab === 'programacao' && eventId) {
+      fetchActivities();
+    }
+  }, [tab, eventId]);
+
+  const fetchActivities = async () => {
+    setLoadingActivities(true);
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('time', { ascending: true });
+    
+    if (!error && data) {
+      setActivitiesList(data);
+    }
+    setLoadingActivities(false);
+  };
 
   if (!event) return null;
 
-  const handleDeleteActivity = (id: string) => {
+  const handleDeleteActivity = async (id: string) => {
     if (confirm("Deseja realmente remover esta atividade do cronograma oficial?")) {
-      setActivitiesList(prev => prev.filter(a => a.id !== id));
-      // Aqui integraria com supabase.from('activities').delete().eq('id', id)
+      const { error } = await supabase.from('activities').delete().eq('id', id);
+      if (!error) {
+        setActivitiesList(prev => prev.filter(a => a.id !== id));
+      }
     }
   };
 
@@ -108,11 +126,16 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
             </div>
           ) : (
             <div className="animate-in fade-in slide-in-from-right-6 duration-500 space-y-2 px-2">
-              {activitiesList.map((item, idx) => (
+              {loadingActivities ? (
+                 <div className="py-20 flex flex-col items-center gap-4">
+                    <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Sincronizando Agenda...</p>
+                 </div>
+              ) : activitiesList.length > 0 ? activitiesList.map((item, idx) => (
                 <div key={item.id} className="flex gap-6 group relative">
                   <div className="flex flex-col items-center">
                     <div className="size-11 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 flex items-center justify-center text-primary shadow-lg z-10 group-hover:scale-110 transition-transform">
-                      <span className="material-symbols-outlined text-2xl">{item.icon}</span>
+                      <span className="material-symbols-outlined text-2xl">{item.icon || 'event'}</span>
                     </div>
                     {idx !== activitiesList.length - 1 && <div className="w-[2px] flex-1 bg-slate-200 dark:bg-zinc-800 my-2 rounded-full opacity-50"></div>}
                   </div>
@@ -138,8 +161,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
                     </div>
                   </div>
                 </div>
-              ))}
-              {activitiesList.length === 0 && (
+              )) : (
                 <div className="py-20 text-center bg-slate-100/50 dark:bg-zinc-900/50 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-white/5">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cronograma em processamento</p>
                 </div>
