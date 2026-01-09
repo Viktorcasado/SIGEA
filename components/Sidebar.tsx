@@ -52,9 +52,10 @@ interface SidebarProps {
   role: UserRole;
   profile: any;
   onLogout: () => void;
+  openPortal: (url: string, name: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, navigateTo, role, profile, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentPage, navigateTo, role, profile, onLogout, openPortal }) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     return localStorage.getItem('sigea_sidebar_collapsed') === 'true';
   });
@@ -78,6 +79,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, navigateTo, role, profil
   const utilityItems = [
     { id: 'integrations', label: 'Integrações', icon: 'sync' },
     { id: 'help', label: 'Central de Ajuda', icon: 'help' },
+  ];
+
+  const quickPortals = [
+    { name: 'SUAP', url: 'https://suap.ifal.edu.br', icon: 'account_balance' },
+    { name: 'SIGAA', url: 'https://sigaa.ifal.edu.br', icon: 'school' },
   ];
 
   return (
@@ -114,6 +120,22 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, navigateTo, role, profil
               isCollapsed={isCollapsed} 
               onClick={() => navigateTo(item.id)} 
             />
+          ))}
+        </div>
+
+        <div className="space-y-1">
+          {!isCollapsed && (
+            <p className="px-4 text-[9px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-[0.3em] mb-4 animate-in fade-in duration-700">Acesso Rápido</p>
+          )}
+          {quickPortals.map((portal) => (
+            <button
+              key={portal.name}
+              onClick={() => openPortal(portal.url, portal.name)}
+              className={`w-full flex items-center gap-4 py-3.5 px-4 rounded-2xl transition-all duration-300 text-slate-500 dark:text-zinc-500 hover:bg-primary/5 hover:text-primary ${isCollapsed ? 'justify-center px-0' : ''}`}
+            >
+              <span className="material-symbols-outlined text-[24px]">{portal.icon}</span>
+              {!isCollapsed && <span className="text-[11px] font-black uppercase tracking-[0.15em]">{portal.name}</span>}
+            </button>
           ))}
         </div>
 

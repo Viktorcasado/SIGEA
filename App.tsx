@@ -24,6 +24,7 @@ import Integrations from './pages/Integrations.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
 import BottomNav from './components/BottomNav.tsx';
 import Sidebar from './components/Sidebar.tsx';
+import PortalBrowser from './components/PortalBrowser.tsx';
 
 const App: React.FC = () => {
   const [hasSeenWelcome, setHasSeenWelcome] = useState<boolean>(() => {
@@ -34,6 +35,7 @@ const App: React.FC = () => {
   const [authStatus, setAuthStatus] = useState<boolean | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [role, setRole] = useState<UserRole>(UserRole.PARTICIPANT);
+  const [activePortal, setActivePortal] = useState<{ url: string; name: string } | null>(null);
   
   const isRecoveryRoute = () => {
     const hash = window.location.hash;
@@ -63,7 +65,6 @@ const App: React.FC = () => {
         .order('created_at', { ascending: false });
       
       if (!error && data) {
-        // Normaliza os dados do banco para a interface (image_url -> imageUrl)
         const normalizedEvents = data.map(e => ({
           ...e,
           imageUrl: e.imageUrl || e.image_url || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000'
@@ -105,6 +106,11 @@ const App: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         updateAuthState(session);
+        // Ao logar, forçamos a ida para a home, onde a role decidirá o dashboard
+        if (event === 'SIGNED_IN') {
+          setCurrentPage('home');
+          localStorage.setItem('sigea_last_page', 'home');
+        }
       } else if (event === 'SIGNED_OUT') {
         handleLogoutCleanUp();
       }
@@ -144,6 +150,10 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const openPortal = (url: string, name: string) => {
+    setActivePortal({ url, name });
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
@@ -167,14 +177,26 @@ const App: React.FC = () => {
     }
   };
 
+  const toggleRole = async () => {
+    const newRole = role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT;
+    setRole(newRole);
+    
+    // Persiste a mudança de role no Supabase para que o próximo login lembre a escolha
+    try {
+      await supabase.auth.updateUser({
+        data: { role: newRole }
+      });
+    } catch (err) {
+      console.error("Erro ao persistir role:", err);
+    }
+  };
+
   const handleAddEvent = (newEvent: SIGEAEvent) => {
-    // Garante que o novo evento tenha imageUrl mapeado corretamente antes de entrar no estado
     const sanitized = {
       ...newEvent,
       imageUrl: newEvent.imageUrl || (newEvent as any).image_url
     };
     setEvents(prev => [sanitized, ...prev]);
-    // Não precisamos chamar fetchEvents() imediatamente aqui para evitar sobrescrever o estado local rápido demais
   };
 
   if (isHydrating) {
@@ -192,7 +214,7 @@ const App: React.FC = () => {
     return <Login onLogin={() => setAuthStatus(true)} onBack={() => setHasSeenWelcome(false)} darkMode={theme === 'dark'} setDarkMode={() => {}} />;
   }
 
-  const commonProps = { navigateTo, events, profile: userProfile };
+  const commonProps = { navigateTo, events, profile: userProfile, openPortal };
 
   const renderContent = () => {
     if (currentPage === 'reset-password') return <ResetPassword navigateTo={navigateTo} />;
@@ -209,7 +231,7 @@ const App: React.FC = () => {
           theme={theme} 
           setTheme={setTheme} 
           role={role} 
-          toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} 
+          toggleRole={toggleRole} 
           onLogout={handleLogout} 
           onDeleteAccount={async () => {}} 
           onUpdate={handleUpdateProfile} 
@@ -225,7 +247,7 @@ const App: React.FC = () => {
         const successEvent = events.find(e => e.id === selectedEventId);
         return <PublishSuccess navigateTo={navigateTo} event={successEvent} />;
       case 'reports': return <Reports navigateTo={navigateTo} />;
-      case 'integrations': return <Integrations navigateTo={navigateTo} />;
+      case 'integrations': return <Integrations {...commonProps} />;
       case 'help': return <Help navigateTo={navigateTo} />;
       default: return <Home {...commonProps} onNotify={() => {}} />;
     }
@@ -241,7 +263,8 @@ const App: React.FC = () => {
           navigateTo={navigateTo} 
           role={role} 
           profile={userProfile} 
-          onLogout={handleLogout} 
+          onLogout={handleLogout}
+          openPortal={openPortal}
         />
       )}
       
@@ -250,6 +273,14 @@ const App: React.FC = () => {
         <BottomNav currentPage={currentPage} navigateTo={navigateTo} role={role} />
         <AIAssistant events={events} />
       </div>
+
+      {activePortal && (
+        <PortalBrowser 
+          url={activePortal.url} 
+          name={activePortal.name} 
+          onClose={() => setActivePortal(null)} 
+        />
+      )}
     </div>
   );
 };
