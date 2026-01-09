@@ -3,46 +3,65 @@ import React, { useState, useEffect } from 'react';
 import Logo from './Logo.tsx';
 import { UserRole } from '../types.ts';
 
-// NavButton component defined outside Sidebar to fix TypeScript key error and follow React best practices
 interface NavButtonProps {
-  item: any;
+  id: string;
+  label: string;
+  icon: string;
   isActive: boolean;
   isCollapsed: boolean;
   onClick: () => void;
+  subItems?: { id: string; label: string }[];
 }
 
-const NavButton: React.FC<NavButtonProps> = ({ item, isActive, isCollapsed, onClick }) => {
-  return (
-    <button
-      onClick={onClick}
-      title={isCollapsed ? item.label : ''}
-      className={`w-full flex items-center gap-4 py-3.5 rounded-2xl transition-all duration-300 group relative active:scale-[0.97] ${
-        isCollapsed ? 'justify-center px-0' : 'px-4'
-      } ${
-        isActive 
-        ? 'bg-primary/10 text-primary' 
-        : 'text-slate-500 dark:text-zinc-500 hover:bg-slate-50 dark:hover:bg-white/5'
-      }`}
-    >
-      <span 
-        className={`material-symbols-outlined text-[24px] transition-all duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`}
-        style={{ 
-          fontVariationSettings: isActive ? "'FILL' 1, 'wght' 500" : "'FILL' 0, 'wght' 300",
-        }}
-      >
-        {item.icon}
-      </span>
-      
-      {!isCollapsed && (
-        <span className={`text-[11px] font-black uppercase tracking-[0.15em] truncate animate-in slide-in-from-left-2 duration-500 ${isActive ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}`}>
-          {item.label}
-        </span>
-      )}
+const NavButton: React.FC<NavButtonProps> = ({ id, label, icon, isActive, isCollapsed, onClick, subItems }) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-      {isActive && (
-        <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-1.5 h-6 bg-primary rounded-full shadow-[0_0_15px_#10b981]"></div>
+  return (
+    <div className="w-full">
+      <button
+        onClick={() => {
+          if (subItems) setIsOpen(!isOpen);
+          onClick();
+        }}
+        className={`w-full flex items-center gap-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
+          isCollapsed ? 'justify-center px-0' : 'px-3'
+        } ${
+          isActive 
+          ? 'bg-primary/10 text-primary border-r-4 border-primary rounded-r-none' 
+          : 'text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-white/5'
+        }`}
+      >
+        <span className="material-symbols-outlined text-[20px] transition-all duration-200">
+          {icon}
+        </span>
+        
+        {!isCollapsed && (
+          <span className={`text-[13px] font-medium flex-1 text-left ${isActive ? 'font-bold' : ''}`}>
+            {label}
+          </span>
+        )}
+
+        {!isCollapsed && subItems && (
+          <span className={`material-symbols-outlined text-sm transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+            expand_more
+          </span>
+        )}
+      </button>
+
+      {!isCollapsed && subItems && isOpen && (
+        <div className="ml-8 mt-1 space-y-1 animate-in slide-in-from-top-2 duration-200">
+          {subItems.map(sub => (
+            <button 
+              key={sub.id}
+              className="w-full text-left py-2 px-3 text-[12px] font-medium text-slate-500 hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <div className="size-1 bg-slate-300 rounded-full"></div>
+              {sub.label}
+            </button>
+          ))}
+        </div>
       )}
-    </button>
+    </div>
   );
 };
 
@@ -60,154 +79,97 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, navigateTo, role, profil
     return localStorage.getItem('sigea_sidebar_collapsed') === 'true';
   });
 
-  useEffect(() => {
-    localStorage.setItem('sigea_sidebar_collapsed', String(isCollapsed));
-  }, [isCollapsed]);
-
-  const menuItems = [
-    { id: 'home', label: role === UserRole.ORGANIZER ? 'Painel' : 'Início', icon: 'home' },
-    { id: 'events', label: 'Explorar Eventos', icon: 'explore' },
-    { id: 'certificates', label: 'Meus Títulos', icon: 'military_tech' },
-  ];
-
-  const adminItems = role === UserRole.ORGANIZER ? [
-    { id: 'create-event', label: 'Criar Evento', icon: 'add_circle' },
-    { id: 'check-in', label: 'Painel Check-in', icon: 'qr_code_2' },
-    { id: 'reports', label: 'Relatórios', icon: 'monitoring' },
-  ] : [];
-
-  const utilityItems = [
-    { id: 'integrations', label: 'Integrações', icon: 'sync' },
-    { id: 'help', label: 'Central de Ajuda', icon: 'help' },
-  ];
-
-  const quickPortals = [
-    { name: 'SUAP', url: 'https://suap.ifal.edu.br', icon: 'account_balance' },
-    { name: 'SIGAA', url: 'https://sigaa.ifal.edu.br', icon: 'school' },
+  const sections = [
+    {
+      title: "GESTÃO",
+      items: [
+        { id: 'home', label: 'Início', icon: 'home' },
+        { id: 'participants', label: 'Pessoas', icon: 'person' },
+      ]
+    },
+    {
+      title: "PRÉ-EVENTO",
+      items: [
+        { id: 'registrations-list', label: 'Inscrições', icon: 'app_registration' },
+        { id: 'events', label: 'Página do Evento', icon: 'description' },
+        { id: 'schedule', label: 'Programação', icon: 'calendar_month' },
+      ]
+    },
+    {
+      title: "PÓS-EVENTO",
+      items: [
+        { id: 'certificates', label: 'Certificados', icon: 'workspace_premium' },
+      ]
+    },
+    {
+      title: "GERAL",
+      items: [
+        { 
+          id: 'settings', 
+          label: 'Configuração', 
+          icon: 'settings',
+          subItems: [
+            { id: 'conf-event', label: 'Evento' },
+            { id: 'conf-org', label: 'Organizadores' }
+          ]
+        },
+        { 
+          id: 'integrations', 
+          label: 'Ferramentas', 
+          icon: 'construction',
+          subItems: [
+            { id: 'conf-func', label: 'Funcionalidades' },
+            { id: 'conf-int', label: 'Integrações' }
+          ]
+        },
+      ]
+    }
   ];
 
   return (
     <aside 
-      className={`hidden lg:flex flex-col h-screen sticky top-0 bg-white dark:bg-[#0b0b0d] border-r border-slate-200 dark:border-white/5 z-50 transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
-        isCollapsed ? 'w-20 px-3' : 'w-72 px-8'
+      className={`hidden lg:flex flex-col h-screen sticky top-0 bg-[#f8fafc] dark:bg-[#121214] border-r border-slate-200 dark:border-white/5 z-50 transition-all duration-300 ${
+        isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
-      {/* Botão de Toggle - Estilo Windows Minimalista */}
-      <button 
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-4 top-12 size-8 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center shadow-xl hover:bg-primary hover:text-white dark:hover:bg-primary transition-all z-[100] group active:scale-90"
-        title={isCollapsed ? "Expandir Menu" : "Recolher Menu"}
-      >
-        <span className="material-symbols-outlined text-[18px] transition-transform duration-500" style={{ transform: isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', fontVariationSettings: "'wght' 600" }}>
-          chevron_left
-        </span>
-      </button>
-
-      <div className={`mb-10 mt-10 transition-all duration-500 ${isCollapsed ? 'px-0 flex justify-center scale-90' : 'px-2'}`}>
-        <Logo size={isCollapsed ? 'sm' : 'md'} />
+      <div className="p-6 flex items-center justify-between">
+        {!isCollapsed && <Logo size="sm" />}
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-500 transition-colors"
+        >
+          <span className="material-symbols-outlined text-[20px]">menu</span>
+        </button>
       </div>
 
-      <nav className="flex-1 space-y-10 overflow-y-auto no-scrollbar pt-2">
-        <div className="space-y-1">
-          {!isCollapsed && (
-            <p className="px-4 text-[9px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-[0.3em] mb-4 animate-in fade-in duration-700">Geral</p>
-          )}
-          {menuItems.map((item) => (
-            <NavButton 
-              key={item.id} 
-              item={item} 
-              isActive={currentPage === item.id} 
-              isCollapsed={isCollapsed} 
-              onClick={() => navigateTo(item.id)} 
-            />
-          ))}
-        </div>
-
-        <div className="space-y-1">
-          {!isCollapsed && (
-            <p className="px-4 text-[9px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-[0.3em] mb-4 animate-in fade-in duration-700">Acesso Rápido</p>
-          )}
-          {quickPortals.map((portal) => (
-            <button
-              key={portal.name}
-              onClick={() => openPortal(portal.url, portal.name)}
-              className={`w-full flex items-center gap-4 py-3.5 px-4 rounded-2xl transition-all duration-300 text-slate-500 dark:text-zinc-500 hover:bg-primary/5 hover:text-primary ${isCollapsed ? 'justify-center px-0' : ''}`}
-            >
-              <span className="material-symbols-outlined text-[24px]">{portal.icon}</span>
-              {!isCollapsed && <span className="text-[11px] font-black uppercase tracking-[0.15em]">{portal.name}</span>}
-            </button>
-          ))}
-        </div>
-
-        {adminItems.length > 0 && (
-          <div className="space-y-1">
+      <nav className="flex-1 overflow-y-auto no-scrollbar px-3 py-4 space-y-8">
+        {sections.map(section => (
+          <div key={section.title} className="space-y-1">
             {!isCollapsed && (
-              <p className="px-4 text-[9px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-[0.3em] mb-4 animate-in fade-in duration-700">Administração</p>
+              <p className="px-3 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest mb-2">
+                {section.title}
+              </p>
             )}
-            {adminItems.map((item) => (
+            {section.items.map(item => (
               <NavButton 
-                key={item.id} 
-                item={item} 
-                isActive={currentPage === item.id} 
-                isCollapsed={isCollapsed} 
-                onClick={() => navigateTo(item.id)} 
+                key={item.id}
+                {...item}
+                isActive={currentPage === item.id}
+                isCollapsed={isCollapsed}
+                onClick={() => navigateTo(item.id)}
               />
             ))}
           </div>
-        )}
-
-        <div className="space-y-1">
-          {!isCollapsed && (
-            <p className="px-4 text-[9px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-[0.3em] mb-4 animate-in fade-in duration-700">Ecossistema IFAL</p>
-          )}
-          {utilityItems.map((item) => (
-            <NavButton 
-              key={item.id} 
-              item={item} 
-              isActive={currentPage === item.id} 
-              isCollapsed={isCollapsed} 
-              onClick={() => navigateTo(item.id)} 
-            />
-          ))}
-        </div>
+        ))}
       </nav>
 
-      <div className={`mt-auto py-8 border-t border-slate-100 dark:border-white/5 space-y-4 transition-all duration-500 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
-        <button 
-          onClick={() => navigateTo('profile')}
-          title={isCollapsed ? 'Minha Conta' : ''}
-          className={`w-full flex items-center gap-4 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all group ${
-            isCollapsed ? 'justify-center' : ''
-          }`}
-        >
-          <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-white font-black text-xs overflow-hidden shadow-lg shadow-primary/20 border-2 border-white dark:border-zinc-800 shrink-0 group-hover:scale-105 transition-transform">
-            {profile?.photo ? (
-              <img src={profile.photo} className="w-full h-full object-cover" alt="Profile" />
-            ) : (
-              <span style={{ fontVariationSettings: "'wght' 800" }}>{profile?.name?.charAt(0) || 'U'}</span>
-            )}
-          </div>
-          {!isCollapsed && (
-            <div className="text-left min-w-0 flex-1 animate-in fade-in duration-700">
-              <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase truncate">{profile?.name || 'Usuário'}</p>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Configurações</p>
-            </div>
-          )}
-        </button>
-
+      <div className="p-4 border-t border-slate-200 dark:border-white/5">
         <button 
           onClick={onLogout}
-          title={isCollapsed ? 'Sair' : ''}
-          className={`w-full flex items-center gap-4 h-12 rounded-2xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/5 transition-all group active:scale-95 border border-transparent ${
-            isCollapsed ? 'justify-center px-0' : 'px-4'
-          }`}
+          className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all ${isCollapsed ? 'justify-center' : ''}`}
         >
-          <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'wght' 300" }}>
-            logout
-          </span>
-          {!isCollapsed && (
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] animate-in fade-in duration-700">Deslogar</span>
-          )}
+          <span className="material-symbols-outlined text-[20px]">logout</span>
+          {!isCollapsed && <span className="text-[13px] font-medium">Sair</span>}
         </button>
       </div>
     </aside>

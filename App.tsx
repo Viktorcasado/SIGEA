@@ -22,6 +22,8 @@ import PublishSuccess from './pages/PublishSuccess.tsx';
 import Welcome from './pages/Welcome.tsx';
 import Reports from './pages/Reports.tsx';
 import Integrations from './pages/Integrations.tsx';
+import Schedule from './pages/Schedule.tsx';
+import ParticipantsAdmin from './pages/ParticipantsAdmin.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
 import BottomNav from './components/BottomNav.tsx';
 import Sidebar from './components/Sidebar.tsx';
@@ -68,7 +70,6 @@ const App: React.FC = () => {
       if (!error && data) {
         const normalizedEvents = data.map(e => ({
           ...e,
-          // Mapeamos colunas do banco para as propriedades do app
           imageUrl: e.image_url || e.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000',
           certificateHours: e.certificate_hours || e.certificateHours || 0
         }));
@@ -91,7 +92,6 @@ const App: React.FC = () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           updateAuthState(session);
-          if (isRecoveryRoute()) setCurrentPage('reset-password');
         } else {
           setAuthStatus(false);
         }
@@ -185,19 +185,14 @@ const App: React.FC = () => {
   const toggleRole = async () => {
     const newRole = role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT;
     setRole(newRole);
-    
     try {
-      await supabase.auth.updateUser({
-        data: { role: newRole }
-      });
+      await supabase.auth.updateUser({ data: { role: newRole } });
     } catch (err) {
       console.error("Erro ao persistir role:", err);
     }
   };
 
-  const handleRefreshEvents = () => {
-    fetchEvents();
-  };
+  const handleRefreshEvents = () => fetchEvents();
 
   if (isHydrating) {
     return (
@@ -214,7 +209,7 @@ const App: React.FC = () => {
     return <Login onLogin={() => setAuthStatus(true)} onBack={() => setHasSeenWelcome(false)} darkMode={theme === 'dark'} setDarkMode={() => {}} />;
   }
 
-  const commonProps = { navigateTo, events, profile: userProfile, openPortal };
+  const commonProps = { navigateTo, events, profile: userProfile, openPortal, role };
 
   const renderContent = () => {
     if (currentPage === 'reset-password') return <ResetPassword navigateTo={navigateTo} />;
@@ -224,7 +219,7 @@ const App: React.FC = () => {
       case 'events': return <EventsList navigateTo={navigateTo} events={events} />;
       case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} role={role} />;
       case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={handleUpdateProfile} />;
-      case 'certificates': return <Certificates navigateTo={navigateTo} events={events} user={userProfile} />;
+      case 'certificates': return <Certificates navigateTo={navigateTo} events={events} user={userProfile} role={role} />;
       case 'profile': return (
         <Profile 
           {...commonProps} 
@@ -244,6 +239,8 @@ const App: React.FC = () => {
       case 'edit-event': return <EditEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onUpdate={handleRefreshEvents} />;
       case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={() => fetchEvents()} onArchive={() => {}} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} eventId={selectedEventId} />;
+      case 'schedule': return <Schedule navigateTo={navigateTo} role={role} />;
+      case 'participants': return <ParticipantsAdmin navigateTo={navigateTo} eventId={selectedEventId || undefined} />;
       case 'publish-success': 
         const successEvent = events.find(e => e.id === selectedEventId);
         return <PublishSuccess navigateTo={navigateTo} event={successEvent} />;
@@ -254,10 +251,10 @@ const App: React.FC = () => {
     }
   };
 
-  const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'reports', 'help', 'create-event', 'edit-event', 'check-in', 'integrations'].includes(currentPage);
+  const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'reports', 'help', 'create-event', 'edit-event', 'check-in', 'integrations', 'schedule', 'participants'].includes(currentPage);
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-[#09090b]">
+    <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#09090b]">
       {isNavigationVisible && (
         <Sidebar 
           currentPage={currentPage} 
@@ -270,7 +267,7 @@ const App: React.FC = () => {
       )}
       
       <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 pb-24 lg:pb-8">{renderContent()}</main>
+        <main className="flex-1 pb-24 lg:pb-0">{renderContent()}</main>
         <BottomNav currentPage={currentPage} navigateTo={navigateTo} role={role} />
         <AIAssistant events={events} />
       </div>
