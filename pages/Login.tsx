@@ -27,7 +27,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
     setError(null);
     setLoading(true);
 
-    // Garante que a URL de redirecionamento seja absoluta e limpa
     const origin = window.location.origin;
     const siteUrl = `${origin}/reset-password`;
 
@@ -73,9 +72,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-[34px] font-black tracking-tight uppercase leading-none">Verifique seu e-mail</h2>
+            <h2 className="text-[34px] font-black tracking-tight uppercase leading-none">Verifique o E-mail</h2>
             <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight px-6">
-              Enviamos as instruções de recuperação para o seu e-mail institucional.
+              As instruções institucionais foram enviadas para o seu endereço de e-mail.
             </p>
           </div>
 
@@ -84,19 +83,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
               onClick={() => window.open('mailto:', '_blank')}
               className="w-full h-18 bg-primary text-white font-black rounded-3xl shadow-2xl shadow-primary/30 active:scale-95 transition-all uppercase text-[11px] tracking-[0.2em]"
             >
-              Abrir E-mail
+              Abrir Caixa de Entrada
             </button>
             <button 
               onClick={() => setView('SIGN_IN')}
               className="w-full py-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-primary transition-colors"
             >
-              Voltar ao Login
+              Voltar ao Início
             </button>
           </div>
-
-          <footer className="pt-20 text-[9px] font-black text-zinc-300 dark:text-zinc-800 uppercase tracking-[0.3em] leading-loose">
-            Não recebeu? Verifique o spam, <br /> ou <button onClick={() => setView('FORGOT_PASSWORD')} className="text-primary hover:underline">tente outro e-mail</button>
-          </footer>
         </div>
       </div>
     );
@@ -104,32 +99,32 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in fade-in overflow-y-auto no-scrollbar">
-      <header className="p-8 flex items-center justify-between sticky top-0 z-10">
+      <header className="p-8 flex items-center justify-between sticky top-0 z-10 max-w-5xl mx-auto w-full">
         <button 
           onClick={() => view === 'SIGN_IN' ? (onBack?.()) : setView('SIGN_IN')}
-          className="size-12 flex items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900 text-zinc-500 active:scale-90 transition-all border border-zinc-100 dark:border-white/5"
+          className="size-14 lg:size-12 flex items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900 text-zinc-500 active:scale-90 transition-all border border-zinc-100 dark:border-white/5"
         >
           <span className="material-symbols-outlined font-black">arrow_back</span>
         </button>
-        <span className="material-symbols-outlined text-zinc-300 dark:text-zinc-800">help</span>
+        <span className="text-primary font-black text-lg tracking-tighter uppercase">SIGEA</span>
       </header>
 
-      <main className="flex-1 flex flex-col px-8 pb-12 max-w-sm mx-auto w-full justify-center">
+      <main className="flex-1 flex flex-col px-8 pb-12 max-w-sm lg:max-w-md mx-auto w-full justify-center">
         <div className="space-y-12">
           <header className="space-y-4">
-            <h1 className="text-[44px] font-black tracking-tighter uppercase leading-none">
-              {view === 'SIGN_IN' ? 'Login' : (view === 'SIGN_UP' ? 'Cadastro' : 'Recuperar')}
+            <h1 className="text-[48px] lg:text-[54px] font-[1000] tracking-tighter uppercase leading-[0.85] text-slate-900 dark:text-white">
+              {view === 'SIGN_IN' ? 'Portal de Acesso' : (view === 'SIGN_UP' ? 'Novo Cadastro' : 'Resetar Senha')}
             </h1>
-            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight max-w-[280px]">
+            <p className="text-[11px] font-black text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-widest max-w-[300px]">
               {view === 'FORGOT_PASSWORD' 
-                ? 'Insira o e-mail associado à sua conta institucional e enviaremos as instruções para redefinir sua senha.' 
-                : 'Acesse o portal institucional SIGEA do IFAL para gerenciar seus eventos acadêmicos.'}
+                ? 'Insira seu e-mail do IFAL para redefinir credenciais.' 
+                : 'Acesse o sistema oficial de gestão acadêmica do Instituto Federal de Alagoas.'}
             </p>
           </header>
 
           <form onSubmit={handleAuth} className="space-y-10">
             {error && (
-              <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[10px] font-black text-red-500 text-center animate-in shake">
+              <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-[10px] font-black text-red-500 text-center animate-in shake">
                 {error}
               </div>
             )}
@@ -137,53 +132,50 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
             <div className="space-y-6">
               {view === 'SIGN_UP' && (
                 <div className="space-y-2 relative group">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome Completo</label>
-                  <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all uppercase" />
+                  <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome Completo</label>
+                  <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-20 lg:h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:ring-8 focus:ring-primary/5 transition-all uppercase" />
                 </div>
               )}
 
               <div className="space-y-2 relative group">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">E-mail Institucional</label>
-                <input required type="email" placeholder="nome@ifal.edu.br" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all lowercase placeholder:text-zinc-300 dark:placeholder:text-zinc-700" />
+                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">E-mail Institucional</label>
+                <input required type="email" placeholder="nome@ifal.edu.br" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-20 lg:h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:ring-8 focus:ring-primary/5 transition-all lowercase" />
               </div>
               
               {view !== 'FORGOT_PASSWORD' && (
                 <div className="space-y-2 relative group">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Senha</label>
-                  <input required type="password" placeholder="********" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all" />
+                  <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Senha de Acesso</label>
+                  <input required type="password" placeholder="********" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-20 lg:h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:ring-8 focus:ring-primary/5 transition-all" />
                 </div>
               )}
             </div>
 
             <button 
               disabled={loading} 
-              className="w-full h-20 bg-primary text-white font-black rounded-Apple shadow-2xl shadow-primary/30 flex items-center justify-center uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-all mt-4 disabled:opacity-50"
+              className="w-full h-20 bg-primary text-white font-black rounded-[2.5rem] lg:rounded-Apple shadow-2xl shadow-primary/30 flex items-center justify-center uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-all mt-4 disabled:opacity-50 hover:scale-[1.02]"
             >
               {loading ? (
-                <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <div className="size-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                view === 'SIGN_IN' ? 'Entrar no Sistema' : (view === 'SIGN_UP' ? 'Criar Conta' : 'Enviar Instruções')
+                view === 'SIGN_IN' ? 'Entrar Agora' : (view === 'SIGN_UP' ? 'Cadastrar' : 'Recuperar Acesso')
               )}
             </button>
           </form>
 
-          {view === 'SIGN_IN' && (
-            <div className="text-center">
+          <footer className="text-center pt-8 flex flex-col gap-6">
+            {view === 'SIGN_IN' && (
               <button 
                 onClick={() => setView('FORGOT_PASSWORD')}
                 className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.1em] hover:text-primary transition-colors"
               >
-                Esqueceu a senha?
+                Esqueci meus dados de acesso
               </button>
-            </div>
-          )}
-
-          <footer className="text-center pt-10">
+            )}
             <button 
               onClick={() => setView(view === 'SIGN_IN' ? 'SIGN_UP' : 'SIGN_IN')} 
-              className="text-[11px] font-black text-primary uppercase tracking-[0.15em]"
+              className="text-[11px] font-black text-primary uppercase tracking-[0.15em] hover:underline underline-offset-4"
             >
-              {view === 'SIGN_IN' ? 'Não possui acesso? Cadastre-se' : 'Já possui cadastro? Faça Login'}
+              {view === 'SIGN_IN' ? 'Não possui acesso? Registre-se aqui' : 'Já possui cadastro? Clique para logar'}
             </button>
           </footer>
         </div>
