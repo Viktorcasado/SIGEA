@@ -24,10 +24,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, navigateTo, role, profil
   ] : [];
 
   return (
-    <aside className="hidden lg:flex flex-col w-72 h-screen sticky top-0 bg-white dark:bg-[#09090b] border-r border-slate-200 dark:border-white/5 p-8 z-50">
+    <aside className="hidden lg:flex flex-col w-72 h-screen sticky top-0 bg-white dark:bg-[#0b0b0d] border-r border-slate-200 dark:border-white/5 p-8 z-50">
       <div className="mb-12 px-2">
         <Logo size="md" />
-        <p className="text-[9px] font-black text-primary uppercase tracking-[0.3em] mt-2">Portal Acadêmico</p>
+        <div className="flex items-center gap-2 mt-2">
+           <div className="size-1.5 bg-primary rounded-full animate-pulse"></div>
+           <p className="text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.3em]">Portal Acadêmico</p>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-8">
@@ -37,9 +40,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, navigateTo, role, profil
             <button
               key={item.id}
               onClick={() => navigateTo(item.id)}
-              className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
+              className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group active:scale-95 ${
                 currentPage === item.id 
-                ? 'bg-primary/10 text-primary shadow-sm' 
+                ? 'bg-primary text-white shadow-lg shadow-primary/20' 
                 : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5'
               }`}
             >
@@ -47,21 +50,20 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, navigateTo, role, profil
                 {item.icon}
               </span>
               <span className="text-xs font-bold uppercase tracking-wide">{item.label}</span>
-              {currentPage === item.id && <div className="ml-auto size-1.5 bg-primary rounded-full shadow-[0_0_8px_#10b981]"></div>}
             </button>
           ))}
         </div>
 
         {adminItems.length > 0 && (
           <div className="space-y-2">
-            <p className="px-4 text-[10px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-widest mb-4">Gestão</p>
+            <p className="px-4 text-[10px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-widest mb-4">Gestão do Campus</p>
             {adminItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => navigateTo(item.id)}
-                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
+                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group active:scale-95 ${
                   currentPage === item.id 
-                  ? 'bg-primary/10 text-primary shadow-sm' 
+                  ? 'bg-primary text-white shadow-lg shadow-primary/20' 
                   : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5'
                 }`}
               >
@@ -80,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, navigateTo, role, profil
           onClick={() => navigateTo('profile')}
           className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
         >
-          <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-white font-black text-xs overflow-hidden shadow-lg shadow-primary/20">
+          <div className="size-11 rounded-xl bg-primary flex items-center justify-center text-white font-black text-xs overflow-hidden shadow-lg shadow-primary/20 border-2 border-white dark:border-zinc-800">
             {profile?.photo ? (
               <img src={profile.photo} className="w-full h-full object-cover" alt="Profile" />
             ) : (
@@ -88,18 +90,18 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, navigateTo, role, profil
             )}
           </div>
           <div className="text-left min-w-0">
-            <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase truncate">{profile?.name?.split(' ')[0]}</p>
-            <p className="text-[9px] font-bold text-slate-400 uppercase truncate">Configurações</p>
+            <p className="text-[11px] font-black text-slate-900 dark:text-white uppercase truncate">{profile?.name || 'Usuário'}</p>
+            <p className="text-[9px] font-bold text-slate-400 uppercase truncate tracking-widest">Ver Perfil</p>
           </div>
           <span className="material-symbols-outlined ml-auto text-slate-300 group-hover:text-primary transition-colors">settings</span>
         </button>
 
         <button 
           onClick={onLogout}
-          className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/5 transition-all group"
+          className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/5 transition-all group active:scale-95"
         >
           <span className="material-symbols-outlined text-[22px]">logout</span>
-          <span className="text-xs font-black uppercase tracking-widest">Encerrar Sessão</span>
+          <span className="text-xs font-black uppercase tracking-widest">Sair do Sistema</span>
         </button>
       </div>
     </aside>

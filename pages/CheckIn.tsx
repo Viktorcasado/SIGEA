@@ -1,23 +1,53 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 
 interface CheckInProps {
   navigateTo: (page: string) => void;
+  eventId: string | null;
 }
 
-const CheckIn: React.FC<CheckInProps> = ({ navigateTo }) => {
-  const [lastCheckIns, setLastCheckIns] = useState([
-    { name: 'João da Silva', role: 'Estudante', time: '14:32', initials: 'JS', status: 'Sucesso' },
-    { name: 'Maria Oliveira', role: 'Docente', time: '14:30', initials: 'MO', status: 'Sucesso' },
-    { name: 'Carlos Lima', role: 'Visitante', time: '14:28', initials: 'CL', status: 'Sucesso' }
-  ]);
-
+const CheckIn: React.FC<CheckInProps> = ({ navigateTo, eventId }) => {
+  const [lastCheckIns, setLastCheckIns] = useState<any[]>([]);
+  const [stats, setStats] = useState({ present: 0, total: 0 });
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraMode, setCameraMode] = useState<'user' | 'environment'>('environment');
   const [hasError, setHasError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<string | null>(null);
+
+  const fetchCheckInData = async () => {
+    if (!eventId) return;
+    
+    // Busca últimos check-ins (status Confirmado e que seriam marcados como presentes)
+    const { data, error } = await supabase
+      .from('registrations')
+      .select('name, role, status, created_at')
+      .eq('event_id', eventId)
+      .eq('status', 'Confirmado')
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (!error && data) {
+      setLastCheckIns(data.map(d => ({
+        name: d.name,
+        role: d.role,
+        time: new Date(d.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        initials: d.name.split(' ').map((n:any) => n[0]).join('').slice(0, 2).toUpperCase(),
+        status: 'Sucesso'
+      })));
+    }
+
+    // Busca estatísticas totais
+    const { count: totalCount } = await supabase
+      .from('registrations')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId);
+      
+    setStats({ present: data?.length || 0, total: totalCount || 0 });
+  };
 
   const startCamera = async () => {
     if (streamRef.current) {
@@ -33,16 +63,17 @@ const CheckIn: React.FC<CheckInProps> = ({ navigateTo }) => {
       if (videoRef.current) { videoRef.current.srcObject = stream; }
       setHasError(null);
     } catch (err: any) {
-      setHasError("Acesso à câmera negado. Verifique as permissões do navegador.");
+      setHasError("Acesso à câmera negado ou indisponível.");
     }
   };
 
   useEffect(() => {
     startCamera();
+    fetchCheckInData();
     return () => {
       if (streamRef.current) { streamRef.current.getTracks().forEach(track => track.stop()); }
     };
-  }, [cameraMode]);
+  }, [cameraMode, eventId]);
 
   const simulateScan = () => {
     if (isScanning) return;
@@ -50,14 +81,7 @@ const CheckIn: React.FC<CheckInProps> = ({ navigateTo }) => {
     setTimeout(() => {
       setIsScanning(false);
       setScanResult("VALIDADO");
-      const newCheckIn = {
-        name: 'Novo Participante',
-        role: 'Estudante',
-        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        initials: 'NP',
-        status: 'Sucesso'
-      };
-      setLastCheckIns([newCheckIn, ...lastCheckIns.slice(0, 2)]);
+      fetchCheckInData(); // Recarrega dados reais após simulação
       setTimeout(() => setScanResult(null), 2000);
     }, 1500);
   };
@@ -110,13 +134,6 @@ const CheckIn: React.FC<CheckInProps> = ({ navigateTo }) => {
                     <span className="material-symbols-outlined text-primary text-5xl font-black">verified</span>
                   </div>
                   <h3 className="text-white text-xl font-black uppercase tracking-[0.3em]">VALIDADO</h3>
-                  <p className="text-white/80 text-[10px] font-bold uppercase mt-2 tracking-widest">Entrada Liberada</p>
-                </div>
-              )}
-              {!scanResult && (
-                <div className="mt-16 px-6 py-3 rounded-full bg-black/40 backdrop-blur-2xl border border-white/10 flex items-center gap-3">
-                  <span className={`size-2 rounded-full ${isScanning ? 'bg-primary animate-ping' : 'bg-white/40'}`}></span>
-                  <p className="text-white text-[9px] font-black uppercase tracking-[0.2em]">{isScanning ? 'Lendo SIGEA Token...' : 'Posicione o QR Code'}</p>
                 </div>
               )}
             </div>
@@ -125,25 +142,25 @@ const CheckIn: React.FC<CheckInProps> = ({ navigateTo }) => {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-             <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">Atividade Atual</h3>
-             <span className="text-[9px] font-black text-primary uppercase">Mesa Redonda #04</span>
+             <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400">Status da Sessão</h3>
+             <span className="text-[9px] font-black text-primary uppercase">Presença Atual</span>
           </div>
           <div className="p-5 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-3xl flex items-center gap-4 shadow-sm">
              <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary"><span className="material-symbols-outlined">analytics</span></div>
              <div className="flex-1">
-                <p className="text-[11px] font-black text-zinc-900 dark:text-white uppercase leading-none mb-1">Taxa de Presença</p>
+                <p className="text-[11px] font-black text-zinc-900 dark:text-white uppercase leading-none mb-1">Taxa de Ocupação</p>
                 <div className="w-full bg-slate-50 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden mt-2">
-                   <div className="bg-primary h-full" style={{width: '68%'}}></div>
+                   <div className="bg-primary h-full" style={{width: `${stats.total > 0 ? (stats.present / stats.total) * 100 : 0}%`}}></div>
                 </div>
              </div>
-             <span className="text-[11px] font-black text-primary">68%</span>
+             <span className="text-[11px] font-black text-primary">{stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 0}%</span>
           </div>
         </div>
 
         <div className="space-y-4 pb-12">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 px-1">Check-ins Recentes</h3>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-400 px-1">Participantes Sincronizados</h3>
           <div className="space-y-2">
-            {lastCheckIns.map((item, idx) => (
+            {lastCheckIns.length > 0 ? lastCheckIns.map((item, idx) => (
               <div key={idx} className="flex items-center gap-4 p-4 rounded-3xl bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 shadow-sm transition-all animate-in slide-in-from-left-4 duration-500">
                 <div className="size-11 rounded-2xl bg-slate-50 dark:bg-zinc-800 text-slate-400 flex items-center justify-center font-black text-sm">{item.initials}</div>
                 <div className="flex-1 min-w-0">
@@ -152,10 +169,12 @@ const CheckIn: React.FC<CheckInProps> = ({ navigateTo }) => {
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-black text-zinc-500 uppercase">{item.time}</p>
-                  <p className="text-[8px] font-black text-primary uppercase">SUCESSO</p>
+                  <p className="text-[8px] font-black text-primary uppercase">OK</p>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p className="py-10 text-center text-[9px] font-black text-zinc-400 uppercase tracking-widest">Nenhum check-in registrado hoje.</p>
+            )}
           </div>
         </div>
       </main>

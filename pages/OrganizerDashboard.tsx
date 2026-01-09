@@ -1,18 +1,23 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Logo from '../components/Logo.tsx';
-import { Event } from '../types.ts';
+import { Event, UserRole } from '../types.ts';
 
 interface OrganizerDashboardProps {
   navigateTo: (page: string, id?: string) => void;
   onNotify: () => void;
-  profile: { name: string, photo: string };
+  profile: { id: string, name: string, photo: string };
   events: Event[];
   hasUnread?: boolean;
 }
 
 const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ navigateTo, onNotify, profile, events, hasUnread }) => {
   const firstName = (profile?.name || 'Organizador').split(' ')[0];
+
+  // Filtra apenas eventos que pertencem a este organizador
+  const myEvents = useMemo(() => {
+    return events.filter(e => e.organizer_id === profile.id);
+  }, [events, profile.id]);
 
   return (
     <div className="flex flex-col w-full pb-32 min-h-screen bg-slate-50 dark:bg-[#09090b] animate-in fade-in duration-700">
@@ -62,7 +67,10 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ navigateTo, onN
               <span className="text-[11px] font-[900] uppercase tracking-widest text-center relative z-10 leading-tight">Novo <br /> Evento</span>
             </button>
             <button 
-              onClick={() => navigateTo('check-in')} 
+              onClick={() => {
+                if (myEvents.length > 0) navigateTo('check-in', myEvents[0].id);
+                else alert("Você precisa criar um evento antes de realizar check-ins.");
+              }} 
               className="flex flex-col items-center justify-center gap-6 p-10 rounded-[3rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 shadow-xl shadow-black/5 transition-all active:scale-95 text-center group"
             >
               <div className="size-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform ring-1 ring-primary/20">
@@ -76,14 +84,14 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ navigateTo, onN
         <section className="pb-20">
            <div className="flex items-center justify-between mb-10">
             <div className="flex flex-col gap-2">
-               <h3 className="text-[13px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Gerenciamento Ativo</h3>
+               <h3 className="text-[13px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Seus Eventos</h3>
                <div className="w-8 h-1 bg-primary rounded-full shadow-[0_0_8px_#10b981]"></div>
             </div>
-            <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-5 py-2.5 rounded-full border border-primary/10">{events.length} Eventos</span>
+            <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-5 py-2.5 rounded-full border border-primary/10">{myEvents.length} Ativos</span>
           </div>
 
           <div className="space-y-6">
-            {events.length > 0 ? events.map(event => (
+            {myEvents.length > 0 ? myEvents.map(event => (
               <div 
                 key={event.id} 
                 onClick={() => navigateTo('manage-event', event.id)} 
@@ -99,15 +107,6 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ navigateTo, onN
                     <span className="text-[9px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-widest">{event.status}</span>
                   </div>
                   <h4 className="text-[15px] font-[1000] leading-tight truncate uppercase text-slate-900 dark:text-white group-hover:text-primary transition-colors tracking-tighter">{event.title}</h4>
-                  
-                  <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-50 dark:border-white/5">
-                    <div className="flex-1 bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden mr-4 shadow-inner">
-                      <div className="bg-primary h-full shadow-[0_0_8px_#10b981]" style={{width: '75%'}}></div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase">75%</span>
-                    </div>
-                  </div>
                 </div>
               </div>
             )) : (
@@ -116,7 +115,7 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ navigateTo, onN
                    <span className="material-symbols-outlined text-4xl">event_busy</span>
                 </div>
                 <div className="space-y-1">
-                   <p className="text-[11px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Aguardando novo projeto</p>
+                   <p className="text-[11px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Nenhum evento criado por você</p>
                    <button onClick={() => navigateTo('create-event')} className="text-primary text-[10px] font-black uppercase tracking-[0.2em] hover:underline underline-offset-4">Iniciar Publicação Agora</button>
                 </div>
               </div>

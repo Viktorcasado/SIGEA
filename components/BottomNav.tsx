@@ -19,7 +19,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentPage, navigateTo, role }) 
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] px-8 pb-[env(safe-area-inset-bottom,32px)] pt-6 bg-white/80 dark:bg-zinc-950/90 backdrop-blur-3xl border-t border-slate-200/50 dark:border-white/5 animate-in slide-in-from-bottom duration-700 shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] px-8 pb-[env(safe-area-inset-bottom,24px)] pt-6 bg-white/90 dark:bg-[#0b0b0d]/90 backdrop-blur-3xl border-t border-slate-200/50 dark:border-white/10 animate-in slide-in-from-bottom duration-700 shadow-[0_-15px_40px_rgba(0,0,0,0.1)]">
       <div className="flex items-center justify-around max-w-lg mx-auto">
         {tabs.map((tab) => {
           const isActive = currentPage === tab.id;
@@ -33,16 +33,16 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentPage, navigateTo, role }) 
             >
               <div className="relative flex items-center justify-center">
                 <span 
-                  className={`material-symbols-outlined text-[30px] transition-all duration-500 ${isActive ? 'filled scale-110 drop-shadow-[0_0_10px_#10b981]' : 'group-hover:scale-110'}`} 
+                  className={`material-symbols-outlined text-[28px] transition-all duration-500 ${isActive ? 'filled scale-110 drop-shadow-[0_0_12px_#10b981]' : 'group-hover:scale-105'}`} 
                   style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 700" : "'FILL' 0, 'wght' 400" }}
                 >
                   {tab.icon}
                 </span>
                 {isActive && (
-                  <div className="absolute inset-0 bg-primary/25 blur-2xl rounded-full animate-pulse -z-10"></div>
+                  <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse -z-10"></div>
                 )}
               </div>
-              <span className={`text-[9px] font-[1000] uppercase tracking-[0.2em] transition-all duration-500 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-0.5'}`}>
+              <span className={`text-[8px] font-[1000] uppercase tracking-[0.25em] transition-all duration-500 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-0.5'}`}>
                 {tab.label}
               </span>
               {isActive && (
