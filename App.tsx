@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserRole, Event as SIGEAEvent } from './types.ts';
 import { supabase, handleSupabaseError } from './supabaseClient.ts';
-import { MOCK_EVENTS } from './constants.tsx';
 
 import Home from './pages/Home.tsx';
 import EventsList from './pages/EventsList.tsx';
@@ -11,12 +10,11 @@ import Registration from './pages/Registration.tsx';
 import Certificates from './pages/Certificates.tsx';
 import Profile from './pages/Profile.tsx';
 import Help from './pages/Help.tsx';
-import CheckIn from './pages/CheckIn.tsx';
 import MyTicket from './pages/MyTicket.tsx';
 import Login from './pages/Login.tsx';
+import ResetPassword from './pages/ResetPassword.tsx';
 import OrganizerDashboard from './pages/OrganizerDashboard.tsx';
 import CreateEvent from './pages/CreateEvent.tsx';
-import ManageEvent from './pages/ManageEvent.tsx';
 import PublishSuccess from './pages/PublishSuccess.tsx';
 import Welcome from './pages/Welcome.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
@@ -27,16 +25,28 @@ const App: React.FC = () => {
     return localStorage.getItem('sigea_seen_welcome') === 'true';
   });
   
-  // Estados de Persistência
   const [isHydrating, setIsHydrating] = useState(true);
   const [authStatus, setAuthStatus] = useState<boolean | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [role, setRole] = useState<UserRole>(UserRole.PARTICIPANT);
+  const [dbError, setDbError] = useState<string | null>(null);
   
-  // Reidratação de Navegação
-  const [currentPage, setCurrentPage] = useState(() => {
+  // Função auxiliar para detectar se a URL atual é de recuperação de senha
+  const isRecoveryRoute = () => {
+    const hash = window.location.hash;
+    const search = window.location.search;
+    const path = window.location.pathname;
+    return path.includes('reset-password') || 
+           hash.includes('type=recovery') || 
+           hash.includes('access_token') || 
+           search.includes('type=recovery');
+  };
+
+  const [currentPage, setCurrentPage] = useState<string>(() => {
+    if (isRecoveryRoute()) return 'reset-password';
     return localStorage.getItem('sigea_last_page') || 'home';
   });
+  
   const [selectedEventId, setSelectedEventId] = useState<string | null>(() => {
     return localStorage.getItem('sigea_last_event_id');
   });
@@ -46,67 +56,101 @@ const App: React.FC = () => {
     return (localStorage.getItem('sigea_theme') as any) || 'dark';
   });
 
-  // Persistência de Tema
   useEffect(() => {
     const root = window.document.documentElement;
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     root.classList.toggle('dark', isDark);
-    localStorage.setItem('sigea_theme', theme);
   }, [theme]);
 
-  // Busca de Eventos
   useEffect(() => {
-    const fetchEvents = async () => {
+    const initApp = async () => {
+      // 1. Verifica sessão inicial
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        updateAuthState(session);
+        // Se houver sessão mas estivermos em rota de recuperação, garantimos a página correta
+        if (isRecoveryRoute()) {
+          setCurrentPage('reset-password');
+        }
+      } else {
+        setAuthStatus(false);
+      }
+      
+      // 2. Carrega eventos
       try {
         const { data, error } = await supabase
           .from('events')
           .select('*')
           .order('created_at', { ascending: false });
-        
+          
         if (error) throw error;
-        if (data && data.length > 0) setEvents(data);
-        else setEvents(MOCK_EVENTS);
-      } catch (err) {
-        setEvents(MOCK_EVENTS);
+        setEvents(data || []);
+      } catch (err: any) {
+        setDbError(handleSupabaseError(err));
       } finally {
-        // Apenas encerra hidratação se o auth já estiver resolvido
-        if (authStatus !== null) setIsHydrating(false);
+        setIsHydrating(false);
       }
     };
-    fetchEvents();
-  }, [authStatus]);
 
-  // Inicialização de Auth com Persistência Superior
-  useEffect(() => {
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      updateAuthState(session);
-      if (events.length > 0 || authStatus === false) setIsHydrating(false);
-    };
+    initApp();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      updateAuthState(session);
+    // Listener de mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        updateAuthState(session);
+        // Evento específico disparado quando o usuário clica no link de recuperação
+        if (event === 'PASSWORD_RECOVERY') {
+          setCurrentPage('reset-password');
+          localStorage.setItem('sigea_last_page', 'reset-password');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        handleLogoutCleanUp();
+      }
     });
 
-    initAuth();
     return () => subscription.unsubscribe();
-  }, [events.length]);
+  }, []);
 
   const updateAuthState = (session: any) => {
-    if (session) {
-      const metadata = session.user.user_metadata;
-      setUserProfile({
-        id: session.user.id,
-        name: metadata?.name || 'Usuário SIGEA',
-        email: session.user.email,
-        campus: metadata?.campus || localStorage.getItem('sigea_last_campus') || 'IFAL - Campus Maceió',
-        photo: metadata?.photo_url || ''
-      });
-      setRole((metadata?.role || UserRole.PARTICIPANT) as UserRole);
-      setAuthStatus(true);
-    } else {
-      setAuthStatus(false);
-      setIsHydrating(false);
+    const metadata = session.user.user_metadata;
+    setUserProfile({
+      id: session.user.id,
+      name: metadata?.name || 'Usuário SIGEA',
+      email: session.user.email,
+      campus: metadata?.campus || 'IFAL - Campus Maceió',
+      photo: metadata?.photo_url || ''
+    });
+    setRole((metadata?.role || UserRole.PARTICIPANT) as UserRole);
+    setAuthStatus(true);
+  };
+
+  const handleLogoutCleanUp = () => {
+    setAuthStatus(false);
+    setUserProfile(null);
+    localStorage.removeItem('sigea-auth-token');
+    localStorage.removeItem('sigea_last_page');
+    localStorage.removeItem('sigea_last_event_id');
+    setCurrentPage('home');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    } finally {
+      handleLogoutCleanUp();
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!userProfile?.id) return;
+    try {
+      await supabase.from('registrations').delete().eq('user_id', userProfile.id);
+      await handleLogout();
+    } catch (err) {
+      alert("Erro ao excluir dados.");
     }
   };
 
@@ -115,91 +159,67 @@ const App: React.FC = () => {
     setSelectedEventId(id);
     localStorage.setItem('sigea_last_page', page);
     if (id) localStorage.setItem('sigea_last_event_id', id);
-    else localStorage.removeItem('sigea_last_event_id');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleContinueFromWelcome = () => {
-    localStorage.setItem('sigea_seen_welcome', 'true');
-    setHasSeenWelcome(true);
-  };
-
-  const handleUpdateProfile = async (updatedData: any) => {
-    try {
-      if (updatedData.campus) localStorage.setItem('sigea_last_campus', updatedData.campus);
-      if (userProfile?.id) {
-        const { error } = await supabase.auth.updateUser({
-          data: { 
-            name: updatedData.name || userProfile.name, 
-            campus: updatedData.campus || userProfile.campus, 
-            photo_url: updatedData.photo || userProfile.photo 
-          }
-        });
-        if (error) throw error;
-      }
-      setUserProfile((prev: any) => ({ ...prev, ...updatedData }));
-      return true;
-    } catch (error: any) {
-      setUserProfile((prev: any) => ({ ...prev, ...updatedData }));
-      return true; 
-    }
-  };
-
-  const handleLogout = async () => {
-    setIsHydrating(true);
-    localStorage.removeItem('sigea_last_page');
-    localStorage.removeItem('sigea_last_event_id');
-    localStorage.removeItem('sigea_demo');
-    await supabase.auth.signOut();
-    window.location.reload();
-  };
-
-  // Tela de Carregamento Institucional (Hydration Shield)
   if (isHydrating) {
     return (
-      <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center z-[99999] animate-in fade-in duration-500">
-        <div className="relative size-24 mb-8">
-          <div className="absolute inset-0 border-4 border-primary/20 rounded-full"></div>
-          <div className="absolute inset-0 border-4 border-primary rounded-full border-t-transparent animate-spin"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-white font-black text-xl tracking-tighter">SI</span>
-          </div>
-        </div>
-        <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] animate-pulse">Sincronizando SIGEA...</p>
+      <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center">
+        <div className="size-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-[0.4em]">Sincronizando SIGEA...</p>
       </div>
     );
   }
 
-  if (!hasSeenWelcome) {
-    return <Welcome onContinue={handleContinueFromWelcome} />;
-  }
-
-  if (!authStatus) {
+  if (dbError) {
     return (
-      <Login 
-        onLogin={() => {}} 
-        onBack={() => setHasSeenWelcome(false)}
-        darkMode={theme === 'dark'} 
-        setDarkMode={() => {}} 
-      />
+      <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center p-10 text-center">
+        <span className="material-symbols-outlined text-red-500 text-6xl mb-6">database_off</span>
+        <h2 className="text-white text-xl font-black uppercase mb-4">Erro de Sincronização</h2>
+        <p className="text-zinc-500 text-sm mb-8 leading-relaxed max-w-xs">{dbError}</p>
+        <button onClick={() => window.location.reload()} className="px-8 py-4 bg-primary text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all">Recarregar App</button>
+      </div>
     );
   }
 
-  const commonProps = { navigateTo, events, profile: userProfile, isSyncing: false };
+  if (!hasSeenWelcome) return <Welcome onContinue={() => { localStorage.setItem('sigea_seen_welcome', 'true'); setHasSeenWelcome(true); }} />;
+  
+  // LOGICA CRÍTICA: Se não estiver logado E não for rota de recuperação, mostra login.
+  // Se for rota de recuperação, o authStatus pode ser true (logado temporariamente pelo token) ou false,
+  // mas devemos mostrar o ResetPassword.
+  if (!authStatus && currentPage !== 'reset-password') {
+    return <Login onLogin={() => setAuthStatus(true)} onBack={() => setHasSeenWelcome(false)} darkMode={theme === 'dark'} setDarkMode={() => {}} />;
+  }
+
+  const commonProps = { navigateTo, events, profile: userProfile };
 
   const renderContent = () => {
+    // Força o ResetPassword se a rota for detectada, independente do estado do authStatus
+    if (currentPage === 'reset-password') return <ResetPassword navigateTo={navigateTo} />;
+
     switch (currentPage) {
       case 'home': return role === UserRole.ORGANIZER ? <OrganizerDashboard {...commonProps} onNotify={() => {}} /> : <Home {...commonProps} onNotify={() => {}} />;
       case 'events': return <EventsList navigateTo={navigateTo} events={events} />;
       case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} role={role} />;
-      case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={handleUpdateProfile} />;
+      case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={async (data) => {
+        const { error } = await supabase.auth.updateUser({ data });
+        if (!error) {
+          setUserProfile((prev: any) => ({...prev, ...data}));
+          return true;
+        }
+        return false;
+      }} />;
       case 'certificates': return <Certificates navigateTo={navigateTo} events={events} />;
-      case 'profile': return <Profile {...commonProps} theme={theme} setTheme={setTheme} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={handleLogout} onDeleteAccount={async () => {}} onUpdate={handleUpdateProfile} />;
-      case 'help': return <Help navigateTo={navigateTo} />;
+      case 'profile': return <Profile {...commonProps} theme={theme} setTheme={setTheme} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} onUpdate={async (data) => {
+        const { error } = await supabase.auth.updateUser({ data });
+        if (!error) {
+          setUserProfile((prev: any) => ({...prev, ...data}));
+          return true;
+        }
+        return false;
+      }} />;
       case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId) || events[0]} />;
-      case 'check-in': return <CheckIn navigateTo={navigateTo} />;
-      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={(e) => setEvents([e, ...events])} />;
-      case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={(id) => { setEvents(events.filter(e => e.id !== id)); navigateTo('home'); }} onArchive={() => {}} />;
+      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={(ev) => setEvents([ev, ...events])} />;
       case 'publish-success': return <PublishSuccess navigateTo={navigateTo} event={events.find(e => e.id === selectedEventId) || events[0]} />;
       default: return <Home {...commonProps} onNotify={() => {}} />;
     }
@@ -207,16 +227,8 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#09090b]">
-      <main className="flex-1 w-full pb-[calc(env(safe-area-inset-bottom,0px)+80px)]">
-        {renderContent()}
-      </main>
-      
-      <BottomNav 
-        currentPage={currentPage} 
-        navigateTo={navigateTo} 
-        role={role}
-      />
-      
+      <main className="flex-1 pb-24">{renderContent()}</main>
+      <BottomNav currentPage={currentPage} navigateTo={navigateTo} role={role} />
       <AIAssistant events={events} />
     </div>
   );

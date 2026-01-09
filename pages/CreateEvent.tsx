@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Event } from '../types';
 import { CAMPUS_LIST } from '../constants';
-import { supabase, isSupabaseConfigured, handleSupabaseError } from '../supabaseClient';
+import { supabase, handleSupabaseError } from '../supabaseClient';
 
 interface CreateEventProps {
   navigateTo: (page: string, id?: string) => void;
@@ -13,7 +13,6 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
   const [step, setStep] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
   const [errorModal, setErrorModal] = useState<{show: boolean, msg: string}>({ show: false, msg: '' });
-  const isDemoMode = localStorage.getItem('sigea_demo') === 'true';
 
   const [formData, setFormData] = useState({
     title: '',
@@ -23,65 +22,23 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
     time: '08:00 - 18:00',
     location: 'Auditório Principal',
     type: 'Palestra' as any,
-    imageUrl: 'https://images.unsplash.com/photo-1540575861501-7ad05823c951?w=800',
+    imageUrl: '', // Começa vazio para incentivar o link direto
     certificateHours: 10
   });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const bannerSuggestions = [
-    { name: 'Tech', url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800' },
-    { name: 'Natureza', url: 'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800' },
+    { name: 'Tecnologia', url: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800' },
     { name: 'Workshop', url: 'https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?w=800' },
-    { name: 'Câmpus', url: 'https://images.unsplash.com/photo-1541339907198-e08756ebafe1?w=800' }
+    { name: 'Educação', url: 'https://images.unsplash.com/photo-1523240715181-014b9e81980e?w=800' }
   ];
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, imageUrl: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleNext = () => {
-    if (step < 3) setStep(s => s + 1);
-  };
-
-  const handleBack = () => {
-    if (step > 1) setStep(s => s - 1);
-    else navigateTo('home');
-  };
+  const handleNext = () => step < 3 && setStep(s => s + 1);
+  const handleBack = () => step > 1 ? setStep(s => s - 1) : navigateTo('home');
 
   const handleSubmit = async () => {
     setIsPublishing(true);
-
-    if (isDemoMode) {
-      setTimeout(() => {
-        const demoEvent: Event = {
-          ...formData,
-          id: 'demo-' + Math.random().toString(36).substr(2, 9),
-          status: 'Inscrições Abertas',
-          price: 'Gratuito'
-        };
-        onAddEvent(demoEvent);
-        setIsPublishing(false);
-        navigateTo('publish-success', demoEvent.id);
-      }, 1500);
-      return;
-    }
-
-    if (!isSupabaseConfigured()) {
-      setErrorModal({ 
-        show: true, 
-        msg: "Chaves de sistema não configuradas. Ative o Modo Demonstração para testar sem banco de dados." 
-      });
-      setIsPublishing(false);
-      return;
-    }
     
     const dbEvent = {
       title: formData.title,
@@ -90,7 +47,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
       date: formData.date,
       time: formData.time,
       location: formData.location,
-      imageUrl: formData.imageUrl,
+      imageUrl: formData.imageUrl || bannerSuggestions[0].url,
       type: formData.type,
       status: 'Inscrições Abertas',
       price: 'Gratuito',
@@ -98,13 +55,8 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
     };
 
     try {
-      const { data, error } = await supabase
-        .from('events')
-        .insert([dbEvent])
-        .select();
-      
+      const { data, error } = await supabase.from('events').insert([dbEvent]).select();
       if (error) throw error;
-
       if (data && data[0]) {
         onAddEvent(data[0] as Event);
         navigateTo('publish-success', data[0].id);
@@ -116,299 +68,113 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
     }
   };
 
-  const eventTypes = [
-    { name: 'Palestra', icon: 'mic_external_on' },
-    { name: 'Workshop', icon: 'build' },
-    { name: 'Curso', icon: 'menu_book' },
-    { name: 'Congresso', icon: 'groups' },
-    { name: 'Simpósio', icon: 'school' },
-    { name: 'Seminário', icon: 'history_edu' },
-    { name: 'Mesa Redonda', icon: 'forum' },
-    { name: 'Fórum', icon: 'campaign' },
-    { name: 'Exposição', icon: 'gallery_thumbnail' },
-    { name: 'Hackathon', icon: 'terminal' },
-    { name: 'Mentoria', icon: 'psychology' }
-  ];
-
   return (
-    <div className="relative flex flex-col w-full pb-32 min-h-screen bg-slate-50 dark:bg-zinc-950 animate-in fade-in duration-500">
-      
+    <div className="flex flex-col w-full pb-32 min-h-screen bg-slate-50 dark:bg-zinc-950 animate-in fade-in">
       {errorModal.show && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-sm bg-zinc-900/90 backdrop-blur-2xl rounded-[2.5rem] p-8 border border-white/10 shadow-[0_32px_64px_rgba(0,0,0,0.5)] flex flex-col items-center text-center scale-up-center">
-            <div className="size-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-6">
-               <span className="material-symbols-outlined text-4xl">error</span>
-            </div>
-            <p className="text-sm font-bold leading-relaxed text-zinc-300 mb-8 px-2">
-              {errorModal.msg}
-            </p>
-            <button 
-              onClick={() => setErrorModal({ show: false, msg: '' })}
-              className="w-full py-4 bg-zinc-800 hover:bg-zinc-700 text-primary font-black uppercase text-xs tracking-[0.3em] rounded-2xl transition-all active:scale-95"
-            >
-              OK
-            </button>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+          <div className="bg-zinc-900 border border-white/10 p-8 rounded-[2.5rem] text-center max-w-xs">
+            <span className="material-symbols-outlined text-red-500 text-5xl mb-4">error</span>
+            <p className="text-white text-xs font-bold mb-6">{errorModal.msg}</p>
+            <button onClick={() => setErrorModal({show:false, msg:''})} className="w-full py-4 bg-zinc-800 text-primary font-black rounded-2xl">ENTENDI</button>
           </div>
         </div>
       )}
 
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl border-b border-zinc-100 dark:border-white/5">
-        <div className="flex items-center justify-between px-6 py-6">
-          <button onClick={handleBack} className="size-11 flex items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 active:scale-90 transition-all border border-transparent dark:border-white/5">
-            <span className="material-symbols-outlined font-black">{step === 1 ? 'close' : 'arrow_back'}</span>
-          </button>
-          <div className="flex flex-col items-center">
-            <h1 className="text-[10px] font-black text-zinc-900 dark:text-white uppercase tracking-[0.3em]">Editor de Eventos</h1>
-            <p className="text-[9px] font-bold text-primary uppercase tracking-widest mt-0.5">Etapa {step} de 3</p>
+      <header className="p-6 border-b border-zinc-100 dark:border-white/5 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-50">
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={handleBack} className="size-10 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-900 text-zinc-500"><span className="material-symbols-outlined">arrow_back</span></button>
+          <div className="text-center">
+            <h1 className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-white">Novo Evento</h1>
+            <p className="text-[9px] font-bold text-primary uppercase">Passo {step} de 3</p>
           </div>
-          <div className="size-11"></div>
+          <div className="size-10"></div>
         </div>
-        <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-900">
-          <div 
-            className="h-full bg-primary shadow-[0_0_12px_#10b981] transition-all duration-700 ease-out"
-            style={{width: `${(step / 3) * 100}%`}}
-          ></div>
+        <div className="h-1 bg-zinc-100 dark:bg-zinc-900 rounded-full overflow-hidden">
+          <div className="h-full bg-primary transition-all duration-500" style={{width: `${(step/3)*100}%`}}></div>
         </div>
       </header>
 
-      <main className="flex-1 p-6 max-w-2xl mx-auto w-full">
+      <main className="p-6 space-y-8 max-w-xl mx-auto w-full">
         {step === 1 && (
-          <section className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="space-y-1">
-              <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase">Definições Básicas</h3>
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Identidade e Classificação</p>
+          <div className="space-y-6 animate-in slide-in-from-bottom-4">
+            <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight uppercase">Informações Básicas</h2>
+            <div className="space-y-4">
+              <input 
+                type="text" 
+                placeholder="TÍTULO DO EVENTO" 
+                value={formData.title}
+                onChange={e => setFormData({...formData, title: e.target.value})}
+                className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl font-bold dark:text-white outline-none focus:border-primary transition-all"
+              />
+              <select 
+                value={formData.campus}
+                onChange={e => setFormData({...formData, campus: e.target.value})}
+                className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl font-bold dark:text-white outline-none"
+              >
+                {CAMPUS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
-
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Título do Evento</label>
-                <input 
-                  type="text" 
-                  value={formData.title}
-                  onChange={e => setFormData({...formData, title: e.target.value})}
-                  className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-3xl outline-none text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all dark:text-white shadow-sm" 
-                  placeholder="Ex: I Seminário de Inovação e Tecnologia" 
-                />
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Modalidade Acadêmica</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {eventTypes.map((t) => (
-                    <button 
-                      key={t.name}
-                      onClick={() => setFormData({...formData, type: t.name as any})}
-                      className={`flex flex-col items-center justify-center gap-3 p-5 rounded-3xl border-2 transition-all duration-300 active:scale-95 ${
-                        formData.type === t.name 
-                        ? 'bg-primary/10 border-primary text-primary shadow-lg ring-1 ring-primary/20' 
-                        : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-white/5 text-zinc-400'
-                      }`}
-                    >
-                      <span className={`material-symbols-outlined text-3xl ${formData.type === t.name ? 'filled' : ''}`}>
-                        {t.icon}
-                      </span>
-                      <span className="text-[9px] font-black uppercase tracking-tight text-center leading-none">
-                        {t.name}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Certificação (Horas)</label>
-                <div className="relative">
-                  <input 
-                    type="number" 
-                    value={formData.certificateHours}
-                    onChange={e => setFormData({...formData, certificateHours: parseInt(e.target.value) || 0})}
-                    className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-3xl outline-none text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all dark:text-white shadow-sm" 
-                    placeholder="Ex: 20" 
-                  />
-                  <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-zinc-300 uppercase">Horas Acadêmicas</span>
-                </div>
-              </div>
-            </div>
-          </section>
+          </div>
         )}
 
         {step === 2 && (
-          <section className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="space-y-1">
-              <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase">Local e Agenda</h3>
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Cronograma Institucional</p>
+          <div className="space-y-6 animate-in slide-in-from-right-4">
+            <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight uppercase">Data e Local</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <input type="text" placeholder="DATA (EX: 20 OUT)" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="h-16 px-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl font-bold dark:text-white outline-none" />
+              <input type="text" placeholder="HORÁRIO" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} className="h-16 px-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl font-bold dark:text-white outline-none" />
             </div>
-
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Unidade IFAL</label>
-                <select 
-                  value={formData.campus}
-                  onChange={e => setFormData({...formData, campus: e.target.value})}
-                  className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-3xl outline-none text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all dark:text-white appearance-none shadow-sm"
-                >
-                  {CAMPUS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Data de Realização</label>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary">calendar_month</span>
-                    <input 
-                      type="text" 
-                      value={formData.date}
-                      onChange={e => setFormData({...formData, date: e.target.value})}
-                      className="w-full h-16 pl-14 pr-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-3xl outline-none text-sm font-bold dark:text-white shadow-sm" 
-                      placeholder="Ex: 12 a 15 Out" 
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Horário Previsto</label>
-                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary">schedule</span>
-                    <input 
-                      type="text" 
-                      value={formData.time}
-                      onChange={e => setFormData({...formData, time: e.target.value})}
-                      className="w-full h-16 pl-14 pr-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-3xl outline-none text-sm font-bold dark:text-white shadow-sm" 
-                      placeholder="Ex: 08:00 - 17:00" 
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Localização Específica</label>
-                <div className="relative">
-                   <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary">location_on</span>
-                  <input 
-                    type="text" 
-                    value={formData.location}
-                    onChange={e => setFormData({...formData, location: e.target.value})}
-                    className="w-full h-16 pl-14 pr-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-3xl outline-none text-sm font-bold dark:text-white shadow-sm" 
-                    placeholder="Ex: Auditório Central, Bloco B, Sala 02" 
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
+            <input type="text" placeholder="LOCAL EXATO" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl font-bold dark:text-white outline-none" />
+          </div>
         )}
 
         {step === 3 && (
-          <section className="space-y-8 animate-in zoom-in-95 duration-500">
-            <div className="space-y-1">
-              <h3 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tighter uppercase">Apresentação</h3>
-              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Identidade Visual do Evento</p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Banner (Link Direto ou Upload)</label>
-                  <div className="relative group">
-                    <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary group-focus-within:scale-110 transition-transform">link</span>
-                    <input 
-                      type="text" 
-                      value={formData.imageUrl}
-                      onChange={e => setFormData({...formData, imageUrl: e.target.value})}
-                      className="w-full h-16 pl-14 pr-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-3xl outline-none text-sm font-bold dark:text-white shadow-sm focus:ring-4 focus:ring-primary/10 transition-all" 
-                      placeholder="Cole a URL da imagem aqui..." 
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Ou escolha uma sugestão</label>
-                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                    {bannerSuggestions.map((banner) => (
-                      <button 
-                        key={banner.name}
-                        onClick={() => setFormData({...formData, imageUrl: banner.url})}
-                        className={`shrink-0 h-14 px-5 rounded-2xl border-2 transition-all flex items-center gap-3 active:scale-95 ${
-                          formData.imageUrl === banner.url 
-                          ? 'border-primary bg-primary/10 text-primary font-black shadow-lg' 
-                          : 'border-zinc-100 dark:border-white/5 bg-white dark:bg-zinc-900 text-zinc-400 font-bold'
-                        }`}
-                      >
-                        <img src={banner.url} className="size-8 rounded-lg object-cover" alt={banner.name} />
-                        <span className="text-[10px] uppercase tracking-widest">{banner.name}</span>
-                      </button>
-                    ))}
-                    <button 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="shrink-0 h-14 px-5 rounded-2xl border-2 border-dashed border-zinc-300 dark:border-white/10 text-zinc-400 font-black text-[10px] uppercase tracking-widest hover:border-primary hover:text-primary transition-all flex items-center gap-2"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">upload</span>
-                      Upload
-                    </button>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 mb-2 block">Visualização Prévia</label>
-                  <div 
-                    className="w-full aspect-[21/9] rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-white/5 overflow-hidden relative shadow-2xl group cursor-pointer"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <img 
-                      src={formData.imageUrl} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" 
-                      alt="Preview"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                       <div className="flex flex-col items-center gap-2">
-                          <span className="material-symbols-outlined text-white text-4xl">add_a_photo</span>
-                          <span className="text-[9px] font-black text-white uppercase tracking-widest">Alterar Imagem</span>
-                       </div>
-                    </div>
-                  </div>
-                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-4">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Descrição do Evento</label>
-                <textarea 
-                  rows={6}
-                  value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
-                  className="w-full p-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-[2.5rem] outline-none text-sm font-bold placeholder:text-zinc-400 resize-none dark:text-white shadow-sm focus:ring-4 focus:ring-primary/10 transition-all" 
-                  placeholder="Informações sobre pautas, palestrantes e pré-requisitos..." 
+          <div className="space-y-6 animate-in zoom-in-95">
+            <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight uppercase">Mídia e Descrição</h2>
+            <div className="space-y-4">
+              <div className="relative group">
+                <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary">link</span>
+                <input 
+                  type="text" 
+                  placeholder="LINK DIRETO DA IMAGEM (URL)" 
+                  value={formData.imageUrl}
+                  onChange={e => setFormData({...formData, imageUrl: e.target.value})}
+                  className="w-full h-16 pl-14 pr-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-2xl font-bold dark:text-white outline-none focus:border-primary transition-all"
                 />
               </div>
+              
+              <div className="aspect-video w-full rounded-[2rem] bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 overflow-hidden shadow-inner relative">
+                {formData.imageUrl ? (
+                  <img src={formData.imageUrl} className="w-full h-full object-cover" alt="Preview" onError={(e) => (e.currentTarget.src = bannerSuggestions[0].url)} />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400">
+                    <span className="material-symbols-outlined text-4xl mb-2">image</span>
+                    <p className="text-[9px] font-black uppercase tracking-widest">Insira o link acima para ver a prévia</p>
+                  </div>
+                )}
+              </div>
+
+              <textarea 
+                rows={4}
+                placeholder="DESCRIÇÃO DO EVENTO..."
+                value={formData.description}
+                onChange={e => setFormData({...formData, description: e.target.value})}
+                className="w-full p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/5 rounded-[2rem] font-bold dark:text-white outline-none resize-none"
+              />
             </div>
-          </section>
+          </div>
         )}
       </main>
 
-      <footer className="fixed bottom-0 left-0 w-full bg-white/70 dark:bg-zinc-950/70 backdrop-blur-3xl border-t border-white/20 dark:border-white/5 p-6 z-[100] max-w-2xl mx-auto h-28 flex gap-4">
-        <button 
-          onClick={handleBack}
-          className="flex-1 px-4 rounded-2xl border-2 border-zinc-100 dark:border-white/5 text-zinc-600 dark:text-zinc-400 font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all hover:bg-zinc-50 dark:hover:bg-white/5"
-        >
-          Voltar
-        </button>
+      <footer className="fixed bottom-0 left-0 w-full p-6 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-t border-zinc-100 dark:border-white/5 flex gap-4">
+        <button onClick={handleBack} className="flex-1 h-16 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all">Voltar</button>
         <button 
           onClick={step === 3 ? handleSubmit : handleNext}
           disabled={isPublishing}
-          className="flex-[2] bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/30 flex items-center justify-center gap-3 uppercase text-[10px] tracking-[0.2em] active:scale-95 transition-all disabled:opacity-70 border border-white/20"
+          className="flex-[2] h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center gap-3 uppercase text-[10px] tracking-widest active:scale-95 transition-all disabled:opacity-50"
         >
-          {isPublishing ? (
-            <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-          ) : (
-            <>
-              {step < 3 ? 'Continuar' : 'Confirmar e Publicar'}
-              <span className="material-symbols-outlined text-xl">
-                {step < 3 ? 'arrow_forward' : 'rocket_launch'}
-              </span>
-            </>
-          )}
+          {isPublishing ? <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : (step === 3 ? 'Publicar Evento' : 'Próximo')}
+          <span className="material-symbols-outlined">{step === 3 ? 'rocket_launch' : 'arrow_forward'}</span>
         </button>
       </footer>
     </div>

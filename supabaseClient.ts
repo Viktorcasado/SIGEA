@@ -1,8 +1,11 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+// URL do projeto Supabase vinculado ao IFAL
 const SUPABASE_URL: string = 'https://zefvlzfkqsxhzjtwmtmj.supabase.co';
-const SUPABASE_ANON_KEY: string = 'sb_publishable_892zJn1mhm1ekEpzJ5JKYA_XhgNTWdu';
+
+// Chave pública fornecida pelo usuário (JWT)
+const SUPABASE_ANON_KEY: string = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplZnZsemZrcXN4aHpqdHdtdG1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczOTIxMDIsImV4cCI6MjA4Mjk2ODEwMn0.daGEMLoPXLOMX9yQXdgwW8USESHqegPAJ-6cmKx8JTk';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -11,50 +14,35 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     detectSessionInUrl: true,
     storageKey: 'sigea-auth-token',
     flowType: 'pkce',
-  },
-  global: {
-    headers: { 'x-application-name': 'sigea-ifal-institucional' }
   }
 });
 
-export const isSupabaseConfigured = (): boolean => {
-  return !!SUPABASE_URL && !!SUPABASE_ANON_KEY && !SUPABASE_URL.includes('your-');
-};
+// O sistema agora opera exclusivamente via Supabase
+export const isSupabaseConfigured = (): boolean => true;
 
-/**
- * Motor de Tradução de Erros SIGEA
- * Converte erros técnicos brutos em mensagens institucionais premium.
- */
 export const handleSupabaseError = (error: any): string => {
-  if (!error) return 'Ocorreu um erro inesperado no sistema institucional.';
+  if (!error) return 'Erro desconhecido.';
   
-  // Debug amigável no console
-  console.group('%c 🛡️ SIGEA Security & API Handler ', 'background: #10b981; color: white; font-weight: bold; border-radius: 4px;');
-  console.log('Error Type:', typeof error);
-  console.error('Details:', error);
-  console.groupEnd();
-
-  // Tratamento de falha de rede (Failed to fetch)
-  if (error.message === 'Failed to fetch' || (error.status === 0)) {
-    return 'Falha na conexão com a Rede Federal. Verifique sua cobertura de internet ou VPN.';
+  const msg = error.message?.toLowerCase() || '';
+  
+  if (msg.includes('jwt') || msg.includes('api key') || msg.includes('malformed')) {
+    return 'Erro de Autenticação: A chave API expirou ou é inválida. Verifique o painel do Supabase.';
+  }
+  
+  if (msg.includes('fetch') || msg.includes('network')) {
+    return 'Falha na conexão: Verifique sua internet ou o status do servidor Supabase.';
   }
 
-  // Mapeamento de Erros Comuns de Auth
   const errorMap: Record<string, string> = {
-    'Invalid login credentials': 'E-mail ou senha institucionais incorretos.',
-    'User already registered': 'Este e-mail já está vinculado a uma conta SIGEA.',
-    'Email not confirmed': 'Por favor, confirme seu e-mail institucional na sua caixa de entrada.',
-    'Password should be at least 6 characters': 'Sua senha deve conter pelo menos 6 caracteres por segurança.',
-    'Invalid email': 'O formato do e-mail informado não é válido.',
-    'User not found': 'Usuário não localizado em nossa base acadêmica.'
+    'invalid login credentials': 'E-mail ou senha incorretos.',
+    'user already registered': 'Este e-mail já possui cadastro.',
+    'email not confirmed': 'Verifique seu e-mail para confirmar a conta.',
+    'too many requests': 'Muitas tentativas. Aguarde um momento.',
   };
 
-  // Tenta extrair a mensagem de forma segura
-  const rawMessage = error.message || (typeof error === 'string' ? error : '');
-  
-  if (rawMessage.includes('fetch')) {
-     return 'Conexão interrompida. Tente novamente em alguns segundos.';
+  for (const [key, value] of Object.entries(errorMap)) {
+    if (msg.includes(key)) return value;
   }
 
-  return errorMap[rawMessage] || rawMessage || 'Falha técnica temporária. Tente novamente.';
+  return error.message || 'Erro na comunicação com o servidor.';
 };
