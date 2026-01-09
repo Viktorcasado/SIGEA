@@ -62,18 +62,18 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
     }
   };
 
-  // TELA 2: CHECK YOUR MAIL (Ref: Imagem 1, meio)
+  // TELA: CHECK YOUR MAIL (Referência: Imagem 1, centro)
   if (view === 'CHECK_EMAIL') {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center p-8 bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in zoom-in-95 duration-500">
-        <div className="w-full max-w-sm flex flex-col items-center text-center space-y-10">
-          <div className="size-24 bg-primary/10 rounded-[2rem] flex items-center justify-center text-primary mb-2 shadow-inner">
+        <div className="w-full max-w-sm flex flex-col items-center text-center space-y-12">
+          <div className="size-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center text-primary mb-2 shadow-inner ring-1 ring-primary/20">
             <span className="material-symbols-outlined text-5xl" style={{ fontVariationSettings: "'FILL' 1" }}>mail</span>
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-3xl font-black tracking-tight uppercase">Check your mail</h2>
-            <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight px-4">
+            <h2 className="text-[34px] font-black tracking-tight uppercase leading-none">Check your mail</h2>
+            <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight px-6">
               Enviamos as instruções de recuperação para o seu e-mail institucional.
             </p>
           </div>
@@ -81,7 +81,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
           <div className="w-full space-y-4 pt-4">
             <button 
               onClick={() => window.open('mailto:', '_blank')}
-              className="w-full h-18 bg-primary text-white font-black rounded-[2rem] shadow-xl shadow-primary/20 active:scale-95 transition-all uppercase text-[10px] tracking-[0.2em]"
+              className="w-full h-18 bg-primary text-white font-black rounded-3xl shadow-2xl shadow-primary/30 active:scale-95 transition-all uppercase text-[11px] tracking-[0.2em]"
             >
               Open email app
             </button>
@@ -101,13 +101,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
     );
   }
 
-  // TELA 1: RESET PASSWORD / LOGIN / CADASTRO (Ref: Imagem 1, esquerda)
+  // TELA: RESET PASSWORD / LOGIN (Referência: Imagem 1, esquerda)
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in fade-in overflow-y-auto no-scrollbar">
-      <header className="p-6 flex items-center justify-between sticky top-0 z-10">
+      <header className="p-8 flex items-center justify-between sticky top-0 z-10">
         <button 
           onClick={() => view === 'SIGN_IN' ? (onBack?.()) : setView('SIGN_IN')}
-          className="size-12 flex items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-500 active:scale-90 transition-all"
+          className="size-12 flex items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900 text-zinc-500 active:scale-90 transition-all border border-zinc-100 dark:border-white/5"
         >
           <span className="material-symbols-outlined font-black">arrow_back</span>
         </button>
@@ -122,42 +122,42 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
             </h1>
             <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight max-w-[280px]">
               {view === 'FORGOT_PASSWORD' 
-                ? 'Insira o e-mail associado à sua conta e enviaremos as instruções para resetar sua senha.' 
+                ? 'Enter the email associated with your account and we\'ll send an email with instructions to reset your password.' 
                 : 'Acesse o portal institucional SIGEA do IFAL para gerenciar seus eventos acadêmicos.'}
             </p>
           </header>
 
-          <form onSubmit={handleAuth} className="space-y-8">
+          <form onSubmit={handleAuth} className="space-y-10">
             {error && (
               <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[10px] font-black text-red-500 text-center animate-in shake">
                 {error}
               </div>
             )}
 
-            <div className="space-y-5">
+            <div className="space-y-6">
               {view === 'SIGN_UP' && (
                 <div className="space-y-2 relative group">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Full Name</label>
-                  <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[1.5rem] px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all uppercase" />
+                  <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all uppercase" />
                 </div>
               )}
 
               <div className="space-y-2 relative group">
                 <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Email address</label>
-                <input required type="email" placeholder="mcraigw@outlook.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[1.5rem] px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all lowercase placeholder:text-zinc-300 dark:placeholder:text-zinc-700" />
+                <input required type="email" placeholder="mcraigw@outlook.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all lowercase placeholder:text-zinc-300 dark:placeholder:text-zinc-700" />
               </div>
               
               {view !== 'FORGOT_PASSWORD' && (
                 <div className="space-y-2 relative group">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Password</label>
-                  <input required type="password" placeholder="********" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[1.5rem] px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all" />
+                  <input required type="password" placeholder="********" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all" />
                 </div>
               )}
             </div>
 
             <button 
               disabled={loading} 
-              className="w-full h-20 bg-primary text-white font-black rounded-[2.2rem] shadow-xl shadow-primary/20 flex items-center justify-center uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-all mt-4 disabled:opacity-50"
+              className="w-full h-20 bg-primary text-white font-black rounded-Apple shadow-2xl shadow-primary/30 flex items-center justify-center uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-all mt-4 disabled:opacity-50"
             >
               {loading ? (
                 <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

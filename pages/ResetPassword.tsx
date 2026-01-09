@@ -19,12 +19,15 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
 
   useEffect(() => {
     const checkAuthFlow = async () => {
+      // Pequeno delay para garantir que o Supabase processou o token da URL
+      await new Promise(r => setTimeout(r, 800));
       const { data: { session } } = await supabase.auth.getSession();
+      
       const hasToken = window.location.hash.includes('access_token') || 
                        window.location.search.includes('type=recovery');
 
       if (!session && !hasToken) {
-        setError("O link expirou ou é inválido. Por favor, solicite um novo acesso.");
+        setError("O link de recuperação expirou ou é inválido. Por favor, solicite um novo acesso.");
       }
       setIsVerifying(false);
     };
@@ -41,7 +44,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
     }
 
     if (password !== confirmPassword) {
-      setError('As senhas digitadas não coincidem.');
+      setError('As senhas digitadas não coincidem. Verifique a confirmação.');
       return;
     }
 
@@ -65,17 +68,17 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
     return (
       <div className="fixed inset-0 bg-white dark:bg-[#09090b] flex flex-col items-center justify-center">
         <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-widest">Validating Token...</p>
+        <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-widest">Validating session...</p>
       </div>
     );
   }
 
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in slide-in-from-right duration-500 overflow-y-auto no-scrollbar">
-      <header className="p-6 flex items-center justify-between sticky top-0 z-10">
+      <header className="p-8 flex items-center justify-between sticky top-0 z-10">
         <button 
           onClick={() => window.location.href = window.location.origin}
-          className="size-12 flex items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-500 active:scale-90 transition-all"
+          className="size-12 flex items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900 text-zinc-500 active:scale-90 transition-all border border-zinc-100 dark:border-white/5"
         >
           <span className="material-symbols-outlined font-black">arrow_back</span>
         </button>
@@ -89,13 +92,13 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
               Create new <span className="text-primary">password</span>
             </h1>
             <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight max-w-[280px]">
-              Sua nova senha deve ser diferente das senhas utilizadas anteriormente.
+              Your new password must be different from previous used passwords.
             </p>
           </header>
 
           {success ? (
             <div className="p-10 bg-primary/5 border border-primary/20 rounded-[3rem] text-center space-y-6 animate-in zoom-in">
-              <div className="size-24 bg-primary rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl shadow-primary/40">
+              <div className="size-24 bg-primary rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl shadow-primary/40">
                 <span className="material-symbols-outlined text-white text-5xl">verified</span>
               </div>
               <div className="space-y-2">
@@ -106,7 +109,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
           ) : (
             <form onSubmit={handleReset} className="space-y-8">
               {error && (
-                <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-[2rem] text-[10px] font-black text-red-500 text-center animate-in shake leading-relaxed">
+                <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-[10px] font-black text-red-500 text-center animate-in shake leading-relaxed">
                   {error}
                 </div>
               )}
@@ -122,7 +125,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
                       placeholder="********" 
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[1.5rem] px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all"
+                      className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all"
                     />
                     <button 
                       type="button"
@@ -146,7 +149,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
                       placeholder="********" 
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
-                      className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[1.5rem] px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all"
+                      className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all"
                     />
                     <button 
                       type="button"
@@ -164,7 +167,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
 
               <button 
                 disabled={loading}
-                className="w-full h-20 bg-primary text-white font-black rounded-[2.2rem] shadow-xl shadow-primary/20 flex items-center justify-center uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-all disabled:opacity-50 mt-4"
+                className="w-full h-20 bg-primary text-white font-black rounded-Apple shadow-2xl shadow-primary/40 flex items-center justify-center uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-all disabled:opacity-50 mt-4"
               >
                 {loading ? (
                   <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
