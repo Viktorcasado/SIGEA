@@ -241,7 +241,7 @@ const App: React.FC = () => {
       case 'ticket': 
         const ticketEvent = events.find(e => e.id === selectedEventId);
         return <MyTicket navigateTo={navigateTo} profile={userProfile} event={ticketEvent} />;
-      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={handleAddEvent} />;
+      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={handleAddEvent} profile={userProfile} />;
       case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={() => fetchEvents()} onArchive={() => {}} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} eventId={selectedEventId} />;
       case 'publish-success': 

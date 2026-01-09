@@ -7,9 +7,10 @@ import { supabase } from '../supabaseClient';
 interface CreateEventProps {
   navigateTo: (page: string, id?: string) => void;
   onAddEvent: (event: Event) => void;
+  profile: any;
 }
 
-const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => {
+const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profile }) => {
   const [step, setStep] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
   const [errorModal, setErrorModal] = useState<{show: boolean, msg: string}>({ show: false, msg: '' });
@@ -35,9 +36,15 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
       return;
     }
 
+    if (!profile?.id) {
+      setErrorModal({ show: true, msg: 'Erro de autenticação. Por favor, faça login novamente.' });
+      return;
+    }
+
     setIsPublishing(true);
     
     // Objeto formatado para o banco de dados (Snake Case)
+    // Incluindo o organizer_id para garantir que apareça no dashboard do organizador
     const dbEventPayload = {
       title: formData.title.toUpperCase(),
       description: formData.description,
@@ -49,7 +56,8 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
       type: formData.type,
       status: 'Inscrições Abertas',
       price: 'Gratuito',
-      certificate_hours: formData.certificateHours
+      certificate_hours: formData.certificateHours,
+      organizer_id: profile.id
     };
 
     try {
@@ -58,14 +66,12 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
       if (error) throw error;
       
       if (data && data[0]) {
-        // Mapeia de volta para o formato da interface Event antes de adicionar ao estado
         const newEvent: Event = {
           ...data[0],
           imageUrl: data[0].image_url,
           certificateHours: data[0].certificate_hours
         } as Event;
 
-        // Salva temporariamente no localStorage para garantir que a tela de sucesso encontre o dado
         localStorage.setItem(`last_published_${newEvent.id}`, JSON.stringify(newEvent));
         
         onAddEvent(newEvent);
@@ -78,7 +84,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent }) => 
         ...dbEventPayload, 
         id: mockId,
         imageUrl: dbEventPayload.image_url,
-        certificateHours: dbEventPayload.certificate_hours
+        certificateHours: (dbEventPayload as any).certificate_hours
       } as unknown as Event;
       
       onAddEvent(demoEvent);
