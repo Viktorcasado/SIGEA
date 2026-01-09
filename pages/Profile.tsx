@@ -10,7 +10,7 @@ interface ProfileProps {
   setTheme: (val: 'light' | 'dark' | 'system') => void;
   role: UserRole;
   profile: { id: string; name: string; photo: string; campus: string; email: string } | null;
-  onUpdate: (profile: any) => Promise<boolean> | void;
+  onUpdate: (data: any) => Promise<boolean> | void;
   onLogout: () => void;
   onDeleteAccount: () => Promise<void>;
 }
@@ -27,22 +27,26 @@ const Profile: React.FC<ProfileProps> = ({
   const [saveSuccess, setSaveSuccess] = useState(false);
   
   const [formData, setFormData] = useState({ 
-    name: profile?.name || '', 
-    photo: profile?.photo || '', 
-    campus: profile?.campus || CAMPUS_LIST[0],
-    email: profile?.email || ''
+    name: '', 
+    photo: '', 
+    campus: CAMPUS_LIST[0],
+    email: ''
   });
+  
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sincroniza dados iniciais apenas quando não estiver editando
   useEffect(() => { 
     if (profile && !isEditing) {
       setFormData({ 
-        name: profile.name, 
-        photo: profile.photo, 
+        name: profile.name || '', 
+        photo: profile.photo || '', 
         campus: profile.campus || CAMPUS_LIST[0],
-        email: profile.email
+        email: profile.email || ''
       }); 
+      setSelectedFile(null);
     }
   }, [profile, isEditing]);
 
@@ -51,6 +55,7 @@ const Profile: React.FC<ProfileProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => { 
         setFormData(prev => ({ ...prev, photo: reader.result as string })); 
@@ -66,12 +71,11 @@ const Profile: React.FC<ProfileProps> = ({
     setSaveSuccess(false);
     
     try {
-      // Enviamos tanto photo quanto photo_url para garantir compatibilidade com o metadata
+      // Passamos os dados de texto E o arquivo para upload real no App.tsx
       const success = await onUpdate({ 
         name: formData.name, 
         campus: formData.campus, 
-        photo_url: formData.photo,
-        photo: formData.photo
+        imageFile: selectedFile // Envia o arquivo real para upload real via Storage
       });
       
       if (success) {
@@ -79,15 +83,18 @@ const Profile: React.FC<ProfileProps> = ({
         setIsEditing(false);
         if (window.navigator.vibrate) window.navigator.vibrate([10, 30, 10]);
         setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        alert("Erro ao salvar as alterações. Verifique sua conexão.");
       }
     } catch (error) { 
       console.error("Erro ao salvar perfil:", error);
+      alert("Falha técnica ao tentar salvar.");
     } finally { 
       setIsSaving(false); 
     }
   };
 
-  const initials = profile.name ? profile.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'US';
+  const initials = formData.name ? formData.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'US';
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-zinc-950 pb-32 animate-in fade-in duration-500 overflow-y-auto no-scrollbar">
@@ -208,11 +215,11 @@ const Profile: React.FC<ProfileProps> = ({
             </div>
           ) : (
             <div className="text-center space-y-3 animate-in fade-in duration-700 w-full max-w-sm">
-              <h1 className="text-3xl font-[900] text-slate-900 dark:text-white uppercase tracking-tighter leading-tight">{profile.name}</h1>
-              <p className="text-[11px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.2em]">{profile.email}</p>
+              <h1 className="text-3xl font-[900] text-slate-900 dark:text-white uppercase tracking-tighter leading-tight">{formData.name || 'Usuário SIGEA'}</h1>
+              <p className="text-[11px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.2em]">{formData.email}</p>
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mt-2">
                  <span className="material-symbols-outlined text-primary text-sm">school</span>
-                 <p className="text-[10px] font-black text-primary uppercase tracking-widest">{profile.campus}</p>
+                 <p className="text-[10px] font-black text-primary uppercase tracking-widest">{formData.campus}</p>
               </div>
             </div>
           )}

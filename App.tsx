@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserRole, Event as SIGEAEvent } from './types.ts';
-import { supabase } from './supabaseClient.ts';
+import { supabase, uploadFile } from './supabaseClient.ts';
 
 import Home from './pages/Home.tsx';
 import EventsList from './pages/EventsList.tsx';
@@ -167,19 +167,38 @@ const App: React.FC = () => {
 
   const handleUpdateProfile = async (data: any) => {
     try {
-      const { error } = await supabase.auth.updateUser({ data });
+      let finalPhotoUrl = data.photo_url || data.photo || userProfile?.photo;
+
+      // Se houver um arquivo de imagem novo (objeto File), fazemos o upload real
+      if (data.imageFile) {
+        const fileExt = data.imageFile.name.split('.').pop();
+        const fileName = `profile-${userProfile.id}-${Date.now()}.${fileExt}`;
+        const filePath = `profiles/${userProfile.id}/${fileName}`;
+        finalPhotoUrl = await uploadFile('assets', filePath, data.imageFile);
+      }
+
+      // Atualiza apenas campos de texto no metadata para evitar estourar o limite de tamanho
+      const updateData = {
+        name: data.name || userProfile.name,
+        campus: data.campus || userProfile.campus,
+        photo_url: finalPhotoUrl,
+        photo: finalPhotoUrl
+      };
+
+      const { error } = await supabase.auth.updateUser({ data: updateData });
+      
       if (!error) {
+        // Atualiza estado local para refletir mudança imediatamente
         setUserProfile((prev: any) => ({
           ...prev, 
-          name: data.name || prev.name,
-          campus: data.campus || prev.campus,
-          photo: data.photo_url || data.photo || prev.photo
+          ...updateData
         }));
         return true;
       }
+      console.error("Erro Supabase Update:", error);
       return false;
     } catch (err) {
-      console.error("Erro na atualização do perfil:", err);
+      console.error("Erro crítico na atualização do perfil:", err);
       return false;
     }
   };
