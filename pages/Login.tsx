@@ -62,45 +62,46 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
     }
   };
 
-  // Renderização da tela de sucesso/e-mail (Imagem 2)
+  // TELA 2: CHECK YOUR MAIL (Ref: Imagem 1, meio)
   if (view === 'CHECK_EMAIL') {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center p-8 bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in zoom-in-95 duration-500">
-        <div className="w-full max-w-sm flex flex-col items-center text-center space-y-8">
-          <div className="size-24 bg-primary/10 rounded-3xl flex items-center justify-center text-primary mb-2 shadow-inner">
+        <div className="w-full max-w-sm flex flex-col items-center text-center space-y-10">
+          <div className="size-24 bg-primary/10 rounded-[2rem] flex items-center justify-center text-primary mb-2 shadow-inner">
             <span className="material-symbols-outlined text-5xl" style={{ fontVariationSettings: "'FILL' 1" }}>mail</span>
           </div>
           
           <div className="space-y-4">
-            <h2 className="text-3xl font-black tracking-tight uppercase">Verifique seu e-mail</h2>
-            <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight">
-              Enviamos as instruções de recuperação <br /> para o seu e-mail institucional.
+            <h2 className="text-3xl font-black tracking-tight uppercase">Check your mail</h2>
+            <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight px-4">
+              Enviamos as instruções de recuperação para o seu e-mail institucional.
             </p>
           </div>
 
           <div className="w-full space-y-4 pt-4">
             <button 
               onClick={() => window.open('mailto:', '_blank')}
-              className="w-full h-18 bg-primary text-white font-black rounded-3xl shadow-xl shadow-primary/20 active:scale-95 transition-all uppercase text-[10px] tracking-[0.2em]"
+              className="w-full h-18 bg-primary text-white font-black rounded-[2rem] shadow-xl shadow-primary/20 active:scale-95 transition-all uppercase text-[10px] tracking-[0.2em]"
             >
-              Abrir App de E-mail
+              Open email app
             </button>
             <button 
               onClick={() => setView('SIGN_IN')}
               className="w-full py-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-primary transition-colors"
             >
-              Confirmar mais tarde
+              Skip, I'll confirm later
             </button>
           </div>
 
-          <footer className="pt-12 text-[9px] font-black text-zinc-300 dark:text-zinc-800 uppercase tracking-[0.3em] leading-loose">
-            Não recebeu? Verifique o spam <br /> ou <button onClick={() => setView('FORGOT_PASSWORD')} className="text-primary hover:underline">tente outro e-mail</button>
+          <footer className="pt-20 text-[9px] font-black text-zinc-300 dark:text-zinc-800 uppercase tracking-[0.3em] leading-loose">
+            Did not receive the email? Check your spam, <br /> or <button onClick={() => setView('FORGOT_PASSWORD')} className="text-primary hover:underline">try another email address</button>
           </footer>
         </div>
       </div>
     );
   }
 
+  // TELA 1: RESET PASSWORD / LOGIN / CADASTRO (Ref: Imagem 1, esquerda)
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in fade-in overflow-y-auto no-scrollbar">
       <header className="p-6 flex items-center justify-between sticky top-0 z-10">
@@ -114,54 +115,54 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
       </header>
 
       <main className="flex-1 flex flex-col px-8 pb-12 max-w-sm mx-auto w-full justify-center">
-        <div className="space-y-10">
-          <header className="space-y-3">
-            <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">
-              {view === 'SIGN_IN' ? 'Login' : (view === 'SIGN_UP' ? 'Cadastro' : 'Reset password')}
+        <div className="space-y-12">
+          <header className="space-y-4">
+            <h1 className="text-[44px] font-black tracking-tighter uppercase leading-none">
+              {view === 'SIGN_IN' ? 'Login' : (view === 'SIGN_UP' ? 'Sign up' : 'Reset password')}
             </h1>
-            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight">
+            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight max-w-[280px]">
               {view === 'FORGOT_PASSWORD' 
                 ? 'Insira o e-mail associado à sua conta e enviaremos as instruções para resetar sua senha.' 
-                : 'Acesse o portal institucional SIGEA do IFAL.'}
+                : 'Acesse o portal institucional SIGEA do IFAL para gerenciar seus eventos acadêmicos.'}
             </p>
           </header>
 
-          <form onSubmit={handleAuth} className="space-y-6">
+          <form onSubmit={handleAuth} className="space-y-8">
             {error && (
               <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[10px] font-black text-red-500 text-center animate-in shake">
                 {error}
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {view === 'SIGN_UP' && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nome Completo</label>
-                  <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-16 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all uppercase" />
+                <div className="space-y-2 relative group">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Full Name</label>
+                  <input required type="text" value={name} onChange={e => setName(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[1.5rem] px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all uppercase" />
                 </div>
               )}
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">E-mail Institucional</label>
-                <input required type="email" placeholder="mcraigw@outlook.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-16 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all lowercase" />
+              <div className="space-y-2 relative group">
+                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Email address</label>
+                <input required type="email" placeholder="mcraigw@outlook.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[1.5rem] px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all lowercase placeholder:text-zinc-300 dark:placeholder:text-zinc-700" />
               </div>
               
               {view !== 'FORGOT_PASSWORD' && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Senha de Acesso</label>
-                  <input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-16 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all" />
+                <div className="space-y-2 relative group">
+                  <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Password</label>
+                  <input required type="password" placeholder="********" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[1.5rem] px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all" />
                 </div>
               )}
             </div>
 
             <button 
               disabled={loading} 
-              className="w-full h-18 bg-primary text-white font-black rounded-3xl shadow-xl shadow-primary/20 flex items-center justify-center uppercase text-[11px] tracking-[0.2em] active:scale-95 transition-all mt-4 disabled:opacity-50"
+              className="w-full h-20 bg-primary text-white font-black rounded-[2.2rem] shadow-xl shadow-primary/20 flex items-center justify-center uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-all mt-4 disabled:opacity-50"
             >
               {loading ? (
                 <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                view === 'SIGN_IN' ? 'Entrar no Sistema' : (view === 'SIGN_UP' ? 'Criar Minha Conta' : 'Enviar Instruções')
+                view === 'SIGN_IN' ? 'Entrar no Sistema' : (view === 'SIGN_UP' ? 'Create Account' : 'Send Instructions')
               )}
             </button>
           </form>
@@ -170,14 +171,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
             <div className="text-center">
               <button 
                 onClick={() => setView('FORGOT_PASSWORD')}
-                className="text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-primary transition-colors"
+                className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.1em] hover:text-primary transition-colors"
               >
                 Esqueceu a senha?
               </button>
             </div>
           )}
 
-          <footer className="text-center pt-8">
+          <footer className="text-center pt-10">
             <button 
               onClick={() => setView(view === 'SIGN_IN' ? 'SIGN_UP' : 'SIGN_IN')} 
               className="text-[11px] font-black text-primary uppercase tracking-[0.15em]"

@@ -24,7 +24,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
                        window.location.search.includes('type=recovery');
 
       if (!session && !hasToken) {
-        setError("O link expirou. Por favor, solicite um novo acesso no login.");
+        setError("O link expirou ou é inválido. Por favor, solicite um novo acesso.");
       }
       setIsVerifying(false);
     };
@@ -65,7 +65,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
     return (
       <div className="fixed inset-0 bg-white dark:bg-[#09090b] flex flex-col items-center justify-center">
         <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-widest">Validando Token...</p>
+        <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-widest">Validating Token...</p>
       </div>
     );
   }
@@ -83,36 +83,36 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
       </header>
 
       <main className="flex-1 flex flex-col px-8 pb-12 max-w-sm mx-auto w-full justify-center">
-        <div className="space-y-10">
-          <header className="space-y-3">
-            <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">
+        <div className="space-y-12">
+          <header className="space-y-4">
+            <h1 className="text-[44px] font-[1000] tracking-tighter uppercase leading-none">
               Create new <span className="text-primary">password</span>
             </h1>
-            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight">
+            <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight max-w-[280px]">
               Sua nova senha deve ser diferente das senhas utilizadas anteriormente.
             </p>
           </header>
 
           {success ? (
             <div className="p-10 bg-primary/5 border border-primary/20 rounded-[3rem] text-center space-y-6 animate-in zoom-in">
-              <div className="size-20 bg-primary rounded-full flex items-center justify-center mx-auto shadow-2xl shadow-primary/40">
-                <span className="material-symbols-outlined text-white text-4xl">verified</span>
+              <div className="size-24 bg-primary rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl shadow-primary/40">
+                <span className="material-symbols-outlined text-white text-5xl">verified</span>
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-black uppercase tracking-tight">Senha Alterada!</h3>
+                <h3 className="text-2xl font-black uppercase tracking-tight">Senha Alterada!</h3>
                 <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Aguarde o redirecionamento institucional...</p>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleReset} className="space-y-6">
+            <form onSubmit={handleReset} className="space-y-8">
               {error && (
                 <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-[2rem] text-[10px] font-black text-red-500 text-center animate-in shake leading-relaxed">
                   {error}
                 </div>
               )}
 
-              <div className="space-y-4">
-                <div className="space-y-1.5 relative group">
+              <div className="space-y-6">
+                <div className="space-y-2 relative group">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Password</label>
                   <div className="relative">
                     <input 
@@ -122,7 +122,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
                       placeholder="********" 
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      className="w-full h-16 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all"
+                      className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[1.5rem] px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all"
                     />
                     <button 
                       type="button"
@@ -134,10 +134,10 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
                       </span>
                     </button>
                   </div>
-                  <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest ml-1">Deve ter pelo menos 8 caracteres.</p>
+                  <p className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${password.length >= 8 ? 'text-primary' : 'text-zinc-400'}`}>Must be at least 8 characters.</p>
                 </div>
 
-                <div className="space-y-1.5 relative group">
+                <div className="space-y-2 relative group">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Confirm Password</label>
                   <div className="relative">
                     <input 
@@ -146,7 +146,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
                       placeholder="********" 
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
-                      className="w-full h-16 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all"
+                      className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-[1.5rem] px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all"
                     />
                     <button 
                       type="button"
@@ -158,13 +158,13 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
                       </span>
                     </button>
                   </div>
-                  <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest ml-1">Ambas as senhas devem coincidir.</p>
+                  <p className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${confirmPassword && password === confirmPassword ? 'text-primary' : 'text-zinc-400'}`}>Both passwords must match.</p>
                 </div>
               </div>
 
               <button 
                 disabled={loading}
-                className="w-full h-18 bg-primary text-white font-black rounded-3xl shadow-xl shadow-primary/20 flex items-center justify-center uppercase text-[11px] tracking-[0.2em] active:scale-95 transition-all disabled:opacity-50 mt-4"
+                className="w-full h-20 bg-primary text-white font-black rounded-[2.2rem] shadow-xl shadow-primary/20 flex items-center justify-center uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-all disabled:opacity-50 mt-4"
               >
                 {loading ? (
                   <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
