@@ -13,6 +13,7 @@ interface CreateEventProps {
 const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profile }) => {
   const [step, setStep] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(false);
   const [errorModal, setErrorModal] = useState<{show: boolean, msg: string}>({ show: false, msg: '' });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -35,6 +36,16 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validações client-side imediatas
+      if (!file.type.startsWith('image/')) {
+        setErrorModal({ show: true, msg: 'Apenas arquivos de imagem (PNG, JPG, WEBP) são permitidos.' });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB
+        setErrorModal({ show: true, msg: 'O arquivo é muito grande. O limite máximo é 5MB.' });
+        return;
+      }
+
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => setPreviewUrl(reader.result as string);
@@ -43,37 +54,46 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
   };
 
   const handleSubmit = async () => {
+    // 1. Validação básica de campos
     if (!formData.title || !formData.date) {
-      setErrorModal({ show: true, msg: 'Por favor, preencha o título e a data do evento.' });
+      setErrorModal({ show: true, msg: 'Por favor, preencha o título e a data do evento para continuar.' });
       return;
     }
 
     if (!profile?.id) {
-      setErrorModal({ show: true, msg: 'Erro de autenticação: Usuário não identificado.' });
+      setErrorModal({ show: true, msg: 'Sessão inválida. Por favor, faça login novamente.' });
       return;
     }
 
     setIsPublishing(true);
+    setUploadProgress(true);
     
     try {
       let finalImageUrl = 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000';
 
-      // 1. Upload da imagem se houver um arquivo selecionado
+      // 2. Upload da imagem (Se falhar, cairá no Catch e manterá o formulário aberto)
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
-        const fileName = `banner-${Math.random().toString(36).substring(2, 10)}-${Date.now()}.${fileExt}`;
+        const fileName = `banner-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `events/${profile.id}/${fileName}`;
         
         try {
           finalImageUrl = await uploadFile('assets', filePath, selectedFile);
-        } catch (uploadErr) {
-          console.error("Erro no Storage:", uploadErr);
-          // Fallback para URL padrão se o storage falhar por permissão
-          finalImageUrl = 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000';
+        } catch (uploadErr: any) {
+          console.error("Falha no Upload do Banner:", uploadErr);
+          setIsPublishing(false);
+          setUploadProgress(false);
+          setErrorModal({ 
+            show: true, 
+            msg: `Erro ao enviar banner: ${uploadErr.message}. Verifique sua conexão e tente novamente.` 
+          });
+          return; // INTERROMPE aqui para o usuário não perder os dados e poder tentar de novo
         }
       }
 
-      // 2. Inserção no Banco de Dados
+      setUploadProgress(false); // Fim da fase de upload
+
+      // 3. Inserção no Banco de Dados
       const dbEventPayload = {
         title: formData.title.toUpperCase(),
         description: formData.description,
@@ -103,28 +123,37 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
 
         localStorage.setItem(`last_published_${newEvent.id}`, JSON.stringify(newEvent));
         
-        // Aguarda a sincronização global antes de navegar
+        // Sincroniza e Navega apenas no SUCESSO TOTAL
         await onAddEvent(newEvent);
         navigateTo('publish-success', newEvent.id);
       }
     } catch (err: any) {
-      console.error("Erro na publicação:", err);
+      console.error("Erro na Publicação Final:", err);
       setIsPublishing(false);
+      setUploadProgress(false);
       setErrorModal({ 
         show: true, 
-        msg: "Falha ao salvar evento ou imagem: " + handleSupabaseError(err) 
+        msg: "Não foi possível salvar o evento: " + handleSupabaseError(err) 
       });
     }
   };
 
   return (
     <div className="flex flex-col w-full pb-32 min-h-screen bg-slate-50 dark:bg-zinc-950 animate-in fade-in duration-500 overflow-x-hidden">
+      {/* Modal de Erro Institucional */}
       {errorModal.show && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-8 bg-black/90 backdrop-blur-md animate-in zoom-in">
           <div className="bg-zinc-900 border border-white/10 p-10 rounded-[3rem] text-center max-w-sm shadow-2xl">
             <span className="material-symbols-outlined text-red-500 text-5xl mb-6">warning</span>
-            <p className="text-white text-xs font-black uppercase tracking-tight mb-8 leading-relaxed">{errorModal.msg}</p>
-            <button onClick={() => setErrorModal({show:false, msg:''})} className="w-full h-16 bg-white/10 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all">Tentar Novamente</button>
+            <p className="text-white text-xs font-black uppercase tracking-tight mb-8 leading-relaxed">
+              {errorModal.msg}
+            </p>
+            <button 
+              onClick={() => setErrorModal({show:false, msg:''})} 
+              className="w-full h-16 bg-white/10 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95 transition-all"
+            >
+              Corrigir e Tentar Novamente
+            </button>
           </div>
         </div>
       )}
@@ -154,7 +183,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
           <div className="space-y-10 animate-in slide-in-from-bottom-6">
             <div className="space-y-3">
               <h2 className="text-[36px] lg:text-[48px] font-[1000] text-zinc-900 dark:text-white tracking-tighter uppercase leading-[0.9]">Dados <br /> <span className="text-primary">Gerais</span></h2>
-              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Informações principais da atividade acadêmica.</p>
+              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Preencha com atenção, estas informações aparecerão nos certificados.</p>
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
@@ -162,7 +191,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
                 <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Título do Evento</label>
                 <input 
                   type="text" 
-                  placeholder="EX: CONGRESSO DE TECNOLOGIA" 
+                  placeholder="EX: I SEMANA DE INFORMÁTICA" 
                   value={formData.title}
                   onChange={e => setFormData({...formData, title: e.target.value})}
                   className="w-full h-20 lg:h-18 px-6 bg-white dark:bg-[#121214] border border-zinc-200 dark:border-white/5 rounded-3xl font-black text-sm dark:text-white outline-none focus:border-primary transition-all shadow-sm"
@@ -184,7 +213,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
               </div>
               
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Horas Certificadas</label>
+                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Carga Horária (h)</label>
                 <input 
                   type="number" 
                   value={formData.certificateHours}
@@ -199,22 +228,22 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
         {step === 2 && (
           <div className="space-y-10 animate-in slide-in-from-right-6">
              <div className="space-y-3">
-              <h2 className="text-[36px] lg:text-[48px] font-[1000] text-zinc-900 dark:text-white tracking-tighter uppercase leading-[0.9]">Local e <br /> <span className="text-primary">Data</span></h2>
-              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Onde e quando os participantes devem comparecer.</p>
+              <h2 className="text-[36px] lg:text-[48px] font-[1000] text-zinc-900 dark:text-white tracking-tighter uppercase leading-[0.9]">Local e <br /> <span className="text-primary">Horário</span></h2>
+              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Defina onde e quando a atividade ocorrerá.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Data de Início</label>
-                <input type="text" placeholder="EX: 15 NOV" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="h-20 lg:h-18 px-6 w-full bg-white dark:bg-[#121214] border border-zinc-200 dark:border-white/5 rounded-3xl font-black text-sm dark:text-white outline-none" />
+                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Data de Realização</label>
+                <input type="text" placeholder="EX: 20 DE MAIO" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="h-20 lg:h-18 px-6 w-full bg-white dark:bg-[#121214] border border-zinc-200 dark:border-white/5 rounded-3xl font-black text-sm dark:text-white outline-none" />
               </div>
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Intervalo de Horário</label>
-                <input type="text" placeholder="EX: 08:00 - 12:00" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} className="h-20 lg:h-18 px-6 w-full bg-white dark:bg-[#121214] border border-zinc-200 dark:border-white/5 rounded-3xl font-black text-sm dark:text-white outline-none" />
+                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Intervalo de Tempo</label>
+                <input type="text" placeholder="EX: 14:00 ÀS 18:00" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} className="h-20 lg:h-18 px-6 w-full bg-white dark:bg-[#121214] border border-zinc-200 dark:border-white/5 rounded-3xl font-black text-sm dark:text-white outline-none" />
               </div>
               <div className="space-y-3 col-span-full">
-                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Espaço Físico / Laboratório</label>
-                <input type="text" placeholder="EX: MINI AUDITÓRIO TECNOLOGIA" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full h-20 lg:h-18 px-6 bg-white dark:bg-[#121214] border border-zinc-200 dark:border-white/5 rounded-3xl font-black text-sm dark:text-white outline-none" />
+                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Local Físico / Sala</label>
+                <input type="text" placeholder="EX: AUDITÓRIO CENTRAL - BLOCO A" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full h-20 lg:h-18 px-6 bg-white dark:bg-[#121214] border border-zinc-200 dark:border-white/5 rounded-3xl font-black text-sm dark:text-white outline-none" />
               </div>
             </div>
           </div>
@@ -223,8 +252,8 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
         {step === 3 && (
           <div className="space-y-10 animate-in zoom-in-95 duration-500">
              <div className="space-y-3">
-              <h2 className="text-[36px] lg:text-[48px] font-[1000] text-zinc-900 dark:text-white tracking-tighter uppercase leading-[0.9]">Mídia e <br /> <span className="text-primary">Descrição</span></h2>
-              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">Adicione o banner oficial do evento.</p>
+              <h2 className="text-[36px] lg:text-[48px] font-[1000] text-zinc-900 dark:text-white tracking-tighter uppercase leading-[0.9]">Mídia e <br /> <span className="text-primary">Apresentação</span></h2>
+              <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">O banner é a primeira impressão do seu evento.</p>
             </div>
 
             <div className="space-y-8">
@@ -236,7 +265,7 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
                   type="file" 
                   ref={fileInputRef} 
                   className="hidden" 
-                  accept="image/*" 
+                  accept="image/png, image/jpeg, image/webp" 
                   onChange={handleFileChange} 
                 />
                 
@@ -246,24 +275,31 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-400 space-y-4">
                     <span className="material-symbols-outlined text-6xl opacity-20">cloud_upload</span>
                     <div className="text-center">
-                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Clique para enviar banner</p>
-                      <p className="text-[8px] font-bold uppercase tracking-widest opacity-30 mt-1">PNG, JPG ou WEBP (Max 5MB)</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Toque para selecionar imagem</p>
+                      <p className="text-[8px] font-bold uppercase tracking-widest opacity-30 mt-1">PNG ou JPG (Até 5MB)</p>
                     </div>
                   </div>
                 )}
 
                 {previewUrl && !isPublishing && (
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
-                    <span className="material-symbols-outlined text-white text-4xl">edit</span>
+                    <span className="material-symbols-outlined text-white text-4xl">sync_alt</span>
+                  </div>
+                )}
+                
+                {uploadProgress && (
+                  <div className="absolute inset-0 bg-primary/20 backdrop-blur-sm flex flex-col items-center justify-center">
+                    <div className="size-12 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <p className="mt-4 text-[9px] font-black text-white uppercase tracking-widest">Enviando Arquivo...</p>
                   </div>
                 )}
               </div>
 
               <div className="space-y-3">
-                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Descrição Detalhada</label>
+                <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest ml-1">Ementa / Descrição</label>
                 <textarea 
                   rows={4}
-                  placeholder="Explique o que os participantes aprenderão..."
+                  placeholder="Descreva os objetivos e a programação do evento..."
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})}
                   className="w-full p-8 bg-white dark:bg-[#121214] border border-zinc-200 dark:border-white/5 rounded-[3rem] font-bold text-sm dark:text-white outline-none resize-none shadow-sm focus:border-primary transition-all"
@@ -289,11 +325,14 @@ const CreateEvent: React.FC<CreateEventProps> = ({ navigateTo, onAddEvent, profi
             className="flex-[2] h-16 lg:h-14 bg-primary text-white font-black rounded-3xl shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 uppercase text-[10px] tracking-[0.2em] active:scale-95 transition-all disabled:opacity-50"
           >
             {isPublishing ? (
-              <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              <div className="flex items-center gap-3">
+                <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>{uploadProgress ? 'ENVIANDO...' : 'SALVANDO...'}</span>
+              </div>
             ) : (
               <>
-                {step === 3 ? 'Publicar Evento' : 'Próxima Etapa'}
-                <span className="material-symbols-outlined text-xl">{step === 3 ? 'send' : 'arrow_forward'}</span>
+                {step === 3 ? 'Publicar Atividade' : 'Próxima Etapa'}
+                <span className="material-symbols-outlined text-xl">{step === 3 ? 'rocket_launch' : 'arrow_forward'}</span>
               </>
             )}
           </button>
