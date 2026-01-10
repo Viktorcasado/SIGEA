@@ -23,6 +23,7 @@ import AIAssistant from './components/AIAssistant.tsx';
 import BottomNav from './components/BottomNav.tsx';
 import Sidebar from './components/Sidebar.tsx';
 import PortalBrowser from './components/PortalBrowser.tsx';
+import PublishSuccess from './pages/PublishSuccess.tsx';
 
 const ADMIN_EMAIL = 'viktorcasado@gmail.com';
 
@@ -131,13 +132,14 @@ const App: React.FC = () => {
       case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={fetchEvents} onArchive={() => {}} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} eventId={selectedEventId} />;
       case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId)} />;
+      case 'publish-success': return <PublishSuccess navigateTo={navigateTo} event={events.find(e => e.id === selectedEventId)} />;
       default: return <Home {...commonProps} onNotify={() => {}} />;
     }
   };
 
   return (
     <div className="flex flex-1 min-h-0 bg-slate-50 dark:bg-[#09090b]">
-      {['home', 'events', 'certificates', 'profile'].includes(currentPage) && (
+      {['home', 'events', 'certificates', 'profile', 'publish-success'].includes(currentPage) && (
         <Sidebar currentPage={currentPage} navigateTo={navigateTo} role={role} profile={userProfile} onLogout={handleLogout} openPortal={commonProps.openPortal} isOpenMobile={isSidebarOpen} setOpenMobile={setIsSidebarOpen} selectedEventId={selectedEventId} />
       )}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
