@@ -8,11 +8,8 @@ const rootElement = document.getElementById('root');
 if (rootElement) {
   try {
     const root = createRoot(rootElement);
-    root.render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
-    );
+    // Removendo StrictMode para garantir comportamento previsível em APIs de hardware (Biometria)
+    root.render(<App />);
   } catch (error) {
     console.error("Critical Render Error:", error);
     rootElement.innerHTML = `

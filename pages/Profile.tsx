@@ -72,7 +72,6 @@ const Profile: React.FC<ProfileProps> = ({
 
     if (!biometricEnabled) {
       try {
-        // ATENÇÃO: A chamada para credentials.create deve ser o mais direta possível ao clique
         const challenge = crypto.getRandomValues(new Uint8Array(32));
         const userId = new TextEncoder().encode(profile.id);
 
@@ -88,13 +87,13 @@ const Profile: React.FC<ProfileProps> = ({
             pubKeyCredParams: [{ alg: -7, type: "public-key" }],
             authenticatorSelection: { 
               userVerification: "required",
-              authenticatorAttachment: "platform",
-              requireResidentKey: false
+              authenticatorAttachment: "platform"
             },
             timeout: 60000
           }
         };
 
+        // Invocação direta da API para evitar 'Illegal Invocation'
         const credential = await window.navigator.credentials.create(createOptions);
         
         if (credential) {
@@ -103,18 +102,11 @@ const Profile: React.FC<ProfileProps> = ({
           if (window.navigator.vibrate) window.navigator.vibrate([20, 40]);
         }
       } catch (err: any) {
-        console.error("Erro na Biometria:", err);
-        let msg = "Não foi possível vincular sua biometria.";
-        
-        if (err.name === 'SecurityError' || err.message.includes('feature is not enabled')) {
-          msg = "A biometria está bloqueada neste ambiente de testes. Para usar FaceID/Digital, instale o app no seu celular via link da Vercel.";
-        } else if (err.name === 'NotAllowedError') {
-          msg = "Operação cancelada ou tempo limite excedido. Tente novamente clicando no botão.";
-        } else {
-          msg = "Verifique se o FaceID/Digital está configurado no sistema do seu celular ou se o site tem permissão de acesso.";
-        }
-        
-        setErrorModal({ show: true, msg });
+        console.error("Erro Biométrico:", err);
+        setErrorModal({ 
+          show: true, 
+          msg: "A biometria está bloqueada nesta prévia. Para usar FaceID/Digital, instale o PWA pelo navegador do celular ou acesse o link direto da Vercel." 
+        });
       }
     } else {
       localStorage.removeItem(`sigea_bio_enabled_${profile.id}`);
@@ -161,7 +153,10 @@ const Profile: React.FC<ProfileProps> = ({
 
       <header className="px-6 pt-12 pb-8 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl z-50 border-b border-zinc-100 dark:border-white/5">
         <button onClick={() => isEditing ? setIsEditing(false) : navigateTo('home')} className="size-12 flex items-center justify-center rounded-2xl bg-slate-50 dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-xl active:scale-90 transition-all"><span className="material-symbols-outlined font-black">{isEditing ? 'close' : 'arrow_back'}</span></button>
-        <h2 className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-zinc-500">{isEditing ? 'Ajustes' : 'Perfil'}</h2>
+        <div className="flex flex-col items-center">
+            <h2 className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-zinc-500">{isEditing ? 'Ajustes' : 'Perfil'}</h2>
+            <span className="text-[8px] font-black text-primary uppercase tracking-widest">Maio / 2026</span>
+        </div>
         <button onClick={() => isEditing ? handleSave() : setIsEditing(true)} disabled={isSaving} className={`size-12 flex items-center justify-center rounded-2xl transition-all shadow-2xl ${isEditing ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
           {isSaving ? <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <span className="material-symbols-outlined">{isEditing ? 'check' : 'edit'}</span>}
         </button>
