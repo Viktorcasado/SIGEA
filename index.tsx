@@ -1,12 +1,16 @@
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { injectSpeedInsights } from '@vercel/speed-insights';
 import App from './App.tsx';
 
 const rootElement = document.getElementById('root');
 
 if (rootElement) {
   try {
+    // Initialize Vercel Speed Insights
+    injectSpeedInsights();
+
     const root = createRoot(rootElement);
     // Removendo StrictMode para garantir comportamento previsível em APIs de hardware (Biometria)
     root.render(<App />);
