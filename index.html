@@ -1,26 +1,21 @@
 
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
-<!-- 
-  Desenvolvido por Viktor Casado 
-  SIGEA – Sistema Integrado de Gestão de Eventos Acadêmicos
-  IFAL – Instituto Federal de Alagoas
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#10b981">
     
-    <!-- PWA Primary Tags -->
+    <!-- PWA Tags -->
+    <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SIGEA">
     
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://zefvlzfkqsxhzjtwmtmj.supabase.co/storage/v1/object/public/assets/favicon.png">
     <link rel="apple-touch-icon" href="https://zefvlzfkqsxhzjtwmtmj.supabase.co/storage/v1/object/public/assets/favicon.png">
     
-    <title>SIGEA | Sistema Integrado de Gestão de Eventos Acadêmicos</title>
+    <title>SIGEA | IFAL</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -37,77 +32,29 @@
                 extend: {
                     colors: {
                         primary: "#10b981",
-                        secondary: "#059669",
-                        zinc: {
-                          950: "#09090b",
-                          900: "#121214",
-                          800: "#1a1a1e"
-                        }
+                        zinc: { 950: "#09090b", 900: "#121214", 800: "#1a1a1e" }
                     },
                     fontFamily: { sans: ["Plus Jakarta Sans", "sans-serif"] },
-                    borderRadius: { 
-                      'apple': '3.2rem',
-                      '4xl': '2rem',
-                      '5xl': '2.5rem'
-                    }
+                    borderRadius: { 'apple': '3.2rem' }
                 }
             }
         }
     </script>
-    
     <style>
-        :root { 
-            --safe-top: env(safe-area-inset-top, 0px); 
-            --safe-bottom: env(safe-area-inset-bottom, 0px); 
-        }
-        
-        * { 
-            -webkit-tap-highlight-color: transparent; 
-            scrollbar-width: thin;
-            scrollbar-color: #3f3f46 transparent;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            height: 100%;
-            height: 100dvh;
-            margin: 0;
-            padding: 0;
-            width: 100%;
-        }
-
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            -webkit-font-smoothing: antialiased;
-            display: flex;
-            flex-direction: column;
-            user-select: none;
-            overflow-x: hidden;
-            background: white;
-        }
-        
-        html.dark body {
-            background: #09090b;
-        }
-
+        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: #09090b; overflow-x: hidden; }
+        #root { height: 100dvh; display: flex; flex-direction: column; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        #root {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.90.1",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
+    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.90.1",
     "next/": "https://esm.sh/next@^16.1.1/",
     "@supabase/auth-helpers-nextjs": "https://esm.sh/@supabase/auth-helpers-nextjs@^0.15.0"
   }
