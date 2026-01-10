@@ -9,8 +9,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storageKey: 'sigea_v5_prod',
-    storage: window.localStorage
+    storageKey: 'sigea_auth_v3',
   }
 });
 
