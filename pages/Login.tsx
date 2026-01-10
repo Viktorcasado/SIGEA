@@ -17,40 +17,22 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [biometricSupported, setBiometricSupported] = useState(false);
-
-  useEffect(() => {
-    const checkBiometrics = async () => {
-      if (typeof window !== 'undefined' && window.PublicKeyCredential) {
-        try {
-          const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-          setBiometricSupported(available);
-        } catch (e) {
-          setBiometricSupported(false);
-        }
-      }
-    };
-    checkBiometrics();
-  }, []);
 
   const handleBiometricLogin = async () => {
     setLoading(true);
     setError(null);
     try {
-      // 1. Tenta recuperar a sessão JWT existente do Supabase
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        throw new Error("Sessão expirada. Entre com e-mail e senha uma vez para ativar a biometria.");
+        throw new Error("Sessão expirada ou inexistente. Entre com e-mail e senha para reativar a biometria.");
       }
 
-      // 2. Verifica se o usuário ativou a biometria para esta conta
       const isBioEnabled = localStorage.getItem(`sigea_bio_enabled_${session.user.id}`) === 'true';
       if (!isBioEnabled) {
-        throw new Error("Biometria não está configurada para esta conta. Ative-a no seu Perfil.");
+        throw new Error("Biometria não ativada. Ative-a nas configurações do seu Perfil.");
       }
 
-      // 3. Solicita autenticação biométrica nativa (WebAuthn)
       const challenge = crypto.getRandomValues(new Uint8Array(32));
       const options: CredentialRequestOptions = {
         publicKey: {
@@ -60,8 +42,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
         }
       };
 
-      // Abre o diálogo nativo do FaceID/Digital
-      const credential = await navigator.credentials.get(options);
+      const credential = await window.navigator.credentials.get(options);
       
       if (credential) {
         if (window.navigator.vibrate) window.navigator.vibrate(20);
@@ -69,15 +50,20 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
       }
     } catch (err: any) {
       console.error("Erro Biométrico:", err);
-      if (err.name === 'SecurityError' || err.message.includes('enabled')) {
-         setError("A biometria está bloqueada nesta janela de teste. Use o link direto ou PWA instalado.");
+      if (err.name === 'SecurityError' || err.message.includes('not enabled')) {
+         setError("Biometria bloqueada nesta prévia. Use o link direto da Vercel ou instale o PWA.");
       } else {
-         setError(err.message || "Erro na autenticação biométrica.");
+         setError(err.message || "Falha na autenticação biométrica.");
       }
     } finally {
       setLoading(false);
     }
   };
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [campus, setCampus] = useState(CAMPUS_LIST[0]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,11 +94,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
     }
   };
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [campus, setCampus] = useState(CAMPUS_LIST[0]);
-
   if (view === 'CHECK_EMAIL') {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center p-8 bg-white dark:bg-[#09090b] animate-in zoom-in-95">
@@ -120,8 +101,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
           <span className="material-symbols-outlined text-4xl">mail</span>
         </div>
         <h2 className="text-2xl font-black uppercase tracking-tight mb-4 text-zinc-900 dark:text-white">E-mail Enviado</h2>
-        <p className="text-xs font-bold text-zinc-500 text-center uppercase tracking-widest max-w-xs leading-relaxed">Verifique sua caixa de entrada institucional.</p>
-        <button onClick={() => setView('SIGN_IN')} className="mt-12 text-primary font-black uppercase text-[10px] tracking-widest">Voltar</button>
+        <p className="text-xs font-bold text-zinc-500 text-center uppercase tracking-widest max-w-xs leading-relaxed">Confirme seu cadastro institucional no seu e-mail.</p>
+        <button onClick={() => setView('SIGN_IN')} className="mt-12 text-primary font-black uppercase text-[10px] tracking-widest">Voltar para Login</button>
       </div>
     );
   }
@@ -142,7 +123,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
               {view === 'SIGN_IN' ? 'Portal de' : 'Novo'}
               <br /><span className="text-primary">Acesso</span>
             </h1>
-            <p className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.4em]">Sistema de Eventos Acadêmicos</p>
+            <p className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.4em]">IFAL • Gestão de Eventos</p>
           </header>
 
           <form onSubmit={handleAuth} className="space-y-8">
@@ -188,15 +169,15 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
                   className="w-full h-20 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-2 border-zinc-100 dark:border-white/5 rounded-[2.5rem] flex items-center justify-center gap-4 transition-all active:scale-95 shadow-lg shadow-black/5"
                 >
                   <span className="material-symbols-outlined text-3xl text-primary">fingerprint</span>
-                  <span className="text-[11px] font-black uppercase tracking-widest">Acesso com FaceID / Digital</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest">Acesso Rápido Biométrico</span>
                 </button>
               )}
             </div>
           </form>
 
-          <footer className="text-center space-y-10 pt-6">
+          <footer className="text-center pt-6">
             <button onClick={() => setView(view === 'SIGN_IN' ? 'SIGN_UP' : 'SIGN_IN')} className="w-full text-primary font-[1000] uppercase text-[12px] tracking-widest">
-              {view === 'SIGN_IN' ? 'Criar nova conta institucional' : 'Já possuo uma conta cadastrada'}
+              {view === 'SIGN_IN' ? 'Criar conta institucional' : 'Já tenho uma conta cadastrada'}
             </button>
           </footer>
         </div>

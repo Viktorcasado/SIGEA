@@ -9,7 +9,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storageKey: 'sigea-auth-session-v5'
+    storageKey: 'sigea-auth-session-v5',
+    storage: window.localStorage
   },
   global: {
     headers: { 'x-application-name': 'sigea-ifal-official' }
@@ -43,10 +44,12 @@ export const handleSupabaseError = (error: any): string => {
   const msg = error.message?.toLowerCase() || '';
   
   if (msg.includes('failed to fetch') || msg.includes('network') || error.message === 'OFFLINE_ERROR') {
-    return 'Conexão instável. Os dados foram mantidos localmente e serão sincronizados automaticamente.';
+    return 'Conexão instável. Os dados serão sincronizados assim que a rede retornar.';
   }
-  if (msg.includes('refresh_token_not_found')) return 'Sessão expirada. Por favor, realize um novo login.';
-  if (msg.includes('database error')) return 'Erro de sincronização com o banco de dados institucional.';
+  if (msg.includes('refresh_token_not_found') || msg.includes('invalid grant')) {
+    return 'Sessão expirada. Por favor, realize um novo login.';
+  }
+  if (msg.includes('user already registered')) return 'Este e-mail já possui cadastro institucional.';
   
   return error.message || 'Erro ao processar requisição.';
 };

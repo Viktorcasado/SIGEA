@@ -27,7 +27,6 @@ const Profile: React.FC<ProfileProps> = ({
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [errorModal, setErrorModal] = useState<{show: boolean, msg: string}>({ show: false, msg: '' });
   const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [biometricSupported, setBiometricSupported] = useState(false);
   
   const [formData, setFormData] = useState({ 
     name: '', 
@@ -53,18 +52,6 @@ const Profile: React.FC<ProfileProps> = ({
       const savedBio = localStorage.getItem(`sigea_bio_enabled_${profile.id}`);
       setBiometricEnabled(savedBio === 'true');
     }
-
-    const checkSupport = async () => {
-      if (typeof window !== 'undefined' && window.PublicKeyCredential) {
-        try {
-          const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-          setBiometricSupported(available);
-        } catch (e) {
-          setBiometricSupported(false);
-        }
-      }
-    };
-    checkSupport();
   }, [profile]);
 
   const handleToggleBiometric = async () => {
@@ -77,7 +64,7 @@ const Profile: React.FC<ProfileProps> = ({
 
         const createOptions: CredentialCreationOptions = {
           publicKey: {
-            challenge: challenge,
+            challenge,
             rp: { name: "SIGEA IFAL", id: window.location.hostname },
             user: {
               id: userId,
@@ -93,7 +80,6 @@ const Profile: React.FC<ProfileProps> = ({
           }
         };
 
-        // Invocação direta da API para evitar 'Illegal Invocation'
         const credential = await window.navigator.credentials.create(createOptions);
         
         if (credential) {
@@ -105,7 +91,7 @@ const Profile: React.FC<ProfileProps> = ({
         console.error("Erro Biométrico:", err);
         setErrorModal({ 
           show: true, 
-          msg: "A biometria está bloqueada nesta prévia. Para usar FaceID/Digital, instale o PWA pelo navegador do celular ou acesse o link direto da Vercel." 
+          msg: "A biometria está bloqueada nesta prévia. Use o PWA ou link direto da Vercel para configurar FaceID/Digital." 
         });
       }
     } else {
@@ -146,7 +132,7 @@ const Profile: React.FC<ProfileProps> = ({
           <div className="bg-white dark:bg-zinc-900 border border-primary/20 p-10 rounded-[3rem] text-center max-w-sm shadow-2xl animate-in zoom-in duration-300">
             <span className="material-symbols-outlined text-red-500 text-5xl mb-6">lock_reset</span>
             <p className="text-zinc-900 dark:text-white text-xs font-black uppercase tracking-tight mb-8 leading-relaxed">{errorModal.msg}</p>
-            <button onClick={() => setErrorModal({show:false, msg:''})} className="w-full h-16 bg-primary text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95">Ok, Entendi</button>
+            <button onClick={() => setErrorModal({show:false, msg:''})} className="w-full h-16 bg-primary text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95">Fechar</button>
           </div>
         </div>
       )}
@@ -213,7 +199,7 @@ const Profile: React.FC<ProfileProps> = ({
              <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-white/5">
                 <div className="flex flex-col">
                   <span className="text-xs font-black uppercase text-zinc-900 dark:text-white tracking-tight">FaceID / Digital</span>
-                  <span className="text-[9px] font-bold text-zinc-400 uppercase">Login rápido no dispositivo</span>
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase">Login seguro no dispositivo</span>
                 </div>
                 <button 
                   onClick={handleToggleBiometric}
@@ -225,7 +211,7 @@ const Profile: React.FC<ProfileProps> = ({
           </div>
         </div>
 
-        <div className="w-full max-w-sm space-y-4 pt-12">
+        <div className="w-full max-sm pt-12">
           <button onClick={onLogout} className="w-full p-8 bg-white dark:bg-zinc-900 rounded-[3rem] border border-zinc-100 dark:border-white/5 shadow-xl flex items-center justify-between group active:scale-95 transition-all">
             <div className="flex items-center gap-4">
               <div className="size-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center transition-colors group-hover:bg-red-500 group-hover:text-white"><span className="material-symbols-outlined">logout</span></div>
