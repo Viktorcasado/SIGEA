@@ -1,168 +1,191 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/services/auth_service.dart';
-import '../../core/theme/ios_glass_theme.dart';
 import '../../core/theme/app_theme.dart';
-
-/// SIGEA – Sistema Institucional IFAL
-/// Desenvolvido por Viktor Casado
-/// Projeto Federal Educacional
+import '../../routes/app_routes.dart';
+import '../events/events_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<AuthService>(context).currentUser;
+
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      extendBody: true, // Para fundo passar por trás da navbar
       appBar: AppBar(
-        title: const Text('Dashboard SIGEA'),
+        title: const Text('Painel SIGEA'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthService>().signOut(),
+            icon: const Icon(Icons.notifications_none_rounded),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: () {
+               Provider.of<AuthService>(context, listen: false).signOut();
+               Navigator.pushReplacementNamed(context, AppRoutes.login);
+            },
           ),
         ],
       ),
-      drawer: MediaQuery.of(context).size.width < 800 ? const _MobileDrawer() : null,
-      body: Row(
-        children: [
-          if (MediaQuery.of(context).size.width >= 800)
-            const _DesktopSidebar(),
-          
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                     AppTheme.primaryGreen.withOpacity(0.1),
-                     AppTheme.backgroundLight,
-                  ],
-                ),
-              ),
-              child: const Center(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      GlassContainer(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Eventos Recentes', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 10),
-                            Text('Nenhum evento registrado hoje.'),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                      Wrap(
-                        spacing: 20,
-                        runSpacing: 20,
-                        children: [
-                          _StatCard(title: 'Certificados', value: '12', icon: Icons.workspace_premium),
-                          _StatCard(title: 'Inscrições', value: '5', icon: Icons.event_available),
-                          _StatCard(title: 'Horas', value: '48h', icon: Icons.timer),
-                        ],
-                      ),
-                    ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Cartão de Boas-vindas
+            GlassContainer(
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Theme.of(context).primaryColor,
+                    child: Text(
+                      user?.email?.substring(0, 1).toUpperCase() ?? 'U',
+                      style: const TextStyle(color: Colors.white, fontSize: 24),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Olá, ${user?.userMetadata?['full_name'] ?? 'Acadêmico'}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text('Bem-vindo ao SIGEA Mobile'),
+                      ],
+                    ),
+                  )
+                ],
               ),
             ),
-          ),
-        ],
+            
+            const SizedBox(height: 24),
+            
+            const Text(
+              'Meus Eventos',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            
+            // Lista Horizontal de Eventos (Placeholder)
+            SizedBox(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 3,
+                itemBuilder: (context, index) {
+                  return Container(
+                    width: 280,
+                    margin: const EdgeInsets.only(right: 16),
+                    child: GlassContainer(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 100,
+                            color: Colors.grey[300], // Banner Placeholder
+                            child: const Center(child: Icon(Icons.image, size: 40, color: Colors.grey)),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  'Semana de Tecnologia',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Campus Maceió • 12/10',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+             const SizedBox(height: 24),
+            
+             // Menu Rápido
+             Row(
+               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+               children: [
+                 _buildQuickAction(context, Icons.qr_code, 'Check-in'),
+                 _buildQuickAction(context, Icons.workspace_premium, 'Certificados'),
+                 _buildQuickAction(context, Icons.calendar_today, 'Agenda'),
+                 _buildQuickAction(context, Icons.person_outline, 'Perfil'),
+               ],
+             )
+          ],
+        ),
+      ),
+      bottomNavigationBar: GlassContainer(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        margin: EdgeInsets.zero,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        blur: 20,
+        color: Colors.white.withOpacity(0.5),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(icon: const Icon(Icons.home), onPressed: () {}, color: Theme.of(context).primaryColor),
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ../events/EventsPage()));
+              }
+            ),
+            IconButton(icon: const Icon(Icons.add_circle_outline, size: 32), onPressed: () {
+               // Apenas para testes/demonstração. Logica real requer checar permissões.
+               // Navigator.pushNamed(context, '/create-event');
+            }),
+            IconButton(icon: const Icon(Icons.bookmark_border), onPressed: () {}),
+            IconButton(icon: const Icon(Icons.person), onPressed: () {}),
+          ],
+        ),
       ),
     );
   }
-}
 
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-
-  const _StatCard({required this.title, required this.value, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassContainer(
-      width: 150,
-      height: 150,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-           Icon(icon, size: 40, color: AppTheme.primaryGreen),
-           const SizedBox(height: 10),
-           Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-           Text(title),
-        ],
-      ),
-    );
-  }
-}
-
-class _MobileDrawer extends StatelessWidget {
-  const _MobileDrawer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          const UserAccountsDrawerHeader(
-            accountName: Text("Viktor Casado"),
-            accountEmail: Text("admin@ifal.edu.br"),
-            decoration: BoxDecoration(color: AppTheme.primaryGreen),
+  Widget _buildQuickAction(BuildContext context, IconData icon, String label) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ]
           ),
-          ListTile(
-            leading: const Icon(Icons.dashboard),
-            title: const Text('Dashboard'),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: const Icon(Icons.event),
-            title: const Text('Meus Eventos'),
-            onTap: () {},
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DesktopSidebar extends StatelessWidget {
-  const _DesktopSidebar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 250,
-      color: Colors.white70,
-      child: Column(
-        children: [
-          const SizedBox(height: 50),
-          const Text("SIGEA ADMIN", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 50),
-          ListTile(
-            leading: const Icon(Icons.dashboard),
-            title: const Text('Dashboard'),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: const Icon(Icons.event),
-            title: const Text('Eventos'),
-            onTap: () {},
-          ),
-          // More items
-        ],
-      ),
+          child: Icon(icon, color: Theme.of(context).primaryColor),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+      ],
     );
   }
 }

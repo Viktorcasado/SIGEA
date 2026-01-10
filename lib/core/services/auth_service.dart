@@ -1,62 +1,114 @@
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
-import 'supabase_service.dart';
 
-/// SIGEA – Sistema Institucional IFAL
+/// Serviço de Autenticação SIGEA
+/// Gerencia Login, Logout, Persistência e Gov.br
 /// Desenvolvido por Viktor Casado
-/// Projeto Federal Educacional
-
 class AuthService extends ChangeNotifier {
-  final SupabaseClient _client = SupabaseService.client;
+  final SupabaseClient _supabase = Supabase.instance.client;
+  User? _currentUser;
+  bool _isLoading = false;
 
-  User? get currentUser => _client.auth.currentUser;
-  Session? get currentSession => _client.auth.currentSession;
-  
-  bool get isAuthenticated => currentUser != null;
+  User? get currentUser => _currentUser;
+  bool get isLoading => _isLoading;
+  bool get isAuthenticated => _currentUser != null;
 
-  Future<AuthResponse> signInWithEmail(String email, String password) async {
-    try {
-      final response = await _client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+  AuthService() {
+    _init();
+  }
+
+  /// Inicializa e escuta mudanças na sessão para evitar loops
+  void _init() {
+    // Escuta estado da autenticação
+    _supabase.auth.onAuthStateChange.listen((data) {
+      final AuthChangeEvent event = data.event;
+      final Session? session = data.session;
+
+      if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.tokenRefreshed) {
+        _currentUser = session?.user;
+      } else if (event == AuthChangeEvent.signedOut) {
+        _currentUser = null;
+      }
+      
       notifyListeners();
-      return response;
-    } catch (e) {
-      rethrow;
-    }
+    });
+
+    // Recupera sessão atual se existir
+    _currentUser = _supabase.auth.currentUser;
   }
 
-  Future<AuthResponse> signUp(String email, String password, String fullName) async {
+  /// Login com Email e Senha
+  Future<void> signInWithEmail(String email, String password) async {
     try {
-      final response = await _client.auth.signUp(
+      _setLoading(true);
+      await _supabase.auth.signInWithPassword(
         email: email,
         password: password,
-        data: {'full_name': fullName}, // Trigger will capture this
       );
-      return response;
     } catch (e) {
       rethrow;
+    } finally {
+      _setLoading(false);
     }
   }
 
-  Future<void> signOut() async {
-    await _client.auth.signOut();
-    notifyListeners();
+  /// Registro de Novo Usuário
+  Future<void> signUp(String email, String password, Map<String, dynamic> metadata) async {
+    try {
+      _setLoading(true);
+      await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: metadata, // Envia dados para o Trigger handle_new_user
+      );
+    } catch (e) {
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
   }
 
-  Future<void> resetPassword(String email) async {
-    // Redirection URL should be configured in Supabase Dashboard -> Auth -> URL Configuration
-    // Example: io.supabase.sigea://login-callback
-    await _client.auth.resetPasswordForEmail(
+  /// Login com Gov.br (OAuth 2.0)
+  /// Nota: Requer configuração no Painel Supabase com Client ID/Secret do Gov.br
+  Future<void> signInWithGovBr() async {
+    try {
+      _setLoading(true);
+      await _supabase.auth.signInWithOAuth(
+        OAuthProvider.google, // Placeholder: Gov.br não é nativo no SDK, usaria 'custom' ou OpenID
+        // Para produção real Gov.br:
+        // provider: OAuthProvider.oidc,
+        // authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+        redirectTo: kIsWeb ? null : 'br.edu.ifal.sigea://login-callback',
+      );
+    } catch (e) {
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Função de Recuperação de Senha
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _supabase.auth.resetPasswordForEmail(
       email,
-      redirectTo: kIsWeb ? null : 'io.supabase.sigea://login-callback',
+      redirectTo: 'br.edu.ifal.sigea://reset-password',
     );
   }
 
-  Future<void> updatePassword(String newPassword) async {
-    await _client.auth.updateUser(
-      UserAttributes(password: newPassword),
-    );
+  /// Logout Seguro
+  Future<void> signOut() async {
+    try {
+      _setLoading(true);
+      await _supabase.auth.signOut();
+      // Limpeza de cache local ou dados sensíveis pode ser feita aqui
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
   }
 }

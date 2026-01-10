@@ -1,39 +1,83 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
-// import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// SIGEA – Sistema Institucional IFAL
+/// Serviço de Sincronização (Offline-First)
+/// Gerencia fila de mutações e cache local
 /// Desenvolvido por Viktor Casado
-/// Projeto Federal Educacional
+class SyncService extends ChangeNotifier {
+  final SupabaseClient _supabase = Supabase.instance.client;
+  bool _isOnline = true;
+  final List<Map<String, dynamic>> _mutationQueue = [];
 
-class SyncService {
-  // Mocking connectivity check for now as we didn't add the package in pubspec for simplicity but defined it in plan
-  Future<bool> get isOnline async => true; 
+  bool get isOnline => _isOnline;
+  int get pendingOperations => _mutationQueue.length;
 
-  Future<void> syncData() async {
-    if (!await isOnline) {
-      debugPrint('Offline mode: data will be synced later.');
-      return;
-    }
+  SyncService() {
+    _initConnectivityListeners();
+  }
 
+  void _initConnectivityListeners() {
+    // Placeholder para ConnectivityPlus ou similar
+    // Em produção: Connectivity().onConnectivityChanged.listen(...)
+    // Simulando monitoramento:
+    Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checkConnection();
+    });
+  }
+
+  Future<void> _checkConnection() async {
+    // Verificação simples de reachability
     try {
-      debugPrint('Syncing data with Supabase...');
-      // 1. Push local changes
-      await _pushLocalChanges();
-      
-      // 2. Pull remote changes
-      await _pullRemoteChanges();
-      
-      debugPrint('Sync complete.');
-    } catch (e) {
-      debugPrint('Sync failed: $e');
+      // await InternetAddress.lookup('google.com');
+      // _isOnline = true;
+      // _processQueue();
+    } catch (_) {
+      _isOnline = false;
     }
+    notifyListeners();
   }
 
-  Future<void> _pushLocalChanges() async {
-    // Logic to read from local SQLite/Hive and push to Supabase
+  /// Adiciona uma operação de escrita na fila offline
+  void queueOperation(String table, String action, Map<String, dynamic> data) {
+    _mutationQueue.add({
+      'table': table,
+      'action': action, // 'INSERT', 'UPDATE', 'DELETE'
+      'data': data,
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+    notifyListeners();
   }
 
-  Future<void> _pullRemoteChanges() async {
-    // Logic to fetch from Supabase and save to local SQLite/Hive
+  /// Processa a fila quando conexão é restaurada
+  Future<void> _processQueue() async {
+    if (!_isOnline || _mutationQueue.isEmpty) return;
+
+    final List<Map<String, dynamic>> failedOps = [];
+
+    for (final op in _mutationQueue) {
+      try {
+        final table = _supabase.from(op['table']);
+        switch (op['action']) {
+          case 'INSERT':
+            await table.insert(op['data']);
+            break;
+          case 'UPDATE':
+            await table.update(op['data']).match({'id': op['data']['id']});
+            break;
+          case 'DELETE':
+            await table.delete().match({'id': op['data']['id']});
+            break;
+        }
+      } catch (e) {
+        // Se falhar, mantém na fila ou loga erro
+        failedOps.add(op);
+        debugPrint('Erro na sincronização: $e');
+      }
+    }
+
+    _mutationQueue.clear();
+    _mutationQueue.addAll(failedOps);
+    notifyListeners();
   }
 }

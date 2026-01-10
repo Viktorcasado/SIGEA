@@ -1,5 +1,5 @@
-name: sigea
-description: SIGEA – Sistema Institucional de Gestão de Eventos Acadêmicos do IFAL.
+name: sigea_ifal
+description: "SIGEA - Sistema Institucional de Gestão de Eventos Acadêmicos do IFAL"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,26 +9,31 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-
-  # Supabase
-  supabase_flutter: ^2.3.0
-
-  # UI / Design
-  google_fonts: ^6.1.0
-  cupertino_icons: ^1.0.6
-  glass_kit: ^3.0.0 # Optional, but we will custom build glass widgets too for control
-  animations: ^2.0.11
-
-  # State / Utils
-  provider: ^6.1.1
-  shared_preferences: ^2.2.2
-  url_launcher: ^6.2.4
-  intl: ^0.19.0
   
-  # Biometrics
+  # Core
+  provider: ^6.1.1
+  supabase_flutter: ^2.3.1
+  
+  # Utils
+  intl: ^0.19.0
+  equatable: ^2.0.5
+  uuid: ^4.3.3
+  url_launcher: ^6.2.4
+  
+  # UI/Assets
+  cupertino_icons: ^1.0.6
+  cached_network_image: ^3.3.1
+  flutter_svg: ^2.0.9
+  google_fonts: ^6.1.0
+  
+  # Local Storage & Offline
+  sqflite: ^2.3.2
+  path: ^1.8.3
+  shared_preferences: ^2.2.2
+  
+  # Security & Biometrics
   local_auth: ^2.1.8
+  flutter_secure_storage: ^9.0.0
 
 dev_dependencies:
   flutter_test:
@@ -38,4 +43,4 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    # - assets/images/
+    - assets/images/
