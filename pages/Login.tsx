@@ -19,33 +19,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
   const [name, setName] = useState('');
   const [campus, setCampus] = useState(CAMPUS_LIST[0]);
 
-  const handleBiometricLogin = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Realize login com senha primeiro para ativar biometria.");
-
-      const isBioEnabled = localStorage.getItem(`sigea_bio_enabled_${session.user.id}`) === 'true';
-      if (!isBioEnabled) throw new Error("Biometria não ativada no seu perfil.");
-
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      // Uso direto do window.navigator.credentials para evitar Illegal Invocation
-      const credential = await window.navigator.credentials.get({
-        publicKey: { challenge, timeout: 60000, userVerification: "required" }
-      });
-      
-      if (credential) {
-        if (window.navigator.vibrate) window.navigator.vibrate(20);
-        onLogin();
-      }
-    } catch (err: any) {
-      setError(err.message || "Erro ao acessar biometria.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -83,10 +56,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
       <main className="flex-1 flex flex-col px-6 pb-20 max-w-sm mx-auto justify-center w-full space-y-12">
         <div className="text-center space-y-4">
           <h1 className="text-5xl font-black uppercase leading-[0.85] tracking-tighter">
-            {view === 'SIGN_IN' ? 'Portal de' : 'Novo'}<br />
-            <span className="text-primary">Acesso</span>
+            {view === 'SIGN_IN' ? 'Acesso' : 'Novo'}<br />
+            <span className="text-primary">Portal</span>
           </h1>
-          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.4em]">IFAL • Gestão de Eventos</p>
         </div>
 
         <form onSubmit={handleAuth} className="space-y-6">
@@ -94,26 +66,19 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
           
           <div className="space-y-4">
             {view === 'SIGN_UP' && (
-              <input required type="text" placeholder="NOME COMPLETO" value={name} onChange={e => setName(e.target.value.toUpperCase())} className="w-full h-16 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all" />
+              <input required type="text" placeholder="NOME" value={name} onChange={e => setName(e.target.value.toUpperCase())} className="w-full h-16 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all" />
             )}
-            <input required type="email" placeholder="E-MAIL INSTITUCIONAL" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-16 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all" />
+            <input required type="email" placeholder="E-MAIL" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-16 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all" />
             <input required type="password" placeholder="SENHA" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-16 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all" />
           </div>
 
           <button disabled={loading} className="w-full h-18 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 uppercase text-xs tracking-widest active:scale-95 transition-all">
-            {loading ? "Processando..." : (view === 'SIGN_IN' ? "Entrar" : "Cadastrar")}
+            {loading ? "..." : (view === 'SIGN_IN' ? "Entrar" : "Criar Conta")}
           </button>
-
-          {view === 'SIGN_IN' && (
-            <button type="button" onClick={handleBiometricLogin} className="w-full h-18 bg-white dark:bg-zinc-900 text-zinc-400 border border-zinc-100 dark:border-white/5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-              <span className="material-symbols-outlined text-primary">fingerprint</span>
-              <span className="text-[10px] font-black uppercase tracking-widest">Acesso Biométrico</span>
-            </button>
-          )}
         </form>
 
         <button onClick={() => setView(view === 'SIGN_IN' ? 'SIGN_UP' : 'SIGN_IN')} className="text-center text-primary font-black uppercase text-[10px] tracking-widest">
-          {view === 'SIGN_IN' ? "Criar conta institucional" : "Já tenho conta"}
+          {view === 'SIGN_IN' ? "Criar conta" : "Já tenho conta"}
         </button>
       </main>
     </div>

@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Event } from '../types';
-import { supabase, isSupabaseConfigured, handleSupabaseError, uploadFile } from '../supabaseClient';
-import { CAMPUS_LIST } from '../constants';
+import { Event } from '../types.ts';
+import { supabase, isSupabaseConfigured, handleSupabaseError, uploadFile } from '../supabaseClient.ts';
+import { CAMPUS_LIST } from '../constants.tsx';
 
 interface RegistrationProps {
   navigateTo: (page: string, id?: string) => void;
@@ -71,7 +71,6 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
     try {
       let finalPhotoUrl = profile.photo;
 
-      // Primeiro faz o upload da foto se houver uma nova
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
         const fileName = `reg-${profile.id}-${Date.now()}.${fileExt}`;
@@ -79,7 +78,6 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
         finalPhotoUrl = await uploadFile('assets', filePath, selectedFile);
       }
 
-      // Atualiza o perfil sem mandar o base64 (manda a URL do storage ou a antiga)
       await onUpdateProfile({
         name: formData.name,
         photo_url: finalPhotoUrl,
@@ -127,7 +125,6 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
 
   return (
     <div className="relative flex flex-col w-full pb-32 min-h-screen bg-slate-50 dark:bg-zinc-950 animate-in fade-in duration-500 overflow-x-hidden">
-      
       {showCampusModal && (
         <div className="fixed inset-0 z-[1000] flex items-end justify-center animate-in fade-in duration-300">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCampusModal(false)}></div>
@@ -178,9 +175,6 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
           </div>
           <div className="size-12"></div>
         </div>
-        <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800">
-          <div className="h-full bg-primary transition-all duration-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" style={{width: `${(step / 3) * 100}%`}}></div>
-        </div>
       </header>
 
       <main className="flex-1 p-6">
@@ -196,9 +190,6 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
                 ) : (
                   <span className="material-symbols-outlined text-4xl text-zinc-300">add_a_photo</span>
                 )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <span className="material-symbols-outlined text-white">edit</span>
-                </div>
               </div>
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
               <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-4">Foto de Identificação</p>
@@ -214,51 +205,6 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
                   className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all dark:text-white"
                 />
               </div>
-              <div className="space-y-1.5 px-2">
-                <label className="text-[11px] font-black text-zinc-500 uppercase ml-2 tracking-widest">E-mail Institucional</label>
-                <input 
-                  type="email" 
-                  value={formData.email}
-                  readOnly
-                  className="w-full h-16 px-6 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-white/5 rounded-2xl text-sm font-bold text-zinc-400 outline-none"
-                />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {step === 2 && (
-          <section className="space-y-6 animate-in slide-in-from-right-4">
-            <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-zinc-500 uppercase ml-4 tracking-widest">Categoria de Vínculo</label>
-              <div className="grid gap-3">
-                {(['Estudante', 'Servidor', 'Externo'] as UserRoleOption[]).map((opt) => (
-                  <button 
-                    key={opt}
-                    onClick={() => {
-                      if (window.navigator.vibrate) window.navigator.vibrate(5);
-                      setRole(opt);
-                    }}
-                    className={`flex items-center justify-between p-6 rounded-3xl border-2 transition-all ${
-                      role === opt ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-white/5'
-                    }`}
-                  >
-                    <span className={`text-sm font-black uppercase ${role === opt ? 'text-primary' : 'text-zinc-600 dark:text-zinc-400'}`}>{opt}</span>
-                    {role === opt && <span className="material-symbols-outlined text-primary">check_circle</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-zinc-500 uppercase ml-4 tracking-widest">Sua Unidade Oficial</label>
-              <div 
-                onClick={() => setShowCampusModal(true)}
-                className="w-full h-16 px-6 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-2xl text-sm font-bold flex items-center justify-between cursor-pointer text-slate-900 dark:text-white shadow-sm hover:border-primary/30 transition-all"
-              >
-                <span className="truncate">{formData.campus}</span>
-                <span className="material-symbols-outlined text-primary">expand_more</span>
-              </div>
             </div>
           </section>
         )}
@@ -266,10 +212,6 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
         {step === 3 && (
           <section className="space-y-8 animate-in zoom-in-95">
             <div className="bg-white dark:bg-zinc-900 p-8 rounded-[3rem] shadow-2xl border border-zinc-100 dark:border-white/5 text-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-6">
-                <div className="px-3 py-1 bg-primary/10 text-primary text-[8px] font-black uppercase rounded-full">Verificado</div>
-              </div>
-              <div className="size-24 rounded-full bg-cover bg-center mx-auto mb-6 ring-4 ring-primary/20 shadow-lg" style={{backgroundImage: `url(${formData.photoPreview || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=200'})`}}></div>
               <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight leading-tight">{formData.name}</h3>
               <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">{role} • {formData.campus}</p>
               
@@ -279,7 +221,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
                     {formData.terms && <span className="material-symbols-outlined text-white text-lg">check</span>}
                   </div>
                   <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase leading-relaxed tracking-tight">
-                    Confirmo que minha unidade oficial é o <span className="text-primary font-black">{formData.campus}</span> e autorizo o processamento de meus dados para emissão de certificado.
+                    Confirmo minha unidade oficial e autorizo o processamento de dados.
                   </p>
                 </label>
               </div>
@@ -302,10 +244,7 @@ const Registration: React.FC<RegistrationProps> = ({ navigateTo, eventId, events
           {isSubmitting ? (
             <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           ) : (
-            <>
-              {step < 3 ? 'Próximo Passo' : 'Finalizar Inscrição'}
-              <span className="material-symbols-outlined text-xl">{step < 3 ? 'arrow_forward' : 'verified'}</span>
-            </>
+            <>{step < 3 ? 'Próximo' : 'Finalizar'}</>
           )}
         </button>
       </footer>

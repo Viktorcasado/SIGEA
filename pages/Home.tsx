@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import EventCard from '../components/EventCard.tsx';
 import { Event as SIGEAEvent } from '../types.ts';
-import { CAMPUS_LIST } from '../constants';
+import { CAMPUS_LIST } from '../constants.tsx';
 import Logo from '../components/Logo.tsx';
 
 interface HomeProps {
@@ -81,7 +81,6 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
             </h1>
         </div>
 
-        {/* Barra de Busca Melhorada e Ajustada */}
         <div className="relative group max-w-2xl z-10 lg:ml-0 space-y-6">
           <div className="relative flex items-center group">
             <div className="absolute left-6 pointer-events-none transition-colors duration-300">
@@ -141,15 +140,6 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
                 <span className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 group-hover:text-primary transition-colors tracking-widest">{portal.name}</span>
               </button>
             ))}
-            <button 
-                onClick={() => navigateTo('integrations')}
-                className="flex flex-col items-center gap-2 group transition-all"
-              >
-                <div className="size-14 lg:size-16 rounded-[1.5rem] bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/5 flex items-center justify-center text-slate-400 group-active:scale-90 transition-transform shadow-sm group-hover:border-primary">
-                  <span className="material-symbols-outlined text-2xl">sync</span>
-                </div>
-                <span className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 group-hover:text-primary transition-colors tracking-widest">Sinc</span>
-              </button>
           </div>
         </section>
 
@@ -171,28 +161,10 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
             )) : (
               <div className="min-w-[300px] h-[420px] text-center bg-white dark:bg-zinc-900/50 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-white/5 flex flex-col items-center justify-center gap-4 px-8">
                 <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-zinc-700">search_off</span>
-                <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-relaxed">Nenhum evento em {selectedCampus !== 'Todos' ? selectedCampus : 'destaque'} no momento.</p>
-                <button onClick={() => setSelectedCampus('Todos')} className="text-primary text-[9px] font-black uppercase tracking-widest">Mostrar Todos</button>
+                <p className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest leading-relaxed">Nenhum evento no momento.</p>
               </div>
             )}
           </div>
-        </section>
-
-        <section className="px-6 lg:px-12 pb-12">
-           <div className="flex flex-col gap-1 mb-6">
-               <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Explorar Recentes</h3>
-               <div className="w-6 h-1 bg-primary rounded-full"></div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-8">
-              {filteredEvents.slice(4, 13).map(event => (
-                <EventCard key={event.id} event={event} onClick={() => navigateTo('details', event.id)} />
-              ))}
-              {filteredEvents.length === 0 && (
-                <div className="col-span-full py-16 text-center text-[10px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-widest bg-white dark:bg-zinc-900/30 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/5 px-8">
-                  Nada encontrado para "{search || selectedCampus}"
-                </div>
-              )}
-            </div>
         </section>
       </main>
     </div>
