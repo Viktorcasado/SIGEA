@@ -68,13 +68,12 @@ const Profile: React.FC<ProfileProps> = ({
   }, [profile]);
 
   const handleToggleBiometric = async () => {
-    if (!biometricSupported || !profile) return;
+    if (!profile) return;
 
     if (!biometricEnabled) {
       try {
-        // O desafio (challenge) deve ser um ArrayBuffer
+        // ATENÇÃO: A chamada para credentials.create deve ser o mais direta possível ao clique
         const challenge = crypto.getRandomValues(new Uint8Array(32));
-        // O ID do usuário também deve ser um ArrayBuffer
         const userId = new TextEncoder().encode(profile.id);
 
         const createOptions: CredentialCreationOptions = {
@@ -96,28 +95,26 @@ const Profile: React.FC<ProfileProps> = ({
           }
         };
 
-        // Correção de contexto: Chamando diretamente do objeto pai sem intermediários
         const credential = await window.navigator.credentials.create(createOptions);
         
         if (credential) {
           localStorage.setItem(`sigea_bio_enabled_${profile.id}`, 'true');
           setBiometricEnabled(true);
-          if (window.navigator.vibrate) window.navigator.vibrate([20, 50]);
+          if (window.navigator.vibrate) window.navigator.vibrate([20, 40]);
         }
       } catch (err: any) {
-        console.error("Erro ao ativar biometria:", err);
-        // Tratamento amigável para erro de permissão de frame/desenvolvimento
+        console.error("Erro na Biometria:", err);
+        let msg = "Não foi possível vincular sua biometria.";
+        
         if (err.name === 'SecurityError' || err.message.includes('feature is not enabled')) {
-           setErrorModal({ 
-            show: true, 
-            msg: "A biometria foi bloqueada pelo navegador. Isso acontece quando o app está dentro de uma janela de testes. Tente acessar o app pelo domínio oficial diretamente." 
-          });
+          msg = "A biometria está bloqueada neste ambiente de testes. Para usar FaceID/Digital, instale o app no seu celular via link da Vercel.";
+        } else if (err.name === 'NotAllowedError') {
+          msg = "Operação cancelada ou tempo limite excedido. Tente novamente clicando no botão.";
         } else {
-          setErrorModal({ 
-            show: true, 
-            msg: "Não foi possível vincular sua biometria. Verifique se o FaceID/Digital está configurado no seu celular." 
-          });
+          msg = "Verifique se o FaceID/Digital está configurado no sistema do seu celular ou se o site tem permissão de acesso.";
         }
+        
+        setErrorModal({ show: true, msg });
       }
     } else {
       localStorage.removeItem(`sigea_bio_enabled_${profile.id}`);
@@ -154,10 +151,10 @@ const Profile: React.FC<ProfileProps> = ({
     <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-zinc-950 pb-32 animate-in fade-in overflow-y-auto no-scrollbar">
       {errorModal.show && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-8 bg-black/90 backdrop-blur-md">
-          <div className="bg-white dark:bg-zinc-900 border border-primary/20 p-10 rounded-[3rem] text-center max-w-sm shadow-2xl">
-            <span className="material-symbols-outlined text-red-500 text-5xl mb-6">warning</span>
+          <div className="bg-white dark:bg-zinc-900 border border-primary/20 p-10 rounded-[3rem] text-center max-w-sm shadow-2xl animate-in zoom-in duration-300">
+            <span className="material-symbols-outlined text-red-500 text-5xl mb-6">lock_reset</span>
             <p className="text-zinc-900 dark:text-white text-xs font-black uppercase tracking-tight mb-8 leading-relaxed">{errorModal.msg}</p>
-            <button onClick={() => setErrorModal({show:false, msg:''})} className="w-full h-16 bg-primary text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95">Entendi</button>
+            <button onClick={() => setErrorModal({show:false, msg:''})} className="w-full h-16 bg-primary text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95">Ok, Entendi</button>
           </div>
         </div>
       )}
@@ -218,20 +215,18 @@ const Profile: React.FC<ProfileProps> = ({
                 </button>
              </div>
 
-             {biometricSupported && (
-               <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-white/5">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-black uppercase text-zinc-900 dark:text-white tracking-tight">FaceID / Digital</span>
-                    <span className="text-[9px] font-bold text-zinc-400 uppercase">Login rápido no dispositivo</span>
-                  </div>
-                  <button 
-                    onClick={handleToggleBiometric}
-                    className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${biometricEnabled ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-800'}`}
-                  >
-                    <div className={`absolute top-1 size-6 bg-white rounded-full transition-all duration-300 shadow-md ${biometricEnabled ? 'left-7' : 'left-1'}`}></div>
-                  </button>
-               </div>
-             )}
+             <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-white/5">
+                <div className="flex flex-col">
+                  <span className="text-xs font-black uppercase text-zinc-900 dark:text-white tracking-tight">FaceID / Digital</span>
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase">Login rápido no dispositivo</span>
+                </div>
+                <button 
+                  onClick={handleToggleBiometric}
+                  className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${biometricEnabled ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-800'}`}
+                >
+                  <div className={`absolute top-1 size-6 bg-white rounded-full transition-all duration-300 shadow-md ${biometricEnabled ? 'left-7' : 'left-1'}`}></div>
+                </button>
+             </div>
           </div>
         </div>
 

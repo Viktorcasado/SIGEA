@@ -34,50 +34,45 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
   }, []);
 
   const handleBiometricLogin = async () => {
-    if (!biometricSupported) return;
-    
     setLoading(true);
     setError(null);
     try {
+      // 1. Tenta recuperar a sessão JWT existente do Supabase
       const { data: { session } } = await supabase.auth.getSession();
       
-      const lastUser = session?.user;
-      if (lastUser) {
-        const isBioActive = localStorage.getItem(`sigea_bio_enabled_${lastUser.id}`) === 'true';
-        if (!isBioActive) {
-          setError("Biometria não ativada. Ative-a no seu perfil após o login manual.");
-          setLoading(false);
-          return;
-        }
+      if (!session) {
+        throw new Error("Sessão expirada. Entre com e-mail e senha uma vez para ativar a biometria.");
       }
 
+      // 2. Verifica se o usuário ativou a biometria para esta conta
+      const isBioEnabled = localStorage.getItem(`sigea_bio_enabled_${session.user.id}`) === 'true';
+      if (!isBioEnabled) {
+        throw new Error("Biometria não está configurada para esta conta. Ative-a no seu Perfil.");
+      }
+
+      // 3. Solicita autenticação biométrica nativa (WebAuthn)
       const challenge = crypto.getRandomValues(new Uint8Array(32));
       const options: CredentialRequestOptions = {
         publicKey: {
           challenge,
           timeout: 60000,
-          userVerification: "required",
-          allowCredentials: [] 
-        },
-        mediation: 'optional'
+          userVerification: "required"
+        }
       };
 
-      // Chamada garantida no contexto do navegador
-      const credential = await window.navigator.credentials.get(options);
+      // Abre o diálogo nativo do FaceID/Digital
+      const credential = await navigator.credentials.get(options);
       
       if (credential) {
-        if (session) {
-          onLogin();
-        } else {
-          setError("Sessão não encontrada. Realize o login com e-mail uma vez para vincular seu dispositivo.");
-        }
+        if (window.navigator.vibrate) window.navigator.vibrate(20);
+        onLogin();
       }
     } catch (err: any) {
       console.error("Erro Biométrico:", err);
-      if (err.name === 'SecurityError' || err.message.includes('feature is not enabled')) {
-        setError("Acesso biométrico bloqueado por política de segurança (iframe). Use o link direto do app para ativar.");
-      } else if (err.name !== 'NotAllowedError') {
-        setError("Erro na autenticação biométrica do dispositivo.");
+      if (err.name === 'SecurityError' || err.message.includes('enabled')) {
+         setError("A biometria está bloqueada nesta janela de teste. Use o link direto ou PWA instalado.");
+      } else {
+         setError(err.message || "Erro na autenticação biométrica.");
       }
     } finally {
       setLoading(false);
@@ -186,7 +181,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
                 {loading ? <div className="size-8 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : 'Entrar no Sistema'}
               </button>
 
-              {view === 'SIGN_IN' && biometricSupported && (
+              {view === 'SIGN_IN' && (
                 <button 
                   type="button"
                   onClick={handleBiometricLogin}

@@ -16,24 +16,20 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentPage, navigateTo, role, to
     { id: 'home', label: role === 'ORGANIZER' ? 'Painel' : 'Início', icon: 'home_app_logo' },
     { id: 'events', label: 'Explorar', icon: 'search' },
     { id: 'certificates', label: 'Títulos', icon: 'workspace_premium' },
-    { id: 'menu', label: 'Menu', icon: 'grid_view' },
+    { id: 'profile', label: 'Perfil', icon: 'person' },
   ];
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/95 dark:bg-[#09090b]/95 backdrop-blur-3xl border-t border-zinc-100 dark:border-white/5 pb-[env(safe-area-inset-bottom,12px)] pt-3 px-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
       <div className="flex items-center justify-around max-w-md mx-auto h-16">
         {tabs.map((tab) => {
-          const isActive = tab.id === 'menu' ? false : currentPage === tab.id;
+          const isActive = currentPage === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => {
                 if (window.navigator.vibrate) window.navigator.vibrate(10);
-                if (tab.id === 'menu') {
-                  toggleSidebar();
-                } else {
-                  navigateTo(tab.id);
-                }
+                navigateTo(tab.id);
               }}
               className="flex-1 flex flex-col items-center justify-center gap-1 group relative outline-none"
             >
