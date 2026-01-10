@@ -59,21 +59,17 @@ const Profile: React.FC<ProfileProps> = ({
 
     if (!biometricEnabled) {
       try {
-        // Verifica se está rodando em frame (como AI Studio ou alguns APKs)
-        const isIframe = window.self !== window.top;
-
         if (!window.isSecureContext) {
-          throw new Error("A biometria requer HTTPS. Use o link da Vercel para ativar.");
+          throw new Error("A biometria requer HTTPS. Use o link oficial para ativar.");
         }
 
         if (!window.PublicKeyCredential) {
-          throw new Error("Seu dispositivo ou navegador atual não suporta biometria web.");
+          throw new Error("Biometria não suportada neste dispositivo/navegador.");
         }
 
         const challenge = crypto.getRandomValues(new Uint8Array(32));
         const userId = new TextEncoder().encode(profile.id);
         
-        // Domínio oficial para o APK reconhecer a "Relying Party"
         const rpId = window.location.hostname === 'localhost' || !window.location.hostname 
           ? 'sigea-ifal.vercel.app' 
           : window.location.hostname;
@@ -108,11 +104,11 @@ const Profile: React.FC<ProfileProps> = ({
         
         if (err.name === 'SecurityError') {
           type = 'security';
-          userMsg = "BIOMETRIA BLOQUEADA: Este ambiente (Prévia ou APK) restringe o acesso ao sensor. Use o link direto da Vercel ou configure o APK com permissão de credenciais.";
+          userMsg = "BLOQUEIO DE SEGURANÇA: Este ambiente (Preview ou APK) restringe o sensor. Use o link direto da Vercel.";
         } else if (err.name === 'NotAllowedError') {
-          userMsg = "Acesso negado ou cancelado.";
+          userMsg = "Acesso negado ou cancelado pelo usuário.";
         } else {
-          userMsg = err.message || "Não foi possível ativar a biometria.";
+          userMsg = err.message || "Falha ao ativar biometria.";
         }
 
         setErrorModal({ show: true, msg: userMsg, type });
