@@ -1,12 +1,16 @@
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { injectSpeedInsights } from '@vercel/speed-insights';
 import App from './App.tsx';
 
 const rootElement = document.getElementById('root');
 
 if (rootElement) {
   try {
+    // Initialize Vercel Speed Insights
+    injectSpeedInsights();
+
     const root = createRoot(rootElement);
     root.render(
       <React.StrictMode>
