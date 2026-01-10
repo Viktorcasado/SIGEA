@@ -1,8 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { UserRole } from '../types';
-import { CAMPUS_LIST } from '../constants';
-import { supabase, handleSupabaseError } from '../supabaseClient';
+import { UserRole } from '../types.ts';
+import { CAMPUS_LIST } from '../constants.tsx';
+import { supabase, handleSupabaseError } from '../supabaseClient.ts';
 
 interface ProfileProps {
   navigateTo: (page: string) => void;
@@ -25,9 +25,8 @@ const Profile: React.FC<ProfileProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [showCampusSelector, setShowCampusSelector] = useState(false);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
-  const [errorModal, setErrorModal] = useState<{show: boolean, msg: string}>({ show: false, msg: '' });
+  const [errorModal, setErrorModal] = useState<{show: boolean, msg: string, type?: 'security' | 'error'}>({ show: false, msg: '' });
   const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [biometricSupported, setBiometricSupported] = useState(false);
   
   const [formData, setFormData] = useState({ 
     name: '', 
@@ -53,18 +52,6 @@ const Profile: React.FC<ProfileProps> = ({
       const savedBio = localStorage.getItem(`sigea_bio_enabled_${profile.id}`);
       setBiometricEnabled(savedBio === 'true');
     }
-
-    const checkSupport = async () => {
-      if (typeof window !== 'undefined' && window.PublicKeyCredential) {
-        try {
-          const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-          setBiometricSupported(available);
-        } catch (e) {
-          setBiometricSupported(false);
-        }
-      }
-    };
-    checkSupport();
   }, [profile]);
 
   const handleToggleBiometric = async () => {
@@ -72,14 +59,25 @@ const Profile: React.FC<ProfileProps> = ({
 
     if (!biometricEnabled) {
       try {
-        // ATENÇÃO: A chamada para credentials.create deve ser o mais direta possível ao clique
+        if (!window.isSecureContext) {
+          throw new Error("A biometria requer HTTPS. Use o link oficial para ativar.");
+        }
+
+        if (!window.PublicKeyCredential) {
+          throw new Error("Biometria não suportada neste dispositivo/navegador.");
+        }
+
         const challenge = crypto.getRandomValues(new Uint8Array(32));
         const userId = new TextEncoder().encode(profile.id);
+        
+        const rpId = window.location.hostname === 'localhost' || !window.location.hostname 
+          ? 'sigea-ifal.vercel.app' 
+          : window.location.hostname;
 
         const createOptions: CredentialCreationOptions = {
           publicKey: {
-            challenge: challenge,
-            rp: { name: "SIGEA IFAL", id: window.location.hostname },
+            challenge,
+            rp: { name: "SIGEA IFAL", id: rpId },
             user: {
               id: userId,
               name: profile.email,
@@ -88,8 +86,7 @@ const Profile: React.FC<ProfileProps> = ({
             pubKeyCredParams: [{ alg: -7, type: "public-key" }],
             authenticatorSelection: { 
               userVerification: "required",
-              authenticatorAttachment: "platform",
-              requireResidentKey: false
+              authenticatorAttachment: "platform"
             },
             timeout: 60000
           }
@@ -100,21 +97,21 @@ const Profile: React.FC<ProfileProps> = ({
         if (credential) {
           localStorage.setItem(`sigea_bio_enabled_${profile.id}`, 'true');
           setBiometricEnabled(true);
-          if (window.navigator.vibrate) window.navigator.vibrate([20, 40]);
         }
       } catch (err: any) {
-        console.error("Erro na Biometria:", err);
-        let msg = "Não foi possível vincular sua biometria.";
+        let userMsg = "Erro na biometria.";
+        let type: 'security' | 'error' = 'error';
         
-        if (err.name === 'SecurityError' || err.message.includes('feature is not enabled')) {
-          msg = "A biometria está bloqueada neste ambiente de testes. Para usar FaceID/Digital, instale o app no seu celular via link da Vercel.";
+        if (err.name === 'SecurityError') {
+          type = 'security';
+          userMsg = "BLOQUEIO DE SEGURANÇA: Este ambiente (Preview ou APK) restringe o sensor. Use o link direto da Vercel.";
         } else if (err.name === 'NotAllowedError') {
-          msg = "Operação cancelada ou tempo limite excedido. Tente novamente clicando no botão.";
+          userMsg = "Acesso negado ou cancelado pelo usuário.";
         } else {
-          msg = "Verifique se o FaceID/Digital está configurado no sistema do seu celular ou se o site tem permissão de acesso.";
+          userMsg = err.message || "Falha ao ativar biometria.";
         }
-        
-        setErrorModal({ show: true, msg });
+
+        setErrorModal({ show: true, msg: userMsg, type });
       }
     } else {
       localStorage.removeItem(`sigea_bio_enabled_${profile.id}`);
@@ -123,7 +120,7 @@ const Profile: React.FC<ProfileProps> = ({
   };
 
   const handleSave = async () => {
-    if (!formData.name.trim()) return setErrorModal({ show: true, msg: 'O nome institucional é obrigatório.' });
+    if (!formData.name.trim()) return setErrorModal({ show: true, msg: 'Nome é obrigatório.' });
     setIsSaving(true);
     try {
       const result = await onUpdate({ 
@@ -135,8 +132,6 @@ const Profile: React.FC<ProfileProps> = ({
       if (result.success) {
         setIsEditing(false);
         setSelectedFile(null);
-      } else {
-        throw new Error(result.error);
       }
     } catch (err: any) {
       setErrorModal({ show: true, msg: handleSupabaseError(err) });
@@ -150,18 +145,30 @@ const Profile: React.FC<ProfileProps> = ({
   return (
     <div className="flex flex-col w-full min-h-screen bg-slate-50 dark:bg-zinc-950 pb-32 animate-in fade-in overflow-y-auto no-scrollbar">
       {errorModal.show && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-8 bg-black/90 backdrop-blur-md">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-8 bg-black/95 backdrop-blur-md">
           <div className="bg-white dark:bg-zinc-900 border border-primary/20 p-10 rounded-[3rem] text-center max-w-sm shadow-2xl animate-in zoom-in duration-300">
-            <span className="material-symbols-outlined text-red-500 text-5xl mb-6">lock_reset</span>
-            <p className="text-zinc-900 dark:text-white text-xs font-black uppercase tracking-tight mb-8 leading-relaxed">{errorModal.msg}</p>
-            <button onClick={() => setErrorModal({show:false, msg:''})} className="w-full h-16 bg-primary text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95">Ok, Entendi</button>
+            <div className={`size-16 rounded-full mx-auto mb-6 flex items-center justify-center ${errorModal.type === 'security' ? 'bg-amber-500/20 text-amber-500' : 'bg-red-500/20 text-red-500'}`}>
+               <span className="material-symbols-outlined text-3xl">{errorModal.type === 'security' ? 'shield_lock' : 'fingerprint'}</span>
+            </div>
+            <p className="text-zinc-900 dark:text-white text-[11px] font-black uppercase tracking-tight mb-8 leading-relaxed">{errorModal.msg}</p>
+            <div className="flex flex-col gap-3">
+              <button onClick={() => setErrorModal({show:false, msg:''})} className="w-full h-14 bg-primary text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95">Fechar</button>
+              {errorModal.type === 'security' && (
+                <button onClick={() => window.open('https://sigea-ifal.vercel.app', '_blank')} className="w-full h-14 bg-zinc-800 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest active:scale-95">Abrir Link Direto</button>
+              )}
+            </div>
           </div>
         </div>
       )}
 
       <header className="px-6 pt-12 pb-8 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-2xl z-50 border-b border-zinc-100 dark:border-white/5">
-        <button onClick={() => isEditing ? setIsEditing(false) : navigateTo('home')} className="size-12 flex items-center justify-center rounded-2xl bg-slate-50 dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-xl active:scale-90 transition-all"><span className="material-symbols-outlined font-black">{isEditing ? 'close' : 'arrow_back'}</span></button>
-        <h2 className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-zinc-500">{isEditing ? 'Ajustes' : 'Perfil'}</h2>
+        <button onClick={() => isEditing ? setIsEditing(false) : navigateTo('home')} className="size-12 flex items-center justify-center rounded-2xl bg-slate-50 dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-xl active:scale-90 transition-all">
+          <span className="material-symbols-outlined font-black">{isEditing ? 'close' : 'arrow_back'}</span>
+        </button>
+        <div className="flex flex-col items-center text-center">
+            <h2 className="text-[12px] font-black uppercase tracking-[0.4em] text-slate-400 dark:text-zinc-500">{isEditing ? 'Ajustes' : 'Perfil'}</h2>
+            <span className="text-[8px] font-black text-primary uppercase tracking-widest">Institucional</span>
+        </div>
         <button onClick={() => isEditing ? handleSave() : setIsEditing(true)} disabled={isSaving} className={`size-12 flex items-center justify-center rounded-2xl transition-all shadow-2xl ${isEditing ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
           {isSaving ? <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <span className="material-symbols-outlined">{isEditing ? 'check' : 'edit'}</span>}
         </button>
@@ -190,88 +197,37 @@ const Profile: React.FC<ProfileProps> = ({
             <input disabled={!isEditing} type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full h-18 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-3xl px-8 text-sm font-bold outline-none text-zinc-900 dark:text-white transition-all focus:ring-4 focus:ring-primary/10" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-             <div onClick={() => isEditing && setShowTypeSelector(true)} className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">Vínculo</label>
-                <div className={`w-full h-18 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-3xl px-6 flex items-center justify-between text-[10px] font-black uppercase text-zinc-900 dark:text-white ${isEditing ? 'cursor-pointer' : 'opacity-60'}`}>{formData.user_type} <span className="material-symbols-outlined text-primary text-sm">expand_more</span></div>
-             </div>
-             <div onClick={() => isEditing && setShowCampusSelector(true)} className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-4">Unidade</label>
-                <div className={`w-full h-18 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-3xl px-6 flex items-center justify-between text-[10px] font-black uppercase text-zinc-900 dark:text-white ${isEditing ? 'cursor-pointer' : 'opacity-60'}`}>Campus <span className="material-symbols-outlined text-primary text-sm">expand_more</span></div>
-             </div>
-          </div>
-
           <div className="p-8 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-100 dark:border-white/5 shadow-xl space-y-6">
              <div className="flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-xs font-black uppercase text-zinc-900 dark:text-white tracking-tight">Modo Organizador</span>
                   <span className="text-[9px] font-bold text-zinc-400 uppercase">Gerenciar eventos</span>
                 </div>
-                <button 
-                  onClick={toggleRole}
-                  className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${role === UserRole.ORGANIZER ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-800'}`}
-                >
+                <button onClick={toggleRole} className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${role === UserRole.ORGANIZER ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-800'}`}>
                   <div className={`absolute top-1 size-6 bg-white rounded-full transition-all duration-300 shadow-md ${role === UserRole.ORGANIZER ? 'left-7' : 'left-1'}`}></div>
                 </button>
              </div>
 
              <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-white/5">
                 <div className="flex flex-col">
-                  <span className="text-xs font-black uppercase text-zinc-900 dark:text-white tracking-tight">FaceID / Digital</span>
-                  <span className="text-[9px] font-bold text-zinc-400 uppercase">Login rápido no dispositivo</span>
+                  <span className="text-xs font-black uppercase text-zinc-900 dark:text-white tracking-tight">Biometria (Digital)</span>
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase">Segurança no Dispositivo</span>
                 </div>
-                <button 
-                  onClick={handleToggleBiometric}
-                  className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${biometricEnabled ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-800'}`}
-                >
+                <button onClick={handleToggleBiometric} className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${biometricEnabled ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-800'}`}>
                   <div className={`absolute top-1 size-6 bg-white rounded-full transition-all duration-300 shadow-md ${biometricEnabled ? 'left-7' : 'left-1'}`}></div>
                 </button>
              </div>
           </div>
         </div>
 
-        <div className="w-full max-w-sm space-y-4 pt-12">
-          <button onClick={onLogout} className="w-full p-8 bg-white dark:bg-zinc-900 rounded-[3rem] border border-zinc-100 dark:border-white/5 shadow-xl flex items-center justify-between group active:scale-95 transition-all">
-            <div className="flex items-center gap-4">
-              <div className="size-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center transition-colors group-hover:bg-red-500 group-hover:text-white"><span className="material-symbols-outlined">logout</span></div>
-              <div className="text-left"><p className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tight">Sair do App</p><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Encerra sua sessão local</p></div>
-            </div>
-            <span className="material-symbols-outlined text-zinc-300">chevron_right</span>
-          </button>
-        </div>
+        <button onClick={onLogout} className="mt-12 w-full max-w-sm p-8 bg-white dark:bg-zinc-900 rounded-[3rem] border border-zinc-100 dark:border-white/5 shadow-xl flex items-center justify-between group active:scale-95 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="size-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center"><span className="material-symbols-outlined">logout</span></div>
+            <div className="text-left"><p className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-tight">Sair</p></div>
+          </div>
+          <span className="material-symbols-outlined text-zinc-300">chevron_right</span>
+        </button>
       </main>
-
-      {showCampusSelector && (
-        <div className="fixed inset-0 z-[1000] flex items-end justify-center animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCampusSelector(false)}></div>
-          <div className="relative w-full max-w-lg bg-white dark:bg-[#121214] rounded-t-[3rem] p-8 max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
-            <header className="flex items-center justify-between mb-8 px-2 shrink-0"><h3 className="text-lg font-black uppercase text-slate-900 dark:text-white tracking-tight">Selecionar Unidade</h3><button onClick={() => setShowCampusSelector(false)} className="size-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center"><span className="material-symbols-outlined">close</span></button></header>
-            <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pb-10 px-2">
-              {CAMPUS_LIST.map(c => (
-                <div key={c} onClick={() => { setFormData({...formData, campus: c}); setShowCampusSelector(false); }} className={`p-6 rounded-[2rem] border transition-all cursor-pointer ${formData.campus === c ? 'bg-primary/10 border-primary' : 'bg-slate-50 dark:bg-zinc-900 border-transparent'}`}>
-                  <span className={`text-xs font-bold uppercase tracking-tight ${formData.campus === c ? 'text-primary font-black' : 'text-slate-600 dark:text-zinc-400'}`}>{c}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showTypeSelector && (
-        <div className="fixed inset-0 z-[1000] flex items-end justify-center animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTypeSelector(false)}></div>
-          <div className="relative w-full max-w-lg bg-white dark:bg-[#121214] rounded-t-[3rem] p-8 max-h-[60vh] overflow-hidden flex flex-col shadow-2xl">
-            <header className="flex items-center justify-between mb-8 px-2 shrink-0"><h3 className="text-lg font-black uppercase text-slate-900 dark:text-white tracking-tight">Classificação</h3><button onClick={() => setShowTypeSelector(false)} className="size-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center"><span className="material-symbols-outlined">close</span></button></header>
-            <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pb-10 px-2">
-              {USER_TYPES.map(t => (
-                <div key={t} onClick={() => { setFormData({...formData, user_type: t}); setShowTypeSelector(false); }} className={`p-6 rounded-[2rem] border transition-all cursor-pointer ${formData.user_type === t ? 'bg-primary/10 border-primary' : 'bg-slate-50 dark:bg-zinc-900 border-transparent'}`}>
-                  <span className={`text-xs font-bold uppercase tracking-tight ${formData.user_type === t ? 'text-primary font-black' : 'text-slate-600 dark:text-zinc-400'}`}>{t}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

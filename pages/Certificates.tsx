@@ -280,7 +280,7 @@ const Certificates: React.FC<CertificatesProps> = ({ navigateTo, eventId, user, 
                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Texto Institucional (Dinamizado)</label>
                        <div className="flex gap-2">
                           {['NOME', 'EVENTO', 'CAMPUS', 'DATA', 'VALIDACAO'].map(tag => (
-                            <button key={tag} onClick={() => insertPlaceholder(tag)} className="px-2 py-1 bg-primary/10 text-primary text-[8px] font-black rounded-lg border border-primary/20 transition-all hover:bg-primary hover:text-white uppercase tracking-tight">{{tag}}</button>
+                            <button key={tag} onClick={() => insertPlaceholder(tag)} className="px-2 py-1 bg-primary/10 text-primary text-[8px] font-black rounded-lg border border-primary/20 transition-all hover:bg-primary hover:text-white uppercase tracking-tight">{`{{${tag}}}`}</button>
                           ))}
                        </div>
                     </div>

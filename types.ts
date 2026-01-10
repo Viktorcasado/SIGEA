@@ -27,7 +27,7 @@ export interface Event {
   location: string;
   imageUrl: string;
   type: string;
-  status: 'Inscrições Abertas' | 'Em Breve' | 'Encerrado' | 'Rascunho';
+  status: 'Inscrições Abertas' | 'Em Breve' | 'Encerrado' | 'Rascunho' | 'Publicado';
   price: string;
   certificateHours: number;
   updated_at?: string;
@@ -56,27 +56,4 @@ export interface Registration {
   registration_number?: string;
   photo_url?: string;
   created_at: string;
-}
-
-export interface CertificateTemplate {
-  id: string;
-  event_id: string;
-  title: string;
-  attribution: string;
-  hours: number;
-  image_url: string;
-  content_template: string;
-  status: string;
-  created_at: string;
-}
-
-export interface Certificate {
-  id: string;
-  event_id: string;
-  user_id: string;
-  event_title: string;
-  hours: number;
-  issue_date: string;
-  validation_code: string;
-  template_url?: string;
 }

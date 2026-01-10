@@ -4,7 +4,8 @@ import { UserRole, Activity } from '../types';
 import { supabase } from '../supabaseClient';
 
 interface ScheduleProps {
-  navigateTo: (page: string) => void;
+  // Fix: navigateTo should accept an optional id argument
+  navigateTo: (page: string, id?: string | null) => void;
   eventId: string | null;
   role?: UserRole;
 }

@@ -6,5 +6,10 @@
   ],
   "name": "SIGEA - Sistema de Gestão de Eventos Acadêmicos",
   "description": "Plataforma oficial de eventos do IFAL",
-  "extraFramePermissions": "publickey-credentials-get *; publickey-credentials-create *"
+  "extraFramePermissions": "publickey-credentials-get *; publickey-credentials-create *",
+  "permissions": [
+    "USE_BIOMETRIC",
+    "USE_FINGERPRINT",
+    "INTERNET"
+  ]
 }
