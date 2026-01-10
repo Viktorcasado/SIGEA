@@ -72,11 +72,17 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initApp = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) updateAuthState(session);
-      else setAuthStatus(false);
-      await fetchEvents();
-      setIsHydrating(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) updateAuthState(session);
+        else setAuthStatus(false);
+        await fetchEvents();
+      } catch (e) {
+        console.error("Erro na inicialização:", e);
+      } finally {
+        // Pequeno delay para garantir que o CSS do React carregou antes de remover o loader do HTML
+        setTimeout(() => setIsHydrating(false), 300);
+      }
     };
     initApp();
 
@@ -102,9 +108,9 @@ const App: React.FC = () => {
   };
 
   if (isHydrating) return (
-    <div className="fixed inset-0 bg-white dark:bg-[#09090b] flex flex-col items-center justify-center">
-      <div className="size-16 border-[5px] border-primary/20 border-t-primary rounded-full animate-spin"></div>
-      <p className="mt-8 text-[11px] font-black text-primary uppercase tracking-[0.4em]">SIGEA IFAL v3.1</p>
+    <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center z-[9999]">
+      <div className="size-10 border-[3px] border-primary/20 border-t-primary rounded-full animate-spin"></div>
+      <p className="mt-6 text-[9px] font-black text-primary/60 uppercase tracking-[0.4em]">SIGEA IFAL v3.1</p>
     </div>
   );
 
