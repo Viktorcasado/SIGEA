@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'sigea-pwa-v2';
+const CACHE_NAME = 'sigea-pwa-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -29,11 +29,20 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  
+  // Estratégia: Stale-While-Revalidate
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).catch(() => {
-        if (event.request.mode === 'navigate') return caches.match('/');
-      });
+      const networked = fetch(event.request)
+        .then((response) => {
+          const cacheCopy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, cacheCopy);
+          });
+          return response;
+        })
+        .catch(() => cached);
+      return cached || networked;
     })
   );
 });
