@@ -1,8 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import EventCard from '../components/EventCard.tsx';
-import Logo from '../components/Logo.tsx';
 import { Event as SIGEAEvent } from '../types.ts';
+import { CAMPUS_LIST } from '../constants';
+import Logo from '../components/Logo.tsx';
 
 interface HomeProps {
   navigateTo: (page: string, id?: string) => void;
@@ -10,116 +11,190 @@ interface HomeProps {
   events: SIGEAEvent[];
   onNotify: () => void;
   hasUnread?: boolean;
-  isSyncing?: boolean;
+  openPortal: (url: string, name: string) => void;
+  toggleSidebar: () => void;
 }
 
-const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasUnread, isSyncing }) => {
+const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasUnread, openPortal, toggleSidebar }) => {
   const [search, setSearch] = useState('');
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
-  const isDemoMode = localStorage.getItem('sigea_demo') === 'true';
-
-  useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const [selectedCampus, setSelectedCampus] = useState('Todos');
   
-  const featured = events.slice(0, isDesktop ? 4 : 3);
-  const filtered = events.filter(e => e.title.toLowerCase().includes(search.toLowerCase()));
+  const filteredEvents = events.filter(e => {
+    const matchesSearch = e.title.toLowerCase().includes(search.toLowerCase()) || 
+                         e.campus.toLowerCase().includes(search.toLowerCase());
+    const matchesCampus = selectedCampus === 'Todos' || e.campus === selectedCampus;
+    return matchesSearch && matchesCampus;
+  });
+
+  const featured = filteredEvents.slice(0, 4);
+  const quickCampuses = ['Todos', ...CAMPUS_LIST];
+
+  const portals = [
+    { name: 'SUAP', icon: 'account_balance', color: 'bg-emerald-500', url: 'https://suap.ifal.edu.br' },
+    { name: 'SIGAA', icon: 'school', color: 'bg-blue-500', url: 'https://sigaa.ifal.edu.br' },
+    { name: 'SIGRH', icon: 'badge', color: 'bg-red-500', url: 'https://sigrh.ifal.edu.br' },
+    { name: 'SIPAC', icon: 'inventory_2', color: 'bg-amber-500', url: 'https://sipac.ifal.edu.br' },
+  ];
 
   return (
-    <div className="flex flex-col w-full animate-in fade-in duration-700">
-      <header className={`px-6 lg:px-0 ${isDesktop ? 'mb-12' : 'pt-12 pb-6'}`}>
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex flex-col">
-            {!isDesktop && <Logo size="md" />}
-            <h1 className={`${isDesktop ? 'text-4xl' : 'text-[28px]'} font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none`}>
-              Bem-vindo, {profile?.name?.split(' ')[0]}
-            </h1>
-            <div className="flex items-center gap-2 mt-1.5">
-              <div className={`size-2 rounded-full ${isDemoMode ? 'bg-amber-400' : isSyncing ? 'bg-amber-400 animate-pulse' : 'bg-primary shadow-[0_0_8px_#10b981]'}`}></div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-zinc-500">
-                {isDemoMode ? 'Modo Demonstração Ativo' : isSyncing ? 'Sincronizando...' : 'IFAL Cloud Active'}
-              </span>
+    <div className="flex flex-col w-full animate-in fade-in duration-700 bg-slate-50 dark:bg-[#09090b] min-h-screen pb-24">
+      <header className="px-6 lg:px-12 pt-12 lg:pt-16 pb-8">
+        <div className="flex items-center justify-between mb-8 lg:mb-10 relative z-20">
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col leading-none">
+               <span className="text-slate-900 dark:text-white font-[1000] text-sm uppercase tracking-tighter">Portal</span>
+               <span className="text-primary font-black text-[10px] uppercase">SIGEA</span>
+            </div>
+          </div>
+
+          <div className="hidden lg:flex flex-col">
+            <div className="flex items-center gap-2 mb-1 lg:mb-4">
+               <span className="text-slate-900 dark:text-white font-[1000] text-xl lg:text-2xl tracking-tighter uppercase">Si<span className="text-primary">gea</span></span>
+               <div className="size-1 bg-primary rounded-full"></div>
             </div>
           </div>
           
-          <div className="flex gap-4">
-             <button onClick={onNotify} className="size-14 flex items-center justify-center rounded-2xl bg-white/80 dark:bg-zinc-900/50 backdrop-blur-xl shadow-lg border border-white/50 dark:border-white/5 text-slate-400 dark:text-zinc-400 relative active:scale-90 transition-all hover:bg-slate-50 dark:hover:bg-zinc-800 ring-1 ring-black/5">
-                <span className="material-symbols-outlined text-[30px]" style={{ fontVariationSettings: "'FILL' 0" }}>notifications</span>
-                {hasUnread && <span className="absolute top-4 right-4 size-3 bg-primary rounded-full ring-4 ring-white dark:ring-zinc-950 shadow-lg shadow-primary/20"></span>}
+          <div className="flex items-center gap-3 lg:gap-4 shrink-0">
+             <button 
+                onClick={onNotify} 
+                className="size-12 lg:size-14 flex items-center justify-center rounded-2xl lg:rounded-[1.5rem] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-slate-400 dark:text-zinc-400 active:scale-90 transition-all shadow-lg hover:border-primary/30"
+              >
+                <span className="material-symbols-outlined text-[24px] lg:text-[28px]">notifications</span>
+                {hasUnread && <span className="absolute top-3 right-3 size-2 bg-primary rounded-full ring-2 ring-white dark:ring-[#09090b]"></span>}
              </button>
-             {!isDesktop && (
-                <div 
-                  onClick={() => navigateTo('profile')}
-                  className="size-14 rounded-2xl bg-cover bg-center border-4 border-white/50 dark:border-white/5 shadow-xl cursor-pointer flex items-center justify-center bg-primary text-white font-black text-lg relative overflow-hidden"
-                  style={profile?.photo ? { backgroundImage: `url("${profile.photo}")` } : {}}
-                >
-                  {!profile?.photo && (profile?.name?.charAt(0) || 'U')}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-black/10 to-transparent"></div>
-                </div>
-             )}
+             <div 
+                onClick={() => navigateTo('profile')}
+                className="size-12 lg:size-14 rounded-2xl lg:rounded-[1.5rem] bg-primary flex items-center justify-center text-white font-black text-sm cursor-pointer active:scale-90 transition-all shadow-lg overflow-hidden ring-2 ring-white dark:ring-white/5"
+              >
+                {profile?.photo ? (
+                  <img src={profile.photo} className="w-full h-full object-cover" alt="Profile" />
+                ) : (
+                  <span className="text-xs lg:text-sm uppercase font-black">{profile?.name?.charAt(0) || 'U'}</span>
+                )}
+              </div>
           </div>
         </div>
 
-        <div className="relative group max-w-2xl">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center size-10 rounded-xl bg-primary/10 backdrop-blur-md">
-            <span className="material-symbols-outlined text-primary text-2xl font-black" style={{ fontVariationSettings: "'FILL' 1" }}>search_spark</span>
+        <div className="mb-8">
+           <h1 className="text-[34px] lg:text-[72px] font-[1000] text-slate-900 dark:text-white uppercase tracking-tighter leading-[0.9]">
+              Olá,<br /><span className="text-primary truncate block lg:max-w-xl">{profile?.name?.split(' ')[0]}</span>
+            </h1>
+        </div>
+
+        {/* Barra de Busca Corrigida */}
+        <div className="relative group max-w-2xl z-10 lg:ml-0 space-y-6">
+          <div className="relative flex items-center">
+            <div className="absolute left-6 pointer-events-none transition-colors duration-300">
+              <span className={`material-symbols-outlined text-2xl ${search ? 'text-primary' : 'text-slate-400 dark:text-zinc-600'}`}>search</span>
+            </div>
+            <input 
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-16 lg:h-18 pl-16 pr-14 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl lg:rounded-[2rem] outline-none text-[15px] font-bold focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-700 text-slate-900 dark:text-white shadow-xl shadow-black/5"
+              placeholder="Buscar eventos, cursos ou oficinas..."
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch('')}
+                className="absolute right-6 size-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 hover:text-primary transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg font-black">close</span>
+              </button>
+            )}
           </div>
-          <input 
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-18 pl-18 pr-6 bg-white/90 dark:bg-zinc-900/80 backdrop-blur-2xl rounded-[2rem] outline-none text-[16px] font-bold border border-white/50 dark:border-white/5 focus:border-primary/40 focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400 placeholder:uppercase placeholder:text-[10px] placeholder:tracking-[0.2em] dark:text-white shadow-xl ring-1 ring-black/5"
-            placeholder="Pesquisar congressos e eventos..."
-          />
+
+          <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+             {quickCampuses.map(c => (
+               <button 
+                key={c}
+                onClick={() => setSelectedCampus(c)}
+                className={`shrink-0 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${
+                  selectedCampus === c 
+                  ? 'bg-primary border-primary text-white shadow-lg' 
+                  : 'bg-white dark:bg-zinc-900 border-slate-100 dark:border-white/5 text-slate-400'
+                }`}
+               >
+                 {c.replace('IFAL - Campus ', '')}
+               </button>
+             ))}
+          </div>
         </div>
       </header>
 
-      <main className="space-y-16">
+      <main className="space-y-12 lg:space-y-24">
+        <section className="px-6 lg:px-12">
+          <div className="flex flex-col gap-1 mb-6">
+             <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Portais da Comunidade</h3>
+             <div className="w-6 h-1 bg-primary rounded-full"></div>
+          </div>
+          <div className="grid grid-cols-4 gap-4 lg:grid-cols-8">
+            {portals.map((portal) => (
+              <button 
+                key={portal.name}
+                onClick={() => openPortal(portal.url, portal.name)}
+                className="flex flex-col items-center gap-2 group transition-all"
+              >
+                <div className={`size-14 lg:size-16 rounded-[1.5rem] ${portal.color} flex items-center justify-center text-white shadow-lg group-active:scale-90 transition-transform group-hover:rotate-6`}>
+                  <span className="material-symbols-outlined text-2xl">{portal.icon}</span>
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-600 group-hover:text-primary transition-colors tracking-widest">{portal.name}</span>
+              </button>
+            ))}
+            <button 
+                onClick={() => navigateTo('integrations')}
+                className="flex flex-col items-center gap-2 group transition-all"
+              >
+                <div className="size-14 lg:size-16 rounded-[1.5rem] bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/5 flex items-center justify-center text-slate-400 group-active:scale-90 transition-transform shadow-sm group-hover:border-primary">
+                  <span className="material-symbols-outlined text-2xl">sync</span>
+                </div>
+                <span className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-600 group-hover:text-primary transition-colors tracking-widest">Sinc</span>
+              </button>
+          </div>
+        </section>
+
         <section>
-          <div className="px-6 lg:px-0 flex items-center justify-between mb-8">
+          <div className="px-6 lg:px-12 flex items-center justify-between mb-6">
             <div className="flex flex-col gap-1">
-               <h3 className="text-[13px] font-black uppercase tracking-[0.3em] text-slate-800 dark:text-white">Destaques da Semana</h3>
-               <div className="w-10 h-1 bg-primary rounded-full"></div>
+               <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Destaques {selectedCampus !== 'Todos' && `• ${selectedCampus.replace('IFAL - Campus ', '')}`}</h3>
+               <div className="w-6 h-1 bg-primary rounded-full"></div>
             </div>
-            <button onClick={() => navigateTo('events')} className="px-5 py-2.5 bg-primary/10 backdrop-blur-md text-primary text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-primary/20 transition-all border border-primary/20 flex items-center gap-2">
-               Catálogo Completo
-               <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+            <button onClick={() => navigateTo('events')} className="px-5 py-2.5 bg-white dark:bg-zinc-900 rounded-xl text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-2 active:scale-95 transition-all border border-slate-100 dark:border-white/5 shadow-sm">
+               Ver Tudo
+               <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
             </button>
           </div>
-          <div className={`flex gap-6 overflow-x-auto no-scrollbar px-6 lg:px-0 pb-4 ${isDesktop ? 'grid grid-cols-4 lg:overflow-visible' : ''}`}>
-            {featured.map(event => (
+          
+          <div className="flex gap-6 overflow-x-auto no-scrollbar px-6 lg:px-12 pb-6">
+            {featured.length > 0 ? featured.map(event => (
               <EventCard key={event.id} event={event} horizontal onClick={() => navigateTo('details', event.id)} />
-            ))}
+            )) : (
+              <div className="min-w-[300px] h-[420px] text-center bg-white dark:bg-zinc-900/50 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-white/5 flex flex-col items-center justify-center gap-4 px-8">
+                <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-zinc-800">search_off</span>
+                <p className="text-[10px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-widest leading-relaxed">Nenhum evento em {selectedCampus !== 'Todos' ? selectedCampus : 'destaque'} no momento.</p>
+                <button onClick={() => setSelectedCampus('Todos')} className="text-primary text-[9px] font-black uppercase tracking-widest">Mostrar Todos</button>
+              </div>
+            )}
           </div>
         </section>
 
-        <section className="px-6 lg:px-0 space-y-8">
-          <div className="flex items-center justify-between">
-             <div className="flex flex-col gap-1">
-                <h3 className="text-[13px] font-black uppercase tracking-[0.3em] text-slate-800 dark:text-white">Todas as Atividades</h3>
-                <div className="w-10 h-1 bg-slate-300 dark:bg-zinc-700 rounded-full"></div>
-             </div>
-             <span className="text-[10px] font-black text-slate-400 dark:text-zinc-600 uppercase tracking-widest bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl px-4 py-2 rounded-full border border-slate-100 dark:border-white/5 shadow-sm">{filtered.length} Ativos</span>
-          </div>
-          <div className={`grid gap-6 ${isDesktop ? 'grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
-            {filtered.map(event => (
-              <EventCard key={event.id} event={event} onClick={() => navigateTo('details', event.id)} />
-            ))}
-          </div>
+        <section className="px-6 lg:px-12 pb-12">
+           <div className="flex flex-col gap-1 mb-6">
+               <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Explorar Recentes</h3>
+               <div className="w-6 h-1 bg-primary rounded-full"></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-8">
+              {filteredEvents.slice(4, 13).map(event => (
+                <EventCard key={event.id} event={event} onClick={() => navigateTo('details', event.id)} />
+              ))}
+              {filteredEvents.length === 0 && (
+                <div className="col-span-full py-16 text-center text-[10px] font-black text-slate-400 dark:text-zinc-700 uppercase tracking-widest bg-white dark:bg-zinc-900/30 rounded-[2rem] border border-dashed border-slate-100 dark:border-white/5 px-8">
+                  Nada encontrado para "{search || selectedCampus}"
+                </div>
+              )}
+            </div>
         </section>
       </main>
-
-      {!isDesktop && (
-        <button 
-          onClick={() => navigateTo('check-in')}
-          className="fixed bottom-48 right-6 z-[4000] size-16 rounded-[1.8rem] bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl text-primary shadow-2xl border border-white/50 dark:border-white/10 flex items-center justify-center hover:scale-105 active:scale-95 transition-all group ring-1 ring-black/5"
-        >
-          <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent"></div>
-          <span className="material-symbols-outlined text-3xl font-black relative z-10" style={{ fontVariationSettings: "'FILL' 1" }}>qr_code_scanner</span>
-        </button>
-      )}
     </div>
   );
 };

@@ -1,8 +1,7 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserRole, Event as SIGEAEvent } from './types.ts';
-import { supabase, handleSupabaseError } from './supabaseClient.ts';
-import { MOCK_EVENTS } from './constants.tsx';
+import { supabase, handleSupabaseError, uploadFile } from './supabaseClient.ts';
 
 import Home from './pages/Home.tsx';
 import EventsList from './pages/EventsList.tsx';
@@ -10,270 +9,345 @@ import EventDetails from './pages/EventDetails.tsx';
 import Registration from './pages/Registration.tsx';
 import Certificates from './pages/Certificates.tsx';
 import Profile from './pages/Profile.tsx';
-import CheckIn from './pages/CheckIn.tsx';
+import Help from './pages/Help.tsx';
 import MyTicket from './pages/MyTicket.tsx';
 import Login from './pages/Login.tsx';
+import ResetPassword from './pages/ResetPassword.tsx';
 import OrganizerDashboard from './pages/OrganizerDashboard.tsx';
 import CreateEvent from './pages/CreateEvent.tsx';
+import EditEvent from './pages/EditEvent.tsx';
 import ManageEvent from './pages/ManageEvent.tsx';
+import CheckIn from './pages/CheckIn.tsx';
 import PublishSuccess from './pages/PublishSuccess.tsx';
-import Logo from './components/Logo.tsx';
+import Welcome from './pages/Welcome.tsx';
+import Reports from './pages/Reports.tsx';
+import Integrations from './pages/Integrations.tsx';
+import Schedule from './pages/Schedule.tsx';
+import ParticipantsAdmin from './pages/ParticipantsAdmin.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
+import BottomNav from './components/BottomNav.tsx';
+import Sidebar from './components/Sidebar.tsx';
+import PortalBrowser from './components/PortalBrowser.tsx';
 
-type ThemeMode = 'light' | 'dark' | 'system';
+const ADMIN_EMAIL = 'viktorcasado@gmail.com';
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [isDemoMode, setIsDemoMode] = useState<boolean>(localStorage.getItem('sigea_demo') === 'true');
-  const [theme, setTheme] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('sigea_theme') as ThemeMode;
-    return saved || 'system';
+  const [hasSeenWelcome, setHasSeenWelcome] = useState<boolean>(() => {
+    return localStorage.getItem('sigea_seen_welcome') === 'true';
   });
   
-  const [role, setRole] = useState<UserRole>(UserRole.PARTICIPANT);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [currentPage, setCurrentPage] = useState('home');
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [events, setEvents] = useState<SIGEAEvent[]>(MOCK_EVENTS);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [isHydrating, setIsHydrating] = useState(true);
+  const [authStatus, setAuthStatus] = useState<boolean | null>(null);
   
-  // Estado para controlar se a sidebar desktop está recolhida
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    return localStorage.getItem('sigea_sidebar_collapsed') === 'true';
+  const [userProfile, setUserProfile] = useState<any>(() => {
+    const saved = localStorage.getItem('sigea_local_profile');
+    return saved ? JSON.parse(saved) : null;
   });
 
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
-  const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent), []);
+  const [role, setRole] = useState<UserRole>(() => {
+    return (localStorage.getItem('sigea_local_role') as UserRole) || UserRole.PARTICIPANT;
+  });
 
-  useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activePortal, setActivePortal] = useState<{ url: string; name: string } | null>(null);
+  
+  const isResetFlow = () => {
+    return window.location.pathname.includes('reset-password') || window.location.hash.includes('type=recovery');
+  };
+
+  const [currentPage, setCurrentPage] = useState<string>(() => {
+    if (isResetFlow()) return 'reset-password';
+    return localStorage.getItem('sigea_last_page') || 'home';
+  });
+  
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(() => {
+    return localStorage.getItem('sigea_last_event_id');
+  });
+
+  const [events, setEvents] = useState<SIGEAEvent[]>([]);
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
+    return (localStorage.getItem('sigea_theme') as any) || 'dark';
+  });
+
+  const fetchEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) {
+        const normalizedEvents = data.map(e => ({
+          ...e,
+          imageUrl: e.image_url || e.imageUrl || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000',
+          certificateHours: e.certificate_hours || e.certificateHours || 0
+        }));
+        setEvents(normalizedEvents);
+        localStorage.setItem('sigea_cached_events', JSON.stringify(normalizedEvents));
+      }
+    } catch (err) {
+      const cached = localStorage.getItem('sigea_cached_events');
+      if (cached) setEvents(JSON.parse(cached));
+    }
+  };
 
   useEffect(() => {
     const root = window.document.documentElement;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const applyTheme = () => {
-      let shouldBeDark = theme === 'dark';
-      if (theme === 'system') shouldBeDark = mediaQuery.matches;
-      shouldBeDark ? root.classList.add('dark') : root.classList.remove('dark');
-    };
-
-    applyTheme();
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    root.classList.toggle('dark', isDark);
     localStorage.setItem('sigea_theme', theme);
-
-    const handleChange = () => {
-      if (theme === 'system') applyTheme();
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
 
-  const fetchInitialData = useCallback(async () => {
-    if (isDemoMode) { setEvents(MOCK_EVENTS); return; }
-    setIsSyncing(true);
-    try {
-      const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) setEvents(data as SIGEAEvent[]);
-    } catch (e) { setEvents(MOCK_EVENTS); } finally { setIsSyncing(false); }
-  }, [isDemoMode]);
+  useEffect(() => {
+    const initApp = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
 
-  const checkAuth = useCallback(async (demoMode: boolean = false) => {
-    setIsLoading(true);
-    setAuthError(null);
-    if (demoMode || isDemoMode) {
-      localStorage.setItem('sigea_demo', 'true');
-      setIsDemoMode(true);
-      setUserProfile({ id: 'demo-user', name: 'Convidado SIGEA', email: 'visitante@ifal.edu.br', campus: 'Campus Maceió', photo: '' });
-      setIsAuthenticated(true);
-      setEvents(MOCK_EVENTS);
-      setIsLoading(false);
-      return;
+        if (session) {
+          updateAuthState(session);
+        } else if (userProfile) {
+          setAuthStatus(true);
+        } else {
+          setAuthStatus(false);
+        }
+        await fetchEvents();
+      } catch (err) {
+        setAuthStatus(userProfile !== null);
+      } finally {
+        setIsHydrating(false);
+      }
+    };
+
+    initApp();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        updateAuthState(session);
+      } else if (event === 'SIGNED_OUT') {
+        setAuthStatus(false);
+        setUserProfile(null);
+        localStorage.removeItem('sigea_local_profile');
+        localStorage.removeItem('sigea_local_role');
+        localStorage.removeItem('sigea_cached_events');
+        setCurrentPage('home');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const updateAuthState = (sessionOrUser: any) => {
+    const user = sessionOrUser.user || sessionOrUser;
+    if (!user) return;
+
+    const metadata = user.user_metadata || {};
+    const email = user.email || userProfile?.email || '';
+    
+    const profileData = {
+      id: user.id,
+      name: metadata.name || 'Usuário SIGEA',
+      email: email,
+      campus: metadata.campus || 'IFAL - Campus Maceió',
+      photo: metadata.photo_url || metadata.photo || ''
+    };
+    
+    setUserProfile(profileData);
+    localStorage.setItem('sigea_local_profile', JSON.stringify(profileData));
+    
+    let userRole = (metadata.role || UserRole.PARTICIPANT) as UserRole;
+    if (email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      userRole = UserRole.ORGANIZER;
     }
+    
+    const localRole = localStorage.getItem('sigea_local_role') as UserRole;
+    if (localRole) {
+      setRole(localRole);
+    } else {
+      setRole(userRole);
+      localStorage.setItem('sigea_local_role', userRole);
+    }
+    
+    setAuthStatus(true);
+  };
+
+  const handleUpdateProfile = async (data: { name: string; campus: string; imageFile?: File | null }) => {
+    const updatedProfile = { ...userProfile, name: data.name, campus: data.campus };
+    setUserProfile(updatedProfile);
+    localStorage.setItem('sigea_local_profile', JSON.stringify(updatedProfile));
+
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-      if (user) {
-        let profileData = null;
-        try { const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(); profileData = data; } catch (e) {}
-        setUserProfile({
-          id: user.id,
-          name: user.user_metadata?.name || profileData?.name || 'Usuário',
-          email: user.email,
-          campus: user.user_metadata?.campus || profileData?.campus || 'Não Informado',
-          photo: user.user_metadata?.photo_url || profileData?.photo_url || ''
-        });
-        setRole((user.user_metadata?.role || profileData?.role || 'PARTICIPANT') as UserRole);
-        setIsAuthenticated(true);
-        await fetchInitialData();
-      } else { setIsAuthenticated(false); }
-    } catch (error: any) { setAuthError(handleSupabaseError(error)); setIsAuthenticated(false); } finally { setIsLoading(false); }
-  }, [fetchInitialData, isDemoMode]);
+      let photo_url = userProfile.photo;
 
-  useEffect(() => { checkAuth(); }, [checkAuth]);
+      if (data.imageFile) {
+        try {
+          const fileExt = data.imageFile.name.split('.').pop();
+          const fileName = `${userProfile.id}-${Date.now()}.${fileExt}`;
+          const filePath = `profiles/${userProfile.id}/${fileName}`;
+          photo_url = await uploadFile('assets', filePath, data.imageFile);
+          
+          const profileWithPhoto = { ...updatedProfile, photo: photo_url };
+          setUserProfile(profileWithPhoto);
+          localStorage.setItem('sigea_local_profile', JSON.stringify(profileWithPhoto));
+        } catch (e) {
+          console.warn("Upload falhou, salvando localmente");
+        }
+      }
 
-  const toggleSidebar = () => {
-    const newState = !isSidebarCollapsed;
-    setIsSidebarCollapsed(newState);
-    localStorage.setItem('sigea_sidebar_collapsed', String(newState));
+      const { data: updateData, error } = await supabase.auth.updateUser({
+        data: { 
+          name: data.name, 
+          campus: data.campus,
+          photo_url: photo_url 
+        }
+      });
+
+      if (error) throw error;
+      if (updateData.user) updateAuthState(updateData.user);
+      return { success: true };
+    } catch (err: any) {
+      const msg = err.message?.toLowerCase() || '';
+      if (msg.includes('failed to fetch') || msg.includes('network error') || msg.includes('typeerror')) {
+        return { success: true, localOnly: true };
+      }
+      return { success: false, error: handleSupabaseError(err) };
+    }
+  };
+
+  const handleToggleRole = async () => {
+    const newRole = role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT;
+    
+    setRole(newRole);
+    localStorage.setItem('sigea_local_role', newRole);
+
+    try {
+      const { data: updateData, error } = await supabase.auth.updateUser({
+        data: { role: newRole }
+      });
+      if (error) throw error;
+      if (updateData.user) updateAuthState(updateData.user);
+    } catch (err: any) {
+      const msg = err.message?.toLowerCase() || '';
+      if (!msg.includes('failed to fetch') && !msg.includes('network error')) {
+        alert(handleSupabaseError(err));
+      }
+    }
   };
 
   const navigateTo = (page: string, id: string | null = null) => {
     setCurrentPage(page);
-    setSelectedEventId(id);
+    if (id) {
+      setSelectedEventId(id);
+      localStorage.setItem('sigea_last_event_id', id);
+    }
+    localStorage.setItem('sigea_last_page', page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const logout = async () => {
-    localStorage.removeItem('sigea_demo');
-    setIsDemoMode(false);
-    await supabase.auth.signOut();
-    setIsAuthenticated(false);
-    setCurrentPage('home');
+  const openPortal = (url: string, name: string) => {
+    setActivePortal({ url, name });
   };
 
-  if (isLoading) {
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      setAuthStatus(false);
+      setUserProfile(null);
+      localStorage.clear();
+      setCurrentPage('login');
+    }
+  };
+
+  if (isHydrating) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-zinc-950 px-8 text-center transition-colors">
-        <div className="size-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-8 text-[10px] font-black uppercase tracking-[0.5em] text-slate-400 dark:text-zinc-400">Iniciando SIGEA...</p>
+      <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center">
+        <div className="size-16 border-[5px] border-primary/20 border-t-primary rounded-full animate-spin"></div>
+        <p className="mt-8 text-[11px] font-black text-primary uppercase tracking-[0.5em]">SIGEA Mobile</p>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return <Login onLogin={checkAuth} darkMode={theme === 'dark'} setDarkMode={() => setTheme(theme === 'dark' ? 'light' : 'dark')} errorMsg={authError} />;
+  if (!hasSeenWelcome && !isResetFlow()) return <Welcome onContinue={() => { localStorage.setItem('sigea_seen_welcome', 'true'); setHasSeenWelcome(true); }} />;
+  
+  if (!authStatus && currentPage !== 'reset-password') {
+    return <Login onLogin={() => setAuthStatus(true)} onBack={() => setHasSeenWelcome(false)} darkMode={theme === 'dark'} setDarkMode={() => {}} />;
   }
 
-  const commonProps = { navigateTo, events, profile: userProfile, onUpdate: () => {}, isSyncing };
+  const commonProps = { navigateTo, events, profile: userProfile, openPortal, role, toggleSidebar: () => setIsSidebarOpen(true) };
 
   const renderContent = () => {
-    if (role === UserRole.ORGANIZER && currentPage === 'home') return <OrganizerDashboard {...commonProps} onNotify={() => {}} />;
+    if (currentPage === 'reset-password') return <ResetPassword navigateTo={navigateTo} />;
+
     switch (currentPage) {
-      case 'home': return <Home {...commonProps} onNotify={() => {}} />;
+      case 'home': return role === UserRole.ORGANIZER ? <OrganizerDashboard {...commonProps} onNotify={() => {}} /> : <Home {...commonProps} onNotify={() => {}} />;
       case 'events': return <EventsList navigateTo={navigateTo} events={events} />;
-      case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} />;
-      case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={async () => {}} />;
-      case 'certificates': return <Certificates navigateTo={navigateTo} events={events} />;
-      case 'profile': return <Profile {...commonProps} theme={theme} setTheme={setTheme} role={role} toggleRole={() => setRole(role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT)} onLogout={logout} onDeleteAccount={async () => {}} />;
-      case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId) || events[0]} />;
-      case 'check-in': return <CheckIn navigateTo={navigateTo} />;
-      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={(e) => setEvents([e, ...events])} />;
-      case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={() => {}} onArchive={() => {}} />;
-      case 'publish-success': return <PublishSuccess navigateTo={navigateTo} event={events.find(e => e.id === selectedEventId) || events[0]} />;
+      case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} role={role} />;
+      case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={handleUpdateProfile} />;
+      case 'certificates': return <Certificates navigateTo={navigateTo} eventId={selectedEventId} user={userProfile} role={role} />;
+      case 'profile': return (
+        <Profile 
+          {...commonProps} 
+          theme={theme} 
+          setTheme={setTheme} 
+          role={role} 
+          toggleRole={handleToggleRole} 
+          onLogout={handleLogout} 
+          onDeleteAccount={async () => {}} 
+          onUpdate={handleUpdateProfile} 
+        />
+      );
+      case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId)} />;
+      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={fetchEvents} profile={userProfile} />;
+      case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={fetchEvents} onArchive={() => {}} />;
+      case 'publish-success': return <PublishSuccess navigateTo={navigateTo} event={events.find(e => e.id === selectedEventId)} />;
+      case 'integrations': return <Integrations {...commonProps} />;
+      case 'help': return <Help navigateTo={navigateTo} />;
+      case 'check-in': return <CheckIn navigateTo={navigateTo} eventId={selectedEventId} />;
+      case 'schedule': return <Schedule navigateTo={navigateTo} eventId={selectedEventId} role={role} />;
+      case 'participants': return <ParticipantsAdmin navigateTo={navigateTo} eventId={selectedEventId || undefined} />;
       default: return <Home {...commonProps} onNotify={() => {}} />;
     }
   };
 
-  const isFullscreenPage = ['check-in', 'register', 'ticket', 'details', 'create-event', 'publish-success'].includes(currentPage);
-
-  const NavItem = ({ page, icon, label }: { page: string, icon: string, label: string }) => {
-    const active = currentPage === page;
-    return (
-      <button 
-        onClick={() => navigateTo(page)} 
-        className={`flex flex-col lg:flex-row items-center lg:gap-4 lg:w-full lg:px-4 lg:py-3 transition-all relative group rounded-2xl ${active ? 'text-primary' : 'text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300'}`}
-      >
-        <div className={`size-12 lg:size-11 flex items-center justify-center rounded-2xl transition-all duration-300 ${active ? 'bg-primary/10 backdrop-blur-md shadow-[0_8px_32px_rgba(16,185,129,0.15)] ring-1 ring-primary/20' : 'group-hover:bg-slate-100 dark:group-hover:bg-zinc-800/50'}`}>
-          <span className={`material-symbols-outlined text-[28px] lg:text-[24px] ${active ? 'filled scale-110' : 'scale-100'}`} style={{ fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0" }}>{icon}</span>
-        </div>
-        
-        {/* Label (Oculto se recolhido) */}
-        {isDesktop && !isSidebarCollapsed && (
-          <span className={`text-[11px] font-[900] uppercase tracking-[0.1em] transition-all duration-300 opacity-100 whitespace-nowrap overflow-hidden ${active ? 'text-primary' : 'text-slate-500 dark:text-zinc-400'}`}>
-            {label}
-          </span>
-        )}
-
-        {/* Tooltip (Apenas se recolhido) */}
-        {isDesktop && isSidebarCollapsed && (
-          <div className="absolute left-full ml-4 px-3 py-2 bg-zinc-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all shadow-xl z-[100] whitespace-nowrap border border-white/10">
-            {label}
-          </div>
-        )}
-
-        {!isDesktop && active && (
-          <div className="absolute -bottom-2 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_#10b981]"></div>
-        )}
-      </button>
-    );
-  };
+  const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'integrations', 'help'].includes(currentPage);
 
   return (
-    <div className={`flex min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors ${isDesktop ? 'flex-row' : 'flex-col'}`}>
-      
-      {isDesktop && !isFullscreenPage && (
-        <aside 
-          className={`h-screen sticky top-0 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl border-r border-slate-200 dark:border-white/5 flex flex-col py-8 shrink-0 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isSidebarCollapsed ? 'w-24 px-4' : 'w-72 px-6'}`}
-        >
-          {/* Toggle Button */}
-          <button 
-            onClick={toggleSidebar}
-            className="absolute -right-4 top-16 size-8 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-full flex items-center justify-center text-slate-400 hover:text-primary transition-all shadow-lg active:scale-90 z-50"
-          >
-            <span className={`material-symbols-outlined text-xl transition-transform duration-500 ${isSidebarCollapsed ? 'rotate-180' : 'rotate-0'}`}>
-              chevron_left
-            </span>
-          </button>
-
-          <div className={`mb-12 transition-all duration-300 ${isSidebarCollapsed ? 'items-center flex flex-col' : 'px-2'}`}>
-            <Logo size={isSidebarCollapsed ? "sm" : "md"} />
-            {!isSidebarCollapsed && <p className="text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest mt-2">IFAL • SIGEA System</p>}
-          </div>
-          
-          {isDemoMode && !isSidebarCollapsed && (
-             <div className="mb-8 px-4 py-3 bg-primary/10 border border-primary/20 rounded-2xl flex items-center gap-2 backdrop-blur-sm animate-in fade-in zoom-in duration-500">
-                <span className="size-2 bg-primary rounded-full animate-pulse shadow-[0_0_8px_#10b981]"></span>
-                <span className="text-[9px] font-black text-primary uppercase tracking-widest">Demonstração</span>
-             </div>
-          )}
-          
-          <nav className="flex-1 flex flex-col gap-2">
-            <NavItem page="home" icon="roofing" label="Início" />
-            <NavItem page="events" icon="explore_nearby" label="Explorar" />
-            <NavItem page="certificates" icon="military_tech" label="Certificados" />
-            <NavItem page="profile" icon="account_circle" label="Perfil" />
-          </nav>
-
-          <div className="mt-auto">
-             <div className={`p-3 bg-slate-50/50 dark:bg-zinc-800/30 backdrop-blur-md rounded-3xl flex items-center transition-all duration-300 border border-slate-100 dark:border-white/5 ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
-                <div className="size-10 rounded-2xl bg-primary flex items-center justify-center text-white font-black shadow-lg shadow-primary/20 shrink-0">
-                   {userProfile?.name?.charAt(0)}
-                </div>
-                {!isSidebarCollapsed && (
-                  <div className="flex-1 min-w-0 animate-in slide-in-from-left-2 duration-300">
-                     <p className="text-xs font-black text-slate-900 dark:text-white truncate uppercase">{userProfile?.name}</p>
-                     <p className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase">{role}</p>
-                  </div>
-                )}
-             </div>
-          </div>
-        </aside>
+    <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#09090b]">
+      {isNavigationVisible && (
+        <Sidebar 
+          currentPage={currentPage} 
+          navigateTo={navigateTo} 
+          role={role} 
+          profile={userProfile} 
+          onLogout={handleLogout}
+          openPortal={openPortal}
+          isOpenMobile={isSidebarOpen}
+          setOpenMobile={setIsSidebarOpen}
+          selectedEventId={selectedEventId}
+        />
       )}
-
-      <main className={`flex-1 transition-all ${isDesktop ? 'px-4 lg:px-10' : 'w-full'} ${!isFullscreenPage && !isDesktop ? 'pb-32' : ''}`}>
-        <div className={`mx-auto ${isDesktop && !isFullscreenPage ? 'max-w-7xl py-10' : ''}`}>
+      
+      <div className="flex-1 flex flex-col min-w-0 relative h-screen overflow-hidden">
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-24 lg:pb-0">
           {renderContent()}
         </div>
-      </main>
+        <BottomNav 
+          currentPage={currentPage} 
+          navigateTo={navigateTo} 
+          role={role} 
+          toggleSidebar={() => setIsSidebarOpen(true)}
+        />
+        <AIAssistant events={events} />
+      </div>
 
-      <AIAssistant events={events} />
-
-      {!isDesktop && !isFullscreenPage && (
-        <div className="fixed bottom-0 left-0 w-full z-[5000] px-6 pb-[calc(1.2rem+var(--safe-bottom))] animate-in slide-in-from-bottom duration-700">
-          <nav className="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex items-center justify-around h-20 border border-white/20 dark:border-white/5 relative overflow-hidden ring-1 ring-black/5">
-             {isIOS && <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-10 h-1.5 bg-slate-200/50 dark:bg-white/10 rounded-full"></div>}
-             <NavItem page="home" icon="roofing" label="Início" />
-             <NavItem page="events" icon="explore_nearby" label="Eventos" />
-             <NavItem page="certificates" icon="military_tech" label="Métricas" />
-             <NavItem page="profile" icon="account_circle" label="Perfil" />
-          </nav>
-        </div>
+      {activePortal && (
+        <PortalBrowser 
+          url={activePortal.url} 
+          name={activePortal.name} 
+          onClose={() => setActivePortal(null)} 
+        />
       )}
     </div>
   );

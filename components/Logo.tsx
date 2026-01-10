@@ -3,7 +3,7 @@ import React from 'react';
 
 interface LogoProps {
   className?: string;
-  dark?: boolean;
+  dark?: boolean; // Força tema escuro se verdadeiro
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'huge';
 }
 
@@ -18,17 +18,16 @@ const Logo: React.FC<LogoProps> = ({ className = "", dark = false, size = 'md' }
 
   return (
     <div className={`flex items-center select-none ${className}`}>
-      <div className="flex flex-col items-start">
-        <span className={`
-          ${dark ? 'text-white' : 'text-primary'} 
-          font-[900] 
-          tracking-[-0.06em] 
-          ${sizeClasses[size]}
-          leading-none
-        `}>
-          Sigea
-        </span>
-      </div>
+      <span className={`
+        font-[900] 
+        tracking-[-0.06em] 
+        ${sizeClasses[size]}
+        leading-none
+        transition-colors duration-300
+        ${dark ? 'text-white' : 'text-slate-900 dark:text-white'}
+      `}>
+        SI<span className="text-primary">GEA</span>
+      </span>
     </div>
   );
 };
