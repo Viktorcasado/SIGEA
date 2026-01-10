@@ -6,11 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#10b981">
     
-    <!-- PWA Tags -->
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SIGEA">
     
     <link rel="icon" type="image/png" href="https://zefvlzfkqsxhzjtwmtmj.supabase.co/storage/v1/object/public/assets/favicon.png">
     <link rel="apple-touch-icon" href="https://zefvlzfkqsxhzjtwmtmj.supabase.co/storage/v1/object/public/assets/favicon.png">
@@ -22,44 +20,37 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     
     <script>
-        window.process = window.process || {};
-        window.process.env = window.process.env || {};
-        if (!window.process.env.NODE_ENV) window.process.env.NODE_ENV = 'production';
-        
+        window.process = { env: { NODE_ENV: 'production' } };
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
-                    colors: {
-                        primary: "#10b981",
-                        zinc: { 950: "#09090b", 900: "#121214", 800: "#1a1a1e" }
-                    },
-                    fontFamily: { sans: ["Plus Jakarta Sans", "sans-serif"] },
-                    borderRadius: { 'apple': '3.2rem' }
+                    colors: { primary: "#10b981" },
+                    fontFamily: { sans: ["Plus Jakarta Sans", "sans-serif"] }
                 }
             }
         }
     </script>
-    <style>
-        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: #09090b; overflow-x: hidden; }
-        #root { height: 100dvh; display: flex; flex-direction: column; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-    </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.0",
+    "@google/genai": "https://esm.sh/@google/genai@0.1.0",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.90.1",
     "next/": "https://esm.sh/next@^16.1.1/",
     "@supabase/auth-helpers-nextjs": "https://esm.sh/@supabase/auth-helpers-nextjs@^0.15.0"
   }
 }
 </script>
+    <style>
+        :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #09090b; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
 </head>
 <body class="antialiased">
     <div id="root"></div>

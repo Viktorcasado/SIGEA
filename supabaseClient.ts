@@ -9,47 +9,30 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storageKey: 'sigea-auth-session-v5',
+    storageKey: 'sigea_v5_prod',
     storage: window.localStorage
-  },
-  global: {
-    headers: { 'x-application-name': 'sigea-ifal-official' }
   }
 });
 
 export const isSupabaseConfigured = (): boolean => {
-  return !!SUPABASE_URL && !!SUPABASE_ANON_KEY && SUPABASE_URL.startsWith('https://');
+  return !!SUPABASE_URL && SUPABASE_URL.startsWith('https://');
 };
 
 export const uploadFile = async (bucket: string, path: string, file: File) => {
-  try {
-    const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
-      upsert: true,
-      cacheControl: '3600'
-    });
-
-    if (error) throw error;
-    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(data.path);
-    return publicUrl;
-  } catch (error: any) {
-    if (error.message === 'Failed to fetch' || !navigator.onLine) {
-      throw new Error('OFFLINE_ERROR');
-    }
-    throw error;
-  }
+  const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
+    upsert: true,
+    cacheControl: '3600'
+  });
+  if (error) throw error;
+  const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(data.path);
+  return publicUrl;
 };
 
 export const handleSupabaseError = (error: any): string => {
   if (!error) return 'Erro desconhecido.';
   const msg = error.message?.toLowerCase() || '';
-  
-  if (msg.includes('failed to fetch') || msg.includes('network') || error.message === 'OFFLINE_ERROR') {
-    return 'Conexão instável. Os dados serão sincronizados assim que a rede retornar.';
-  }
-  if (msg.includes('refresh_token_not_found') || msg.includes('invalid grant')) {
-    return 'Sessão expirada. Por favor, realize um novo login.';
-  }
-  if (msg.includes('user already registered')) return 'Este e-mail já possui cadastro institucional.';
-  
-  return error.message || 'Erro ao processar requisição.';
+  if (msg.includes('failed to fetch')) return 'Sem conexão com o servidor Supabase.';
+  if (msg.includes('invalid login')) return 'E-mail ou senha institucionais incorretos.';
+  if (msg.includes('user already registered')) return 'E-mail já cadastrado no sistema.';
+  return error.message;
 };
