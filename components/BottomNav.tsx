@@ -10,18 +10,17 @@ interface BottomNavProps {
 
 const BottomNav: React.FC<BottomNavProps> = ({ currentPage, navigateTo, role, toggleSidebar }) => {
   const rootPages = ['home', 'events', 'certificates', 'profile'];
-  // Se não estiver em uma das páginas raiz, não mostra o bottom nav (ex: durante criação de evento)
   if (!rootPages.includes(currentPage)) return null;
 
   const tabs = [
     { id: 'home', label: role === 'ORGANIZER' ? 'Painel' : 'Início', icon: 'home_app_logo' },
     { id: 'events', label: 'Explorar', icon: 'search' },
     { id: 'certificates', label: 'Títulos', icon: 'workspace_premium' },
-    { id: 'menu', label: 'Menu', icon: 'grid_view' }, // 'Menu' centraliza todas as configurações e navegação extra
+    { id: 'menu', label: 'Menu', icon: 'grid_view' },
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/95 dark:bg-[#09090b]/95 backdrop-blur-3xl border-t border-slate-100 dark:border-white/5 pb-[env(safe-area-inset-bottom,12px)] pt-3 px-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-white/95 dark:bg-[#09090b]/95 backdrop-blur-3xl border-t border-zinc-100 dark:border-white/5 pb-[env(safe-area-inset-bottom,12px)] pt-3 px-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
       <div className="flex items-center justify-around max-w-md mx-auto h-16">
         {tabs.map((tab) => {
           const isActive = tab.id === 'menu' ? false : currentPage === tab.id;
@@ -43,7 +42,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentPage, navigateTo, role, to
                 ${isActive ? 'bg-primary/20 scale-100' : 'bg-transparent scale-75 group-active:scale-95'}
               `}>
                 <span 
-                  className={`material-symbols-outlined text-[26px] transition-colors duration-300 ${isActive ? 'text-primary' : 'text-slate-400 dark:text-zinc-500'}`}
+                  className={`material-symbols-outlined text-[26px] transition-colors duration-300 ${isActive ? 'text-primary' : 'text-zinc-400 dark:text-zinc-500'}`}
                   style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 500" : "'FILL' 0, 'wght' 400" }}
                 >
                   {tab.icon}
@@ -56,7 +55,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentPage, navigateTo, role, to
 
               <span className={`
                 text-[10px] font-bold tracking-tight transition-all duration-300
-                ${isActive ? 'text-primary opacity-100 translate-y-0' : 'text-slate-500 dark:text-zinc-600 opacity-80 translate-y-0.5'}
+                ${isActive ? 'text-primary opacity-100 translate-y-0' : 'text-zinc-500 dark:text-zinc-600 opacity-80 translate-y-0.5'}
               `}>
                 {tab.label}
               </span>

@@ -262,7 +262,7 @@ const App: React.FC = () => {
 
   if (isHydrating) {
     return (
-      <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center">
+      <div className="fixed inset-0 bg-white dark:bg-[#09090b] flex flex-col items-center justify-center">
         <div className="size-16 border-[5px] border-primary/20 border-t-primary rounded-full animate-spin"></div>
         <p className="mt-8 text-[11px] font-black text-primary uppercase tracking-[0.5em]">SIGEA Mobile</p>
       </div>
@@ -314,7 +314,7 @@ const App: React.FC = () => {
   const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'integrations', 'help'].includes(currentPage);
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#09090b]">
+    <div className="flex flex-1 min-h-0 bg-slate-50 dark:bg-[#09090b]">
       {isNavigationVisible && (
         <Sidebar 
           currentPage={currentPage} 
@@ -329,8 +329,8 @@ const App: React.FC = () => {
         />
       )}
       
-      <div className="flex-1 flex flex-col min-w-0 relative h-screen overflow-hidden">
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-24 lg:pb-0">
+      <div className="flex-1 flex flex-col min-w-0 relative h-full">
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-24 lg:pb-0 h-full">
           {renderContent()}
         </div>
         <BottomNav 

@@ -109,7 +109,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
     <>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-[calc(env(safe-area-inset-bottom,24px)+96px)] right-6 z-[9000] size-16 rounded-[2.2rem] bg-white/10 dark:bg-zinc-900/40 backdrop-blur-xl flex items-center justify-center shadow-2xl active:scale-90 transition-all border border-white/20 dark:border-white/5 group"
+        className="fixed bottom-[calc(env(safe-area-inset-bottom,24px)+96px)] right-6 z-[90] size-16 rounded-[2.2rem] bg-white dark:bg-zinc-900 shadow-2xl active:scale-90 transition-all border border-slate-200 dark:border-white/5 group"
       >
         <div className="relative">
            <GeminiIfalLogo className="size-9 group-hover:scale-110 transition-transform" opacity="opacity-90" />
@@ -118,30 +118,30 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[10000] bg-black/40 backdrop-blur-md flex items-end justify-center animate-in fade-in p-0 sm:p-6">
+        <div className="fixed inset-0 z-[1000] bg-black/30 backdrop-blur-sm flex items-end justify-center animate-in fade-in p-0 sm:p-6">
           <div className="absolute inset-0" onClick={() => setIsOpen(false)}></div>
-          <div className="relative w-full max-w-xl h-[85vh] sm:h-[75vh] bg-white dark:bg-[#09090b] rounded-t-[3.5rem] sm:rounded-apple flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom-20 duration-500 border border-white/10">
+          <div className="relative w-full max-w-xl h-[85vh] sm:h-[75vh] bg-white dark:bg-[#09090b] rounded-t-[3.5rem] sm:rounded-apple flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom-20 duration-500 border border-slate-200 dark:border-white/10">
             
-            <header className="px-8 py-8 bg-zinc-900/90 backdrop-blur-md text-white flex items-center justify-between border-b border-white/5">
+            <header className="px-8 py-8 bg-white dark:bg-zinc-900 backdrop-blur-md flex items-center justify-between border-b border-slate-100 dark:border-white/5">
               <div className="flex items-center gap-4">
-                <div className="size-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
+                <div className="size-12 rounded-2xl bg-slate-50 dark:bg-white/5 flex items-center justify-center border border-slate-200 dark:border-white/10">
                   <GeminiIfalLogo className="size-7" opacity="opacity-100" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black uppercase tracking-[0.2em] leading-none">Gemini <span className="text-primary">IFAL</span></h4>
-                  <p className="text-[9px] font-bold text-zinc-500 uppercase mt-1.5">Especialista em Localização</p>
+                  <h4 className="text-xs font-black uppercase tracking-[0.2em] leading-none text-slate-900 dark:text-white">Gemini <span className="text-primary">IFAL</span></h4>
+                  <p className="text-[9px] font-bold text-slate-400 dark:text-zinc-500 uppercase mt-1.5 tracking-widest">IA Institucional</p>
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} className="size-11 rounded-xl bg-white/5 flex items-center justify-center"><span className="material-symbols-outlined text-zinc-400">close</span></button>
+              <button onClick={() => setIsOpen(false)} className="size-11 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 active:scale-90 transition-all shadow-sm"><span className="material-symbols-outlined">close</span></button>
             </header>
             
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar bg-slate-50 dark:bg-[#09090b]">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2`}>
                   <div className={`max-w-[85%] p-5 rounded-[2.2rem] text-[13px] font-bold leading-relaxed shadow-sm ${
                     msg.role === 'user' 
-                    ? 'bg-primary text-white rounded-tr-none' 
-                    : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 rounded-tl-none border border-zinc-200 dark:border-white/5'
+                    ? 'bg-primary text-white rounded-tr-none shadow-primary/20' 
+                    : 'bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 rounded-tl-none border border-slate-200 dark:border-white/5'
                   }`}>
                     {msg.text.split('\n').map((line, idx) => (
                       <p key={idx} className={line.trim() === '' ? 'h-2' : 'mb-1'}>{line}</p>
@@ -150,32 +150,32 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ events }) => {
                 </div>
               ))}
               {isTyping && (
-                <div className="flex items-center gap-3 px-6 py-4 bg-primary/5 rounded-full w-fit animate-pulse ml-4 border border-primary/10">
+                <div className="flex items-center gap-3 px-6 py-4 bg-primary/5 rounded-full w-fit animate-pulse ml-4 border border-primary/10 shadow-sm">
                   <GeminiIfalLogo className="size-4 animate-spin-slow" />
-                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">Analisando sua dúvida...</span>
+                  <span className="text-[9px] font-black text-primary uppercase tracking-widest">Processando resposta...</span>
                 </div>
               )}
             </div>
 
-            <div className="px-6 py-4 flex gap-3 overflow-x-auto no-scrollbar bg-white/5 border-t border-white/5">
+            <div className="px-6 py-4 flex gap-3 overflow-x-auto no-scrollbar bg-white dark:bg-zinc-900 border-t border-slate-100 dark:border-white/5">
               {SUGGESTIONS.map((s, i) => (
                 <button 
                   key={i} 
                   onClick={() => handleSend(s)} 
-                  className="shrink-0 px-5 py-2.5 bg-white dark:bg-zinc-800 rounded-full text-[9px] font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest border border-zinc-200 dark:border-white/5 whitespace-nowrap active:scale-95 transition-all shadow-sm"
+                  className="shrink-0 px-5 py-2.5 bg-slate-50 dark:bg-zinc-800 rounded-full text-[9px] font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest border border-slate-200 dark:border-white/5 whitespace-nowrap active:scale-95 transition-all shadow-sm"
                 >
                   {s}
                 </button>
               ))}
             </div>
             
-            <footer className="p-6 border-t border-zinc-100 dark:border-white/5 flex gap-3 pb-[calc(env(safe-area-inset-bottom,24px)+24px)] bg-white dark:bg-[#09090b]">
+            <footer className="p-6 border-t border-slate-100 dark:border-white/5 flex gap-3 pb-[calc(env(safe-area-inset-bottom,24px)+24px)] bg-white dark:bg-[#09090b]">
               <input 
                 type="text" 
                 value={input} 
                 onChange={(e) => setInput(e.target.value)} 
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()} 
-                className="flex-1 h-14 bg-slate-50 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-2xl px-6 text-sm font-bold dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-zinc-400" 
+                className="flex-1 h-14 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-2xl px-6 text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400" 
                 placeholder="Qual evento ou campus você procura?" 
               />
               <button 

@@ -11,15 +11,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SIGEA">
     
-    <!-- Windows Desktop Integration -->
-    <meta name="application-name" content="SIGEA | IFAL">
-    <meta name="msapplication-TileColor" content="#09090b">
-    <meta name="msapplication-config" content="none">
-    
-    <!-- Favicon Atualizado para o Logo Oficial -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://zefvlzfkqsxhzjtwmtmj.supabase.co/storage/v1/object/public/assets/favicon.png">
     <link rel="apple-touch-icon" href="https://zefvlzfkqsxhzjtwmtmj.supabase.co/storage/v1/object/public/assets/favicon.png">
-    <link rel="manifest" href="/manifest.json">
     
     <title>SIGEA | Sistema de Gestão Acadêmica</title>
     
@@ -28,7 +22,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     
     <script>
-        // Manter process.env mas permitir que o ambiente injete a API_KEY corretamente
         window.process = window.process || {};
         window.process.env = window.process.env || {};
         if (!window.process.env.NODE_ENV) window.process.env.NODE_ENV = 'production';
@@ -67,48 +60,40 @@
             -webkit-tap-highlight-color: transparent; 
             scrollbar-width: thin;
             scrollbar-color: #3f3f46 transparent;
+            box-sizing: border-box;
         }
 
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
-        
+        html, body {
+            height: 100%;
+            height: 100dvh;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
         body { 
-            background: #f8fafc; 
-            color: #0f172a; 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            overflow-x: hidden;
-            padding-bottom: var(--safe-bottom);
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        .dark body { background: #09090b; color: #f8fafc; }
-
-        body { overscroll-behavior-y: contain; }
-
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: flex;
+            flex-direction: column;
             user-select: none;
+            overflow-x: hidden;
+            background: white; /* Fallback claro */
+        }
+        
+        html.dark body {
+            background: #09090b; /* Fallback escuro */
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        @keyframes scan {
-          0% { transform: translateY(0); }
-          50% { transform: translateY(240px); }
-          100% { transform: translateY(0); }
+        #root {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-
-        @keyframes float {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-          100% { transform: translateY(0px); }
-        }
-        
-        .floating { animation: float 6s ease-in-out infinite; }
     </style>
 <script type="importmap">
 {
