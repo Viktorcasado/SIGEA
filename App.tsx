@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserRole, Event as SIGEAEvent } from './types.ts';
-import { supabase, handleSupabaseError } from './supabaseClient.ts';
+import { supabase } from './supabaseClient.ts';
 import { CAMPUS_LIST } from './constants.tsx';
 
 import Home from './pages/Home.tsx';
@@ -42,7 +41,11 @@ const App: React.FC = () => {
     try {
       const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false });
       if (!error && data) {
-        const normalized = data.map(e => ({ ...e, imageUrl: e.image_url || e.imageUrl, certificateHours: e.certificate_hours || e.certificateHours }));
+        const normalized = data.map(e => ({ 
+          ...e, 
+          imageUrl: e.image_url || e.imageUrl, 
+          certificateHours: e.certificate_hours || e.certificateHours 
+        }));
         setEvents(normalized);
       }
     } catch (err) {
@@ -78,14 +81,20 @@ const App: React.FC = () => {
       } catch (e) {
         console.error("Erro na inicialização:", e);
       } finally {
-        setTimeout(() => setIsHydrating(false), 300);
+        // Remove o loader estático do HTML e libera o React
+        const staticLoader = document.getElementById('initial-loader');
+        if (staticLoader) staticLoader.remove();
+        setIsHydrating(false);
       }
     };
     initApp();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) updateAuthState(session);
-      else setAuthStatus(false);
+      else {
+        setAuthStatus(false);
+        setUserProfile(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -104,12 +113,7 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (isHydrating) return (
-    <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center z-[9999]">
-      <div className="size-10 border-[3px] border-primary/20 border-t-primary rounded-full animate-spin"></div>
-      <p className="mt-6 text-[9px] font-black text-primary/60 uppercase tracking-[0.4em]">Sincronizando SIGEA...</p>
-    </div>
-  );
+  if (isHydrating) return null; // O loader estático do index.html cuida disso
 
   if (!hasSeenWelcome) return <Welcome onContinue={() => { localStorage.setItem('sigea_seen_welcome', 'true'); setHasSeenWelcome(true); }} />;
   if (!authStatus) return <Login onLogin={() => setAuthStatus(true)} onBack={() => setHasSeenWelcome(false)} darkMode={theme === 'dark'} setDarkMode={() => {}} />;
@@ -140,13 +144,27 @@ const App: React.FC = () => {
     }
   };
 
+  const sidebarVisible = ['home', 'events', 'certificates', 'profile'].includes(currentPage);
+
   return (
     <div className="flex flex-1 min-h-0 bg-slate-50 dark:bg-[#09090b]">
-      {['home', 'events', 'certificates', 'profile'].includes(currentPage) && (
-        <Sidebar currentPage={currentPage} navigateTo={navigateTo} role={role} profile={userProfile} onLogout={handleLogout} openPortal={commonProps.openPortal} isOpenMobile={isSidebarOpen} setOpenMobile={setIsSidebarOpen} selectedEventId={selectedEventId} />
+      {sidebarVisible && (
+        <Sidebar 
+          currentPage={currentPage} 
+          navigateTo={navigateTo} 
+          role={role} 
+          profile={userProfile} 
+          onLogout={handleLogout} 
+          openPortal={commonProps.openPortal} 
+          isOpenMobile={isSidebarOpen} 
+          setOpenMobile={setIsSidebarOpen} 
+          selectedEventId={selectedEventId} 
+        />
       )}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-24 lg:pb-0 h-full">{renderContent()}</div>
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-24 lg:pb-0 h-full">
+          {renderContent()}
+        </div>
         <BottomNav currentPage={currentPage} navigateTo={navigateTo} role={role} toggleSidebar={() => setIsSidebarOpen(true)} />
         <AIAssistant events={events} />
       </div>
