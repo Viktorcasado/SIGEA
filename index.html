@@ -36,19 +36,14 @@
     "@google/genai": "https://esm.sh/@google/genai@0.1.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "@supabase/auth-helpers-nextjs": "https://esm.sh/@supabase/auth-helpers-nextjs@^0.15.0",
-    "next/": "https://esm.sh/next@^16.1.1/"
+    "next/": "https://esm.sh/next@^16.1.1/",
+    "@supabase/auth-helpers-nextjs": "https://esm.sh/@supabase/auth-helpers-nextjs@^0.15.0"
   }
 }
 </script>
     <style>
         :root { --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
-        html, body { 
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            background: #09090b;
-        }
+        html, body { height: 100%; margin: 0; padding: 0; background: #09090b; }
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             overflow: hidden; 
@@ -58,12 +53,7 @@
             display: flex;
             flex-direction: column;
         }
-        #root { 
-            flex: 1;
-            display: flex; 
-            flex-direction: column;
-            min-height: 100dvh;
-        }
+        #root { flex: 1; display: flex; flex-direction: column; min-height: 100dvh; }
         .liquid-glass {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(25px) saturate(200%);
@@ -75,8 +65,9 @@
 </head>
 <body class="antialiased">
     <div id="root">
-        <div style="position: fixed; inset: 0; background: #09090b; display: flex; align-items: center; justify-content: center; z-index: 9999;">
+        <div style="position: fixed; inset: 0; background: #09090b; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;">
             <div style="width: 40px; height: 40px; border: 3px solid rgba(16, 185, 129, 0.1); border-top-color: #10b981; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+            <p style="margin-top: 20px; font-family: sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 0.3em; color: rgba(16, 185, 129, 0.5); text-transform: uppercase;">Iniciando SIGEA...</p>
         </div>
     </div>
     <style>@keyframes spin { to { transform: rotate(360deg); } }</style>

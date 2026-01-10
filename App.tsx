@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserRole, Event as SIGEAEvent } from './types.ts';
-import { supabase, handleSupabaseError, uploadFile } from './supabaseClient.ts';
+import { supabase, handleSupabaseError } from './supabaseClient.ts';
 import { CAMPUS_LIST } from './constants.tsx';
 
 import Home from './pages/Home.tsx';
@@ -12,13 +12,11 @@ import Certificates from './pages/Certificates.tsx';
 import Profile from './pages/Profile.tsx';
 import MyTicket from './pages/MyTicket.tsx';
 import Login from './pages/Login.tsx';
-import ResetPassword from './pages/ResetPassword.tsx';
 import OrganizerDashboard from './pages/OrganizerDashboard.tsx';
 import CreateEvent from './pages/CreateEvent.tsx';
 import ManageEvent from './pages/ManageEvent.tsx';
 import CheckIn from './pages/CheckIn.tsx';
 import Welcome from './pages/Welcome.tsx';
-import Schedule from './pages/Schedule.tsx';
 import AIAssistant from './components/AIAssistant.tsx';
 import BottomNav from './components/BottomNav.tsx';
 import Sidebar from './components/Sidebar.tsx';
@@ -80,7 +78,6 @@ const App: React.FC = () => {
       } catch (e) {
         console.error("Erro na inicialização:", e);
       } finally {
-        // Pequeno delay para garantir que o CSS do React carregou antes de remover o loader do HTML
         setTimeout(() => setIsHydrating(false), 300);
       }
     };
@@ -110,7 +107,7 @@ const App: React.FC = () => {
   if (isHydrating) return (
     <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center z-[9999]">
       <div className="size-10 border-[3px] border-primary/20 border-t-primary rounded-full animate-spin"></div>
-      <p className="mt-6 text-[9px] font-black text-primary/60 uppercase tracking-[0.4em]">SIGEA IFAL v3.1</p>
+      <p className="mt-6 text-[9px] font-black text-primary/60 uppercase tracking-[0.4em]">Sincronizando SIGEA...</p>
     </div>
   );
 
@@ -145,7 +142,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-1 min-h-0 bg-slate-50 dark:bg-[#09090b]">
-      {['home', 'events', 'certificates', 'profile', 'publish-success'].includes(currentPage) && (
+      {['home', 'events', 'certificates', 'profile'].includes(currentPage) && (
         <Sidebar currentPage={currentPage} navigateTo={navigateTo} role={role} profile={userProfile} onLogout={handleLogout} openPortal={commonProps.openPortal} isOpenMobile={isSidebarOpen} setOpenMobile={setIsSidebarOpen} selectedEventId={selectedEventId} />
       )}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
