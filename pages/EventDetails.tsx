@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Event, UserRole, Activity } from '../types';
 import { supabase } from '../supabaseClient';
+import { INSTITUTION_CONTACTS } from '../constants';
 
 interface EventDetailsProps {
   navigateTo: (page: string, eventId?: string) => void;
@@ -37,7 +38,6 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
     setLoadingActivities(false);
   };
 
-  // Prevenção de Tela Preta: Fallback visual amigável
   if (!event) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-zinc-950 p-6 text-center">
@@ -71,6 +71,15 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
       if (navigator.share) { await navigator.share(shareData); } 
       else { await navigator.clipboard.writeText(window.location.href); setShowToast(true); setTimeout(() => setShowToast(false), 3000); }
     } catch (err) { console.log('Erro ao compartilhar:', err); }
+  };
+
+  const openMaps = () => {
+    const coords = INSTITUTION_CONTACTS[event.campus]?.coords;
+    if (coords) {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${coords}`, '_blank');
+    } else {
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.campus)}`, '_blank');
+    }
   };
 
   return (
@@ -110,12 +119,23 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
       <main className="flex flex-col px-6 -mt-12 z-20 relative max-w-4xl mx-auto w-full">
         <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl rounded-[3rem] p-8 shadow-2xl border border-white/50 dark:border-white/5 mb-6">
           <h1 className="text-3xl font-black leading-tight text-slate-900 dark:text-white tracking-tighter mb-6 uppercase">{event.title}</h1>
-          <div className="flex items-center gap-4 border-t border-slate-100 dark:border-white/5 pt-6">
-            <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/10 shadow-inner"><span className="material-symbols-outlined text-2xl">school</span></div>
-            <div>
-              <p className="text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Unidade Responsável</p>
-              <p className="text-[12px] font-black text-slate-800 dark:text-zinc-200 uppercase">{event.campus}</p>
+          
+          <div className="flex items-center justify-between border-t border-slate-100 dark:border-white/5 pt-6">
+            <div className="flex items-center gap-4">
+              <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/10 shadow-inner"><span className="material-symbols-outlined text-2xl">school</span></div>
+              <div>
+                <p className="text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Unidade Responsável</p>
+                <p className="text-[12px] font-black text-slate-800 dark:text-zinc-200 uppercase">{event.campus}</p>
+              </div>
             </div>
+            
+            <button 
+              onClick={openMaps}
+              className="size-14 rounded-2xl bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 flex items-center justify-center text-primary shadow-lg active:scale-90 transition-all"
+              title="Ver no Google Maps"
+            >
+              <span className="material-symbols-outlined text-3xl">location_on</span>
+            </button>
           </div>
         </div>
 
@@ -190,7 +210,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({ navigateTo, eventId, events
 
       <div className="fixed bottom-0 left-0 w-full bg-white/70 dark:bg-zinc-950/70 backdrop-blur-3xl border-t border-white/20 dark:border-white/5 px-8 py-8 z-[100] shadow-[0_-15px_40px_rgba(0,0,0,0.1)]">
         <div className="flex items-center gap-5 max-w-4xl mx-auto">
-          <button onClick={handleShare} className="size-16 flex items-center justify-center rounded-[2rem] bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-400 active:scale-95 transition-all border border-slate-200 dark:border-white/5 shadow-xl"><span className="material-symbols-outlined text-2xl font-black">ios_share</span></button>
+          <button onClick={openMaps} className="size-16 flex items-center justify-center rounded-[2rem] bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-400 active:scale-95 transition-all border border-slate-200 dark:border-white/5 shadow-xl"><span className="material-symbols-outlined text-2xl font-black">explore</span></button>
           <button onClick={() => navigateTo('register', event.id)} className="flex-1 h-16 bg-primary text-white font-black rounded-[2rem] shadow-2xl shadow-primary/30 active:scale-95 transition-all uppercase text-[10px] tracking-[0.3em] flex items-center justify-center gap-3 border border-white/20">Solicitar Inscrição <span className="material-symbols-outlined text-2xl">verified</span></button>
         </div>
       </div>

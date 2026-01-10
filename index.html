@@ -28,7 +28,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     
     <script>
-        window.process = { env: { NODE_ENV: 'production', API_KEY: '' } };
+        // Manter process.env mas permitir que o ambiente injete a API_KEY corretamente
+        window.process = window.process || {};
+        window.process.env = window.process.env || {};
+        if (!window.process.env.NODE_ENV) window.process.env.NODE_ENV = 'production';
         
         tailwind.config = {
             darkMode: "class",

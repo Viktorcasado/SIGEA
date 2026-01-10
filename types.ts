@@ -58,6 +58,18 @@ export interface Registration {
   created_at: string;
 }
 
+export interface CertificateTemplate {
+  id: string;
+  event_id: string;
+  title: string;
+  attribution: string;
+  hours: number;
+  image_url: string;
+  content_template: string;
+  status: string;
+  created_at: string;
+}
+
 export interface Certificate {
   id: string;
   event_id: string;
@@ -66,4 +78,5 @@ export interface Certificate {
   hours: number;
   issue_date: string;
   validation_code: string;
+  template_url?: string;
 }

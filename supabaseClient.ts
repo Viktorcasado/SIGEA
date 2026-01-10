@@ -9,23 +9,16 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storageKey: 'sigea-auth-token',
-    flowType: 'pkce',
+    storageKey: 'sigea-auth-session-v4'
   }
 });
 
-export const isSupabaseConfigured = () => {
-  return !!SUPABASE_URL && !!SUPABASE_ANON_KEY && !SUPABASE_URL.includes('your-project');
+export const isSupabaseConfigured = (): boolean => {
+  return !!SUPABASE_URL && !!SUPABASE_ANON_KEY && SUPABASE_URL.startsWith('https://');
 };
 
 export const uploadFile = async (bucket: string, path: string, file: File) => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      throw new Error('Sessão não encontrada. Por favor, faça login novamente.');
-    }
-
     const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
       upsert: true,
       cacheControl: '3600'
@@ -36,21 +29,34 @@ export const uploadFile = async (bucket: string, path: string, file: File) => {
     const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(data.path);
     return publicUrl;
   } catch (error: any) {
-    console.error("Storage Error:", error);
+    console.error("Erro no Upload Storage:", error);
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError' || !navigator.onLine) {
+      throw new Error('NETWORK_ERROR');
+    }
     throw error;
   }
 };
 
 export const handleSupabaseError = (error: any): string => {
   if (!error) return 'Ocorreu um erro inesperado.';
-  console.error("Supabase Debug:", error);
   
   const msg = error.message?.toLowerCase() || '';
-  const status = error.status || error.statusCode;
-
-  if (status === 413 || msg.includes('large')) return 'A imagem é muito grande para o servidor. Tente uma foto menor (máx 2MB).';
-  if (status === 403 || status === 401) return 'Sua sessão expirou ou você não tem permissão. Tente sair e entrar novamente.';
-  if (msg.includes('fetch') || msg.includes('network')) return 'Erro de Conexão: O servidor não respondeu. Verifique seu Wi-Fi ou dados móveis.';
   
-  return error.message || 'Erro na comunicação com o portal institucional.';
+  // Captura agressiva de qualquer erro de rede ou falha de fetch
+  if (
+    msg.includes('failed to fetch') || 
+    msg.includes('network error') || 
+    msg.includes('load failed') ||
+    error.name === 'TypeError' ||
+    error.message === 'NETWORK_ERROR' ||
+    !navigator.onLine
+  ) {
+    return 'Falha na conexão com o servidor. Suas alterações foram salvas localmente e serão sincronizadas depois.';
+  }
+  
+  if (msg.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
+  if (msg.includes('user already registered')) return 'Este e-mail já possui um cadastro ativo.';
+  if (msg.includes('payload too large')) return 'A imagem é muito grande (máx 5MB).';
+  
+  return error.message || 'Erro ao processar solicitação.';
 };

@@ -81,18 +81,27 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
             </h1>
         </div>
 
+        {/* Barra de Busca Corrigida */}
         <div className="relative group max-w-2xl z-10 lg:ml-0 space-y-6">
-          <div className="relative">
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 z-10 pointer-events-none opacity-80 scale-90">
-              <Logo size="sm" />
+          <div className="relative flex items-center">
+            <div className="absolute left-6 pointer-events-none transition-colors duration-300">
+              <span className={`material-symbols-outlined text-2xl ${search ? 'text-primary' : 'text-slate-400 dark:text-zinc-600'}`}>search</span>
             </div>
             <input 
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-16 lg:h-18 pl-18 lg:pl-20 pr-6 bg-white dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl lg:rounded-[2rem] outline-none text-[15px] font-bold focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-700 text-slate-900 dark:text-white shadow-xl shadow-black/5"
-              placeholder="Congressos e Oficinas"
+              className="w-full h-16 lg:h-18 pl-16 pr-14 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 rounded-2xl lg:rounded-[2rem] outline-none text-[15px] font-bold focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-700 text-slate-900 dark:text-white shadow-xl shadow-black/5"
+              placeholder="Buscar eventos, cursos ou oficinas..."
             />
+            {search && (
+              <button 
+                onClick={() => setSearch('')}
+                className="absolute right-6 size-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 hover:text-primary transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg font-black">close</span>
+              </button>
+            )}
           </div>
 
           <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
@@ -116,7 +125,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
       <main className="space-y-12 lg:space-y-24">
         <section className="px-6 lg:px-12">
           <div className="flex flex-col gap-1 mb-6">
-             <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Portais Institucionais</h3>
+             <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Portais da Comunidade</h3>
              <div className="w-6 h-1 bg-primary rounded-full"></div>
           </div>
           <div className="grid grid-cols-4 gap-4 lg:grid-cols-8">
@@ -171,7 +180,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo, profile, events, onNotify, hasU
 
         <section className="px-6 lg:px-12 pb-12">
            <div className="flex flex-col gap-1 mb-6">
-               <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Recentes</h3>
+               <h3 className="text-[12px] font-[1000] uppercase tracking-[0.2em] text-slate-900 dark:text-white">Explorar Recentes</h3>
                <div className="w-6 h-1 bg-primary rounded-full"></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-8">

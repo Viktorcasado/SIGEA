@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase, handleSupabaseError } from '../supabaseClient.ts';
+import Logo from '../components/Logo.tsx';
 
 interface ResetPasswordProps {
   navigateTo: (page: string) => void;
@@ -12,57 +13,48 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(true);
-  
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isVerifyingToken, setIsVerifyingToken] = useState(true);
 
   useEffect(() => {
-    const checkAuthFlow = async () => {
-      // Pequeno delay para garantir que o Supabase processou o token da URL
-      await new Promise(r => setTimeout(r, 1200));
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Verifica no hash e na query string se há indícios de token
-      const hash = window.location.hash;
-      const search = window.location.search;
-      const hasToken = hash.includes('access_token') || 
-                       search.includes('type=recovery') ||
-                       search.includes('reset-password');
-
-      // Se não houver sessão nem token, o link é provavelmente inválido
-      if (!session && !hasToken) {
-        setError("O link de recuperação expirou ou é inválido. Por favor, solicite um novo acesso no Login.");
+    // Escuta mudanças de auth para detectar o fluxo de recovery
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "PASSWORD_RECOVERY") {
+        console.log("Fluxo de recuperação de senha detectado.");
+        setIsVerifyingToken(false);
+      } else if (session) {
+        setIsVerifyingToken(false);
+      } else {
+        // Se não houver sessão ou evento após 2 segundos, exibe erro
+        setTimeout(() => setIsVerifyingToken(false), 2000);
       }
-      setIsVerifying(false);
-    };
-    checkAuthFlow();
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleReset = async (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (password.length < 8) {
-      setError('A nova senha deve ter no mínimo 8 caracteres.');
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem.');
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError('As senhas digitadas não coincidem. Verifique a confirmação.');
+    if (password.length < 8) {
+      setError('A senha deve ter pelo menos 8 caracteres.');
       return;
     }
 
     setLoading(true);
     try {
-      const { error: resetError } = await supabase.auth.updateUser({ password });
-      if (resetError) throw resetError;
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) throw updateError;
 
       setSuccess(true);
-      // Redireciona para o login após sucesso
       setTimeout(() => {
-        window.location.href = window.location.origin;
+        supabase.auth.signOut();
+        navigateTo('login');
       }, 3000);
     } catch (err: any) {
       setError(handleSupabaseError(err));
@@ -71,121 +63,92 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({ navigateTo }) => {
     }
   };
 
-  if (isVerifying) {
+  if (isVerifyingToken) {
     return (
-      <div className="fixed inset-0 bg-white dark:bg-[#09090b] flex flex-col items-center justify-center">
+      <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center p-8">
         <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-widest">Validando credenciais...</p>
+        <p className="mt-6 text-[10px] font-black text-primary uppercase tracking-[0.4em]">Validando Token Institucional</p>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in slide-in-from-right duration-500 overflow-y-auto no-scrollbar">
-      <header className="p-8 flex items-center justify-between sticky top-0 z-10">
-        <button 
-          onClick={() => window.location.href = window.location.origin}
-          className="size-12 flex items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900 text-zinc-500 active:scale-90 transition-all border border-zinc-100 dark:border-white/5"
-        >
-          <span className="material-symbols-outlined font-black">arrow_back</span>
-        </button>
-        <span className="material-symbols-outlined text-zinc-300 dark:text-zinc-800">help</span>
+    <div className="min-h-screen flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white font-sans animate-in fade-in duration-500">
+      <header className="p-8 flex justify-center">
+        <Logo size="lg" />
       </header>
 
       <main className="flex-1 flex flex-col px-8 pb-12 max-w-sm mx-auto w-full justify-center">
         <div className="space-y-12">
-          <header className="space-y-4">
+          <header className="space-y-4 text-center">
             <h1 className="text-[44px] font-[1000] tracking-tighter uppercase leading-none">
-              Criar nova <span className="text-primary">senha</span>
+              Nova <span className="text-primary">Senha</span>
             </h1>
-            <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight max-w-[280px]">
-              Sua nova senha deve ser diferente das anteriores por segurança.
+            <p className="text-sm font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight">
+              Crie uma credencial forte para proteger seus dados no IFAL.
             </p>
           </header>
 
           {success ? (
             <div className="p-10 bg-primary/5 border border-primary/20 rounded-[3rem] text-center space-y-6 animate-in zoom-in">
-              <div className="size-24 bg-primary rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl shadow-primary/40">
-                <span className="material-symbols-outlined text-white text-5xl">verified</span>
+              <div className="size-20 bg-primary rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl shadow-primary/40">
+                <span className="material-symbols-outlined text-white text-4xl">verified</span>
               </div>
-              <div className="space-y-2">
-                <h3 className="text-2xl font-black uppercase tracking-tight">Senha Alterada!</h3>
-                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Aguarde o redirecionamento institucional...</p>
-              </div>
+              <h3 className="text-xl font-black uppercase tracking-tight">Sucesso!</h3>
+              <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Aguarde o redirecionamento para o login...</p>
             </div>
           ) : (
-            <form onSubmit={handleReset} className="space-y-8">
+            <form onSubmit={handleUpdatePassword} className="space-y-8">
               {error && (
-                <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-[10px] font-black text-red-500 text-center animate-in shake leading-relaxed">
+                <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[10px] font-black text-red-500 text-center animate-in shake">
                   {error}
                 </div>
               )}
 
               <div className="space-y-6">
-                <div className="space-y-2 relative group">
+                <div className="space-y-2 group">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nova Senha</label>
-                  <div className="relative">
-                    <input 
-                      required 
-                      type={showPassword ? "text" : "password"} 
-                      autoFocus
-                      placeholder="********" 
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all"
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-primary transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-xl">
-                        {showPassword ? 'visibility' : 'visibility_off'}
-                      </span>
-                    </button>
-                  </div>
-                  <p className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${password.length >= 8 ? 'text-primary' : 'text-zinc-400'}`}>Mínimo de 8 caracteres.</p>
+                  <input 
+                    required 
+                    type="password" 
+                    placeholder="********" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full h-18 px-6 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                  />
                 </div>
 
-                <div className="space-y-2 relative group">
+                <div className="space-y-2 group">
                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Confirmar Senha</label>
-                  <div className="relative">
-                    <input 
-                      required 
-                      type={showConfirmPassword ? "text" : "password"} 
-                      placeholder="********" 
-                      value={confirmPassword}
-                      onChange={e => setConfirmPassword(e.target.value)}
-                      className="w-full h-18 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl px-6 text-sm font-bold outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/5 transition-all"
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-primary transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-xl">
-                        {showConfirmPassword ? 'visibility' : 'visibility_off'}
-                      </span>
-                    </button>
-                  </div>
-                  <p className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${confirmPassword && password === confirmPassword ? 'text-primary' : 'text-zinc-400'}`}>As senhas devem coincidir.</p>
+                  <input 
+                    required 
+                    type="password" 
+                    placeholder="********" 
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full h-18 px-6 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-white/5 rounded-3xl text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all"
+                  />
                 </div>
               </div>
 
               <button 
                 disabled={loading}
-                className="w-full h-20 bg-primary text-white font-black rounded-Apple shadow-2xl shadow-primary/40 flex items-center justify-center uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-all disabled:opacity-50 mt-4"
+                className="w-full h-20 bg-primary text-white font-black rounded-[2rem] shadow-2xl shadow-primary/30 flex items-center justify-center uppercase text-[11px] tracking-[0.25em] active:scale-95 transition-all disabled:opacity-50"
               >
                 {loading ? (
-                  <div className="size-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <div className="size-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
-                  'Redefinir Senha'
+                  'Redefinir Agora'
                 )}
               </button>
             </form>
           )}
         </div>
       </main>
+      
+      <footer className="py-12 text-center opacity-30 text-[9px] font-black uppercase tracking-[0.5em]">
+        SIGEA • RedFederal v2.5
+      </footer>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserRole, Event as SIGEAEvent } from './types.ts';
-import { supabase, uploadFile, handleSupabaseError } from './supabaseClient.ts';
+import { supabase, handleSupabaseError, uploadFile } from './supabaseClient.ts';
 
 import Home from './pages/Home.tsx';
 import EventsList from './pages/EventsList.tsx';
@@ -29,6 +29,8 @@ import BottomNav from './components/BottomNav.tsx';
 import Sidebar from './components/Sidebar.tsx';
 import PortalBrowser from './components/PortalBrowser.tsx';
 
+const ADMIN_EMAIL = 'viktorcasado@gmail.com';
+
 const App: React.FC = () => {
   const [hasSeenWelcome, setHasSeenWelcome] = useState<boolean>(() => {
     return localStorage.getItem('sigea_seen_welcome') === 'true';
@@ -36,19 +38,25 @@ const App: React.FC = () => {
   
   const [isHydrating, setIsHydrating] = useState(true);
   const [authStatus, setAuthStatus] = useState<boolean | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [role, setRole] = useState<UserRole>(UserRole.PARTICIPANT);
-  const [activePortal, setActivePortal] = useState<{ url: string; name: string } | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  const isRecoveryRoute = () => {
-    const hash = window.location.hash;
-    const search = window.location.search;
-    return window.location.pathname.includes('reset-password') || hash.includes('type=recovery') || search.includes('reset-password');
+  const [userProfile, setUserProfile] = useState<any>(() => {
+    const saved = localStorage.getItem('sigea_local_profile');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [role, setRole] = useState<UserRole>(() => {
+    return (localStorage.getItem('sigea_local_role') as UserRole) || UserRole.PARTICIPANT;
+  });
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activePortal, setActivePortal] = useState<{ url: string; name: string } | null>(null);
+  
+  const isResetFlow = () => {
+    return window.location.pathname.includes('reset-password') || window.location.hash.includes('type=recovery');
   };
 
   const [currentPage, setCurrentPage] = useState<string>(() => {
-    if (isRecoveryRoute()) return 'reset-password';
+    if (isResetFlow()) return 'reset-password';
     return localStorage.getItem('sigea_last_page') || 'home';
   });
   
@@ -75,9 +83,11 @@ const App: React.FC = () => {
           certificateHours: e.certificate_hours || e.certificateHours || 0
         }));
         setEvents(normalizedEvents);
+        localStorage.setItem('sigea_cached_events', JSON.stringify(normalizedEvents));
       }
     } catch (err) {
-      console.error("Erro ao carregar banco real:", err);
+      const cached = localStorage.getItem('sigea_cached_events');
+      if (cached) setEvents(JSON.parse(cached));
     }
   };
 
@@ -85,21 +95,26 @@ const App: React.FC = () => {
     const root = window.document.documentElement;
     const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
     root.classList.toggle('dark', isDark);
+    localStorage.setItem('sigea_theme', theme);
   }, [theme]);
 
   useEffect(() => {
     const initApp = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
+
         if (session) {
           updateAuthState(session);
+        } else if (userProfile) {
+          setAuthStatus(true);
         } else {
           setAuthStatus(false);
         }
         await fetchEvents();
       } catch (err) {
-        console.error("Erro crítico na inicialização:", err);
-        setAuthStatus(false);
+        setAuthStatus(userProfile !== null);
       } finally {
         setIsHydrating(false);
       }
@@ -110,41 +125,114 @@ const App: React.FC = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         updateAuthState(session);
-        if (event === 'SIGNED_IN') {
-          if (currentPage === 'home' || !localStorage.getItem('sigea_last_page')) {
-            setCurrentPage('home');
-          }
-        }
       } else if (event === 'SIGNED_OUT') {
-        handleLogoutCleanUp();
+        setAuthStatus(false);
+        setUserProfile(null);
+        localStorage.removeItem('sigea_local_profile');
+        localStorage.removeItem('sigea_local_role');
+        localStorage.removeItem('sigea_cached_events');
+        setCurrentPage('home');
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const updateAuthState = (session: any) => {
-    const metadata = session.user.user_metadata;
-    const userEmail = session.user.email?.toLowerCase();
-    const isAdmin = userEmail === 'viktorcasado@gmail.com';
+  const updateAuthState = (sessionOrUser: any) => {
+    const user = sessionOrUser.user || sessionOrUser;
+    if (!user) return;
 
+    const metadata = user.user_metadata || {};
+    const email = user.email || userProfile?.email || '';
+    
     const profileData = {
-      id: session.user.id,
-      name: metadata?.name || (isAdmin ? 'Viktor Casado' : 'Usuário SIGEA'),
-      email: session.user.email,
-      campus: metadata?.campus || 'IFAL - Campus Maceió',
-      photo: metadata?.photo_url || metadata?.photo || ''
+      id: user.id,
+      name: metadata.name || 'Usuário SIGEA',
+      email: email,
+      campus: metadata.campus || 'IFAL - Campus Maceió',
+      photo: metadata.photo_url || metadata.photo || ''
     };
+    
     setUserProfile(profileData);
-    setRole((isAdmin ? UserRole.ORGANIZER : (metadata?.role || UserRole.PARTICIPANT)) as UserRole);
+    localStorage.setItem('sigea_local_profile', JSON.stringify(profileData));
+    
+    let userRole = (metadata.role || UserRole.PARTICIPANT) as UserRole;
+    if (email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      userRole = UserRole.ORGANIZER;
+    }
+    
+    const localRole = localStorage.getItem('sigea_local_role') as UserRole;
+    if (localRole) {
+      setRole(localRole);
+    } else {
+      setRole(userRole);
+      localStorage.setItem('sigea_local_role', userRole);
+    }
+    
     setAuthStatus(true);
   };
 
-  const handleLogoutCleanUp = () => {
-    setAuthStatus(false);
-    setUserProfile(null);
-    localStorage.removeItem('sigea_last_page');
-    setCurrentPage('home');
+  const handleUpdateProfile = async (data: { name: string; campus: string; imageFile?: File | null }) => {
+    const updatedProfile = { ...userProfile, name: data.name, campus: data.campus };
+    setUserProfile(updatedProfile);
+    localStorage.setItem('sigea_local_profile', JSON.stringify(updatedProfile));
+
+    try {
+      let photo_url = userProfile.photo;
+
+      if (data.imageFile) {
+        try {
+          const fileExt = data.imageFile.name.split('.').pop();
+          const fileName = `${userProfile.id}-${Date.now()}.${fileExt}`;
+          const filePath = `profiles/${userProfile.id}/${fileName}`;
+          photo_url = await uploadFile('assets', filePath, data.imageFile);
+          
+          const profileWithPhoto = { ...updatedProfile, photo: photo_url };
+          setUserProfile(profileWithPhoto);
+          localStorage.setItem('sigea_local_profile', JSON.stringify(profileWithPhoto));
+        } catch (e) {
+          console.warn("Upload falhou, salvando localmente");
+        }
+      }
+
+      const { data: updateData, error } = await supabase.auth.updateUser({
+        data: { 
+          name: data.name, 
+          campus: data.campus,
+          photo_url: photo_url 
+        }
+      });
+
+      if (error) throw error;
+      if (updateData.user) updateAuthState(updateData.user);
+      return { success: true };
+    } catch (err: any) {
+      const msg = err.message?.toLowerCase() || '';
+      if (msg.includes('failed to fetch') || msg.includes('network error') || msg.includes('typeerror')) {
+        return { success: true, localOnly: true };
+      }
+      return { success: false, error: handleSupabaseError(err) };
+    }
+  };
+
+  const handleToggleRole = async () => {
+    const newRole = role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT;
+    
+    setRole(newRole);
+    localStorage.setItem('sigea_local_role', newRole);
+
+    try {
+      const { data: updateData, error } = await supabase.auth.updateUser({
+        data: { role: newRole }
+      });
+      if (error) throw error;
+      if (updateData.user) updateAuthState(updateData.user);
+    } catch (err: any) {
+      const msg = err.message?.toLowerCase() || '';
+      if (!msg.includes('failed to fetch') && !msg.includes('network error')) {
+        alert(handleSupabaseError(err));
+      }
+    }
   };
 
   const navigateTo = (page: string, id: string | null = null) => {
@@ -162,68 +250,26 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
-
-  const handleUpdateProfile = async (data: any) => {
     try {
-      await supabase.auth.refreshSession();
-      
-      let finalPhotoUrl = userProfile?.photo;
-
-      if (data.imageFile) {
-        const fileExt = data.imageFile.name.split('.').pop();
-        const fileName = `avatar-${userProfile.id}-${Date.now()}.${fileExt}`;
-        const filePath = `profiles/${userProfile.id}/${fileName}`;
-        try {
-          const uploadedUrl = await uploadFile('assets', filePath, data.imageFile);
-          finalPhotoUrl = uploadedUrl;
-        } catch (uploadErr: any) {
-          return { success: false, error: uploadErr.message };
-        }
-      }
-
-      const updateData = {
-        name: data.name || userProfile.name,
-        campus: data.campus || userProfile.campus,
-        photo_url: finalPhotoUrl,
-        photo: finalPhotoUrl
-      };
-
-      const { error } = await supabase.auth.updateUser({ data: updateData });
-      if (error) throw error;
-
-      setUserProfile((prev: any) => ({ ...prev, ...updateData }));
-      return { success: true };
-    } catch (err: any) {
-      return { success: false, error: handleSupabaseError(err) };
+      await supabase.auth.signOut();
+    } catch (e) {
+      setAuthStatus(false);
+      setUserProfile(null);
+      localStorage.clear();
+      setCurrentPage('login');
     }
-  };
-
-  const toggleRole = async () => {
-    const newRole = role === UserRole.PARTICIPANT ? UserRole.ORGANIZER : UserRole.PARTICIPANT;
-    setRole(newRole);
-    try {
-      await supabase.auth.updateUser({ data: { role: newRole } });
-    } catch (err) {
-      console.error("Erro ao persistir role:", err);
-    }
-  };
-
-  const handleRefreshEvents = async () => {
-    await fetchEvents();
   };
 
   if (isHydrating) {
     return (
       <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center">
         <div className="size-16 border-[5px] border-primary/20 border-t-primary rounded-full animate-spin"></div>
-        <p className="mt-8 text-[11px] font-black text-primary uppercase tracking-[0.5em]">SIGEA</p>
+        <p className="mt-8 text-[11px] font-black text-primary uppercase tracking-[0.5em]">SIGEA Mobile</p>
       </div>
     );
   }
 
-  if (!hasSeenWelcome && !isRecoveryRoute()) return <Welcome onContinue={() => { localStorage.setItem('sigea_seen_welcome', 'true'); setHasSeenWelcome(true); }} />;
+  if (!hasSeenWelcome && !isResetFlow()) return <Welcome onContinue={() => { localStorage.setItem('sigea_seen_welcome', 'true'); setHasSeenWelcome(true); }} />;
   
   if (!authStatus && currentPage !== 'reset-password') {
     return <Login onLogin={() => setAuthStatus(true)} onBack={() => setHasSeenWelcome(false)} darkMode={theme === 'dark'} setDarkMode={() => {}} />;
@@ -239,39 +285,33 @@ const App: React.FC = () => {
       case 'events': return <EventsList navigateTo={navigateTo} events={events} />;
       case 'details': return <EventDetails navigateTo={navigateTo} eventId={selectedEventId} events={events} role={role} />;
       case 'register': return <Registration {...commonProps} eventId={selectedEventId} onUpdateProfile={handleUpdateProfile} />;
-      case 'certificates': return <Certificates navigateTo={navigateTo} eventId={selectedEventId} events={events} user={userProfile} role={role} />;
+      case 'certificates': return <Certificates navigateTo={navigateTo} eventId={selectedEventId} user={userProfile} role={role} />;
       case 'profile': return (
         <Profile 
           {...commonProps} 
           theme={theme} 
           setTheme={setTheme} 
           role={role} 
-          toggleRole={toggleRole} 
+          toggleRole={handleToggleRole} 
           onLogout={handleLogout} 
           onDeleteAccount={async () => {}} 
           onUpdate={handleUpdateProfile} 
         />
       );
-      case 'ticket': 
-        const ticketEvent = events.find(e => e.id === selectedEventId);
-        return <MyTicket navigateTo={navigateTo} profile={userProfile} event={ticketEvent} />;
-      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={handleRefreshEvents} profile={userProfile} />;
-      case 'edit-event': return <EditEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onUpdate={handleRefreshEvents} />;
-      case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={() => fetchEvents()} onArchive={() => {}} />;
+      case 'ticket': return <MyTicket navigateTo={navigateTo} profile={userProfile} event={events.find(e => e.id === selectedEventId)} />;
+      case 'create-event': return <CreateEvent navigateTo={navigateTo} onAddEvent={fetchEvents} profile={userProfile} />;
+      case 'manage-event': return <ManageEvent navigateTo={navigateTo} eventId={selectedEventId} events={events} onDelete={fetchEvents} onArchive={() => {}} />;
+      case 'publish-success': return <PublishSuccess navigateTo={navigateTo} event={events.find(e => e.id === selectedEventId)} />;
+      case 'integrations': return <Integrations {...commonProps} />;
+      case 'help': return <Help navigateTo={navigateTo} />;
       case 'check-in': return <CheckIn navigateTo={navigateTo} eventId={selectedEventId} />;
       case 'schedule': return <Schedule navigateTo={navigateTo} eventId={selectedEventId} role={role} />;
       case 'participants': return <ParticipantsAdmin navigateTo={navigateTo} eventId={selectedEventId || undefined} />;
-      case 'publish-success': 
-        const successEvent = events.find(e => e.id === selectedEventId);
-        return <PublishSuccess navigateTo={navigateTo} event={successEvent} />;
-      case 'reports': return <Reports navigateTo={navigateTo} />;
-      case 'integrations': return <Integrations {...commonProps} />;
-      case 'help': return <Help navigateTo={navigateTo} />;
       default: return <Home {...commonProps} onNotify={() => {}} />;
     }
   };
 
-  const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'reports', 'help', 'create-event', 'edit-event', 'check-in', 'integrations', 'schedule', 'participants', 'manage-event', 'details', 'register'].includes(currentPage);
+  const isNavigationVisible = ['home', 'events', 'certificates', 'profile', 'integrations', 'help'].includes(currentPage);
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#09090b]">

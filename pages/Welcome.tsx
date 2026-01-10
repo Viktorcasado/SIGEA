@@ -28,8 +28,8 @@ const Welcome: React.FC<WelcomeProps> = ({ onContinue }) => {
           <IfalLogo className="h-8" />
           <div className="h-6 w-px bg-slate-200 dark:bg-white/10"></div>
           <div className="flex flex-col">
-            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Portal Oficial</span>
-            <span className="text-[8px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Plataforma Homologada</span>
+            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Portal de Eventos</span>
+            <span className="text-[8px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Campus & Comunidade</span>
           </div>
         </div>
       </header>
@@ -47,16 +47,16 @@ const Welcome: React.FC<WelcomeProps> = ({ onContinue }) => {
           </div>
           
           <p className="text-slate-600 dark:text-zinc-400 text-xl font-medium leading-tight pr-10">
-            A plataforma definitiva para <span className="text-slate-900 dark:text-white font-black">gestão acadêmica</span> e eventos do IFAL.
+            Conectando o <span className="text-slate-900 dark:text-white font-black">IFAL</span> à comunidade através de eventos, ciência e cultura.
           </p>
         </div>
 
         {/* Features Quick-Look */}
         <div className="grid grid-cols-3 gap-4 mb-14 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-500">
           {[
-            { icon: 'calendar_today', label: 'Eventos' },
-            { icon: 'military_tech', label: 'Títulos' },
-            { icon: 'qr_code_2', label: 'Check-in' }
+            { icon: 'groups', label: 'Comunidade' },
+            { icon: 'military_tech', label: 'Certificados' },
+            { icon: 'qr_code_2', label: 'Acesso' }
           ].map((item, i) => (
             <div key={i} className="flex flex-col items-center gap-3 p-5 rounded-[2rem] bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 backdrop-blur-sm transition-all hover:bg-white dark:hover:bg-zinc-800 hover:shadow-lg">
               <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>{item.icon}</span>
@@ -72,14 +72,14 @@ const Welcome: React.FC<WelcomeProps> = ({ onContinue }) => {
             className="group relative w-full h-20 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[2.5rem] flex items-center justify-between px-10 shadow-2xl shadow-black/20 dark:shadow-white/5 active:scale-95 transition-all overflow-hidden"
           >
             <div className="absolute inset-0 bg-primary opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <span className="text-xs font-[900] uppercase tracking-[0.3em] relative z-10 group-hover:text-white transition-colors">Acessar Sistema</span>
+            <span className="text-xs font-[900] uppercase tracking-[0.3em] relative z-10 group-hover:text-white transition-colors">Entrar no Portal</span>
             <div className="size-12 rounded-full bg-white/10 dark:bg-slate-900/5 flex items-center justify-center relative z-10 group-hover:bg-white transition-colors">
               <span className="material-symbols-outlined text-white dark:text-slate-900 group-hover:text-primary transition-colors">arrow_forward</span>
             </div>
           </button>
 
           <footer className="flex flex-col items-center gap-2 opacity-30">
-            <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-[0.5em]">Educação • Tecnologia • Futuro</p>
+            <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-[0.5em]">Conhecimento • Integração • Cidadania</p>
             <div className="flex items-center gap-4 text-[8px] font-bold text-slate-400 uppercase">
               <span>Sigea Mobile v2.5</span>
               <div className="size-1 bg-slate-300 rounded-full"></div>
