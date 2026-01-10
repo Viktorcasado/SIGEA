@@ -17,15 +17,72 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [canUseBiometrics, setCanUseBiometrics] = useState(false);
+  const [biometricSupported, setBiometricSupported] = useState(false);
 
   useEffect(() => {
-    // Detecta se é mobile app via UserAgent ou bridge Flutter
-    const isApp = (window as any).flutter_inappwebview || navigator.userAgent.includes('SigeaMobile');
-    if (isApp && window.PublicKeyCredential) {
-      setCanUseBiometrics(localStorage.getItem('sigea_biometry_enabled') === 'true');
-    }
+    const checkBiometrics = async () => {
+      if (typeof window !== 'undefined' && window.PublicKeyCredential) {
+        try {
+          const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+          setBiometricSupported(available);
+        } catch (e) {
+          setBiometricSupported(false);
+        }
+      }
+    };
+    checkBiometrics();
   }, []);
+
+  const handleBiometricLogin = async () => {
+    if (!biometricSupported) return;
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const lastUser = session?.user;
+      if (lastUser) {
+        const isBioActive = localStorage.getItem(`sigea_bio_enabled_${lastUser.id}`) === 'true';
+        if (!isBioActive) {
+          setError("Biometria não ativada. Ative-a no seu perfil após o login manual.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const options: CredentialRequestOptions = {
+        publicKey: {
+          challenge,
+          timeout: 60000,
+          userVerification: "required",
+          allowCredentials: [] 
+        },
+        mediation: 'optional'
+      };
+
+      // Chamada garantida no contexto do navegador
+      const credential = await window.navigator.credentials.get(options);
+      
+      if (credential) {
+        if (session) {
+          onLogin();
+        } else {
+          setError("Sessão não encontrada. Realize o login com e-mail uma vez para vincular seu dispositivo.");
+        }
+      }
+    } catch (err: any) {
+      console.error("Erro Biométrico:", err);
+      if (err.name === 'SecurityError' || err.message.includes('feature is not enabled')) {
+        setError("Acesso biométrico bloqueado por política de segurança (iframe). Use o link direto do app para ativar.");
+      } else if (err.name !== 'NotAllowedError') {
+        setError("Erro na autenticação biométrica do dispositivo.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,33 +105,11 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
         });
         if (err) throw err;
         setView('CHECK_EMAIL');
-      } else if (view === 'FORGOT_PASSWORD') {
-        const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
-        if (err) throw err;
-        setView('CHECK_EMAIL');
       }
     } catch (err: any) {
       setError(handleSupabaseError(err));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleBiometricLogin = async () => {
-    setLoading(true);
-    // Bridge com Flutter local_auth
-    if ((window as any).SigeaNative) {
-      try {
-        const success = await (window as any).SigeaNative.authenticateBiometrics();
-        if (success) onLogin();
-      } catch (e) {
-        setError("Falha na autenticação biométrica nativa.");
-      }
-    } else {
-      // Simulação para Web/Dev
-      setTimeout(() => { setLoading(false); onLogin(); }, 1000);
     }
   };
 
@@ -89,11 +124,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
         <div className="size-20 bg-primary/10 rounded-[2rem] flex items-center justify-center text-primary mb-8">
           <span className="material-symbols-outlined text-4xl">mail</span>
         </div>
-        <h2 className="text-2xl font-black uppercase tracking-tight mb-4">E-mail Enviado</h2>
-        <p className="text-xs font-bold text-zinc-500 text-center uppercase tracking-widest max-w-xs leading-relaxed">
-          Verifique sua caixa de entrada institucional para confirmar sua conta ou redefinir sua senha.
-        </p>
-        <button onClick={() => setView('SIGN_IN')} className="mt-12 text-primary font-black uppercase text-[10px] tracking-widest">Voltar para o Início</button>
+        <h2 className="text-2xl font-black uppercase tracking-tight mb-4 text-zinc-900 dark:text-white">E-mail Enviado</h2>
+        <p className="text-xs font-bold text-zinc-500 text-center uppercase tracking-widest max-w-xs leading-relaxed">Verifique sua caixa de entrada institucional.</p>
+        <button onClick={() => setView('SIGN_IN')} className="mt-12 text-primary font-black uppercase text-[10px] tracking-widest">Voltar</button>
       </div>
     );
   }
@@ -101,53 +134,74 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in fade-in overflow-y-auto no-scrollbar">
       <header className="p-6 flex items-center justify-between shrink-0">
-        <button onClick={() => view === 'SIGN_IN' ? onBack?.() : setView('SIGN_IN')} className="size-12 flex items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900 text-zinc-500 border border-zinc-100 dark:border-white/5"><span className="material-symbols-outlined font-black">arrow_back</span></button>
-        <span className="text-primary font-black text-lg tracking-tighter">SIGEA IFAL</span>
+        <button onClick={() => view === 'SIGN_IN' ? onBack?.() : setView('SIGN_IN')} className="size-12 flex items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900 text-zinc-500 border border-zinc-100 dark:border-white/5 shadow-sm active:scale-90 transition-all">
+          <span className="material-symbols-outlined font-black">arrow_back</span>
+        </button>
+        <span className="text-primary font-[1000] text-2xl tracking-tighter uppercase">SIGEA</span>
       </header>
 
-      <main className="flex-1 flex flex-col px-8 pb-20 max-w-md mx-auto justify-center w-full">
+      <main className="flex-1 flex flex-col px-6 pb-20 max-w-[440px] mx-auto justify-center w-full">
         <div className="space-y-12">
-          <header className="space-y-4">
-            <h1 className="text-[48px] font-[1000] tracking-tighter uppercase leading-[0.8]">
-              {view === 'SIGN_IN' ? 'Portal' : (view === 'SIGN_UP' ? 'Novo' : 'Recuperar')}
-              <br /><span className="text-primary">{view === 'FORGOT_PASSWORD' ? 'Senha' : 'Acesso'}</span>
+          <header className="space-y-4 text-center">
+            <h1 className="text-[54px] font-[1000] tracking-tighter uppercase leading-[0.85]">
+              {view === 'SIGN_IN' ? 'Portal de' : 'Novo'}
+              <br /><span className="text-primary">Acesso</span>
             </h1>
-            <p className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em]">
-              Sistema de Gestão de Eventos Acadêmicos
-            </p>
+            <p className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.4em]">Sistema de Eventos Acadêmicos</p>
           </header>
 
           <form onSubmit={handleAuth} className="space-y-8">
-            {error && <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[10px] font-black text-red-500 text-center">{error}</div>}
+            {error && (
+              <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-[10px] font-black text-red-500 text-center animate-in shake">
+                {error}
+              </div>
+            )}
 
-            <div className="space-y-5">
+            <div className="space-y-6">
               {view === 'SIGN_UP' && (
-                <input required type="text" placeholder="NOME COMPLETO" value={name} onChange={e => setName(e.target.value)} className="w-full h-18 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all uppercase" />
-              )}
-              <input required type="email" placeholder="E-MAIL INSTITUCIONAL" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-18 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all lowercase" />
-              {view !== 'FORGOT_PASSWORD' && (
-                <div className="relative">
-                  <input required type={showPassword ? "text" : "password"} placeholder="SENHA" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-18 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400"><span className="material-symbols-outlined">{showPassword ? 'visibility_off' : 'visibility'}</span></button>
+                <div className="space-y-3">
+                  <label className="text-[12px] font-black text-zinc-400 uppercase tracking-widest ml-4">Nome Completo</label>
+                  <input required type="text" placeholder="JOÃO SILVA" value={name} onChange={e => setName(e.target.value)} className="w-full h-20 bg-slate-50 dark:bg-zinc-900 border-2 border-slate-100 dark:border-white/5 rounded-[2.5rem] px-8 text-lg font-bold outline-none focus:border-primary/30 focus:ring-8 focus:ring-primary/5 transition-all uppercase text-zinc-900 dark:text-white" />
                 </div>
               )}
+              
+              <div className="space-y-3">
+                <label className="text-[12px] font-black text-zinc-400 uppercase tracking-widest ml-4">E-mail Institucional</label>
+                <input required type="email" placeholder="nome@ifal.edu.br" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-20 bg-slate-50 dark:bg-zinc-900 border-2 border-slate-100 dark:border-white/5 rounded-[2.5rem] px-8 text-lg font-bold outline-none focus:border-primary/30 focus:ring-8 focus:ring-primary/5 transition-all text-zinc-900 dark:text-white" />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[12px] font-black text-zinc-400 uppercase tracking-widest ml-4">Sua Senha</label>
+                <div className="relative">
+                  <input required type={showPassword ? "text" : "password"} placeholder="********" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-20 bg-slate-50 dark:bg-zinc-900 border-2 border-slate-100 dark:border-white/5 rounded-[2.5rem] px-8 text-lg font-bold outline-none focus:border-primary/30 focus:ring-8 focus:ring-primary/5 transition-all text-zinc-900 dark:text-white" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-8 top-1/2 -translate-y-1/2 text-zinc-400 active:scale-90 transition-transform">
+                    <span className="material-symbols-outlined text-[30px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <button disabled={loading} className="w-full h-20 bg-primary text-white font-[1000] rounded-[2rem] shadow-2xl shadow-primary/30 uppercase text-[12px] tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center">
-              {loading ? <div className="size-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : (view === 'SIGN_IN' ? 'Entrar Agora' : 'Confirmar')}
-            </button>
+            <div className="flex flex-col gap-4">
+              <button disabled={loading} className="w-full h-20 bg-primary text-white font-[1000] rounded-[2.5rem] shadow-2xl shadow-primary/30 uppercase text-[14px] tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center">
+                {loading ? <div className="size-8 border-4 border-white/30 border-t-white rounded-full animate-spin" /> : 'Entrar no Sistema'}
+              </button>
+
+              {view === 'SIGN_IN' && biometricSupported && (
+                <button 
+                  type="button"
+                  onClick={handleBiometricLogin}
+                  className="w-full h-20 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-2 border-zinc-100 dark:border-white/5 rounded-[2.5rem] flex items-center justify-center gap-4 transition-all active:scale-95 shadow-lg shadow-black/5"
+                >
+                  <span className="material-symbols-outlined text-3xl text-primary">fingerprint</span>
+                  <span className="text-[11px] font-black uppercase tracking-widest">Acesso com FaceID / Digital</span>
+                </button>
+              )}
+            </div>
           </form>
 
-          {view === 'SIGN_IN' && canUseBiometrics && (
-            <button onClick={handleBiometricLogin} className="w-full py-4 border-2 border-primary/20 rounded-2xl flex items-center justify-center gap-3 text-primary font-black text-[10px] uppercase tracking-widest animate-in fade-in">
-              <span className="material-symbols-outlined">fingerprint</span> Acesso Biométrico
-            </button>
-          )}
-
-          <footer className="text-center space-y-6">
-            {view === 'SIGN_IN' && <button onClick={() => setView('FORGOT_PASSWORD')} className="text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-primary transition-colors">Esqueci meus dados de acesso</button>}
-            <button onClick={() => setView(view === 'SIGN_IN' ? 'SIGN_UP' : 'SIGN_IN')} className="w-full text-primary font-[1000] uppercase text-[11px] tracking-widest">
-              {view === 'SIGN_IN' ? 'Criar nova conta institucional' : 'Já tenho uma conta'}
+          <footer className="text-center space-y-10 pt-6">
+            <button onClick={() => setView(view === 'SIGN_IN' ? 'SIGN_UP' : 'SIGN_IN')} className="w-full text-primary font-[1000] uppercase text-[12px] tracking-widest">
+              {view === 'SIGN_IN' ? 'Criar nova conta institucional' : 'Já possuo uma conta cadastrada'}
             </button>
           </footer>
         </div>
