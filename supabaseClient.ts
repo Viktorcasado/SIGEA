@@ -9,7 +9,10 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storageKey: 'sigea-auth-session-v4'
+    storageKey: 'sigea-auth-session-v5'
+  },
+  global: {
+    headers: { 'x-application-name': 'sigea-ifal-official' }
   }
 });
 
@@ -25,38 +28,25 @@ export const uploadFile = async (bucket: string, path: string, file: File) => {
     });
 
     if (error) throw error;
-
     const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(data.path);
     return publicUrl;
   } catch (error: any) {
-    console.error("Erro no Upload Storage:", error);
-    if (error.message === 'Failed to fetch' || error.name === 'TypeError' || !navigator.onLine) {
-      throw new Error('NETWORK_ERROR');
+    if (error.message === 'Failed to fetch' || !navigator.onLine) {
+      throw new Error('OFFLINE_ERROR');
     }
     throw error;
   }
 };
 
 export const handleSupabaseError = (error: any): string => {
-  if (!error) return 'Ocorreu um erro inesperado.';
-  
+  if (!error) return 'Erro desconhecido.';
   const msg = error.message?.toLowerCase() || '';
   
-  // Captura agressiva de qualquer erro de rede ou falha de fetch
-  if (
-    msg.includes('failed to fetch') || 
-    msg.includes('network error') || 
-    msg.includes('load failed') ||
-    error.name === 'TypeError' ||
-    error.message === 'NETWORK_ERROR' ||
-    !navigator.onLine
-  ) {
-    return 'Falha na conexão com o servidor. Suas alterações foram salvas localmente e serão sincronizadas depois.';
+  if (msg.includes('failed to fetch') || msg.includes('network') || error.message === 'OFFLINE_ERROR') {
+    return 'Conexão instável. Os dados foram mantidos localmente e serão sincronizados automaticamente.';
   }
+  if (msg.includes('refresh_token_not_found')) return 'Sessão expirada. Por favor, realize um novo login.';
+  if (msg.includes('database error')) return 'Erro de sincronização com o banco de dados institucional.';
   
-  if (msg.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
-  if (msg.includes('user already registered')) return 'Este e-mail já possui um cadastro ativo.';
-  if (msg.includes('payload too large')) return 'A imagem é muito grande (máx 5MB).';
-  
-  return error.message || 'Erro ao processar solicitação.';
+  return error.message || 'Erro ao processar requisição.';
 };

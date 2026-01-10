@@ -17,18 +17,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [biometrySupported, setBiometrySupported] = useState(false);
-  const [isBiometryEnabled, setIsBiometryEnabled] = useState(false);
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [campus, setCampus] = useState(CAMPUS_LIST[0]);
+  const [canUseBiometrics, setCanUseBiometrics] = useState(false);
 
   useEffect(() => {
-    if (window.PublicKeyCredential) {
-      setBiometrySupported(true);
-      setIsBiometryEnabled(localStorage.getItem('sigea_biometry_enabled') === 'true');
+    // Detecta se é mobile app via UserAgent ou bridge Flutter
+    const isApp = (window as any).flutter_inappwebview || navigator.userAgent.includes('SigeaMobile');
+    if (isApp && window.PublicKeyCredential) {
+      setCanUseBiometrics(localStorage.getItem('sigea_biometry_enabled') === 'true');
     }
   }, []);
 
@@ -37,29 +32,24 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
     setError(null);
     setLoading(true);
 
-    const normalizedEmail = email.trim().toLowerCase();
-
     try {
       if (view === 'SIGN_IN') {
-        const { error: err } = await supabase.auth.signInWithPassword({ 
-          email: normalizedEmail, 
-          password 
-        });
+        const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (err) throw err;
         onLogin();
       } else if (view === 'SIGN_UP') {
         const { error: err } = await supabase.auth.signUp({
-          email: normalizedEmail,
+          email: email.trim(),
           password,
           options: { 
-            data: { name: name.trim(), campus, role: 'PARTICIPANT' },
-            emailRedirectTo: window.location.origin
+            data: { name: name.trim(), campus, role: 'PARTICIPANT', user_type: 'ALUNO' },
+            emailRedirectTo: `${window.location.origin}/login`
           }
         });
         if (err) throw err;
         setView('CHECK_EMAIL');
       } else if (view === 'FORGOT_PASSWORD') {
-        const { error: err } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
           redirectTo: `${window.location.origin}/reset-password`,
         });
         if (err) throw err;
@@ -74,170 +64,90 @@ const Login: React.FC<LoginProps> = ({ onLogin, onBack }) => {
 
   const handleBiometricLogin = async () => {
     setLoading(true);
-    if (window.navigator.vibrate) window.navigator.vibrate(50);
-    setTimeout(() => {
-      setLoading(false);
-      onLogin();
-    }, 1200);
-  };
-
-  const handleGovBrLogin = async () => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google', 
-        options: { redirectTo: window.location.origin }
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      setError("O acesso gov.br está temporariamente indisponível. Use seu e-mail de acesso.");
-    } finally {
-      setLoading(false);
+    // Bridge com Flutter local_auth
+    if ((window as any).SigeaNative) {
+      try {
+        const success = await (window as any).SigeaNative.authenticateBiometrics();
+        if (success) onLogin();
+      } catch (e) {
+        setError("Falha na autenticação biométrica nativa.");
+      }
+    } else {
+      // Simulação para Web/Dev
+      setTimeout(() => { setLoading(false); onLogin(); }, 1000);
     }
   };
 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [campus, setCampus] = useState(CAMPUS_LIST[0]);
+
   if (view === 'CHECK_EMAIL') {
     return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center p-8 bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in zoom-in-95 duration-500">
-        <div className="w-full max-w-sm flex flex-col items-center text-center space-y-8">
-          <div className="size-20 bg-primary/10 rounded-[2rem] flex items-center justify-center text-primary mb-2 shadow-inner ring-1 ring-primary/20">
-            <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>mail</span>
-          </div>
-          <div className="space-y-3">
-            <h2 className="text-2xl font-black tracking-tight uppercase leading-none">Verifique seu E-mail</h2>
-            <p className="text-[12px] font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed uppercase tracking-tight px-4">
-              Enviamos um link de confirmação para o endereço informado. Verifique também sua caixa de spam.
-            </p>
-          </div>
-          <div className="w-full space-y-3">
-            <button onClick={() => window.open('mailto:', '_blank')} className="w-full h-16 bg-primary text-white font-black rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all uppercase text-[10px] tracking-widest">Abrir Caixa de Entrada</button>
-            <button onClick={() => setView('SIGN_IN')} className="w-full py-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-primary transition-colors">Voltar ao Início</button>
-          </div>
+      <div className="fixed inset-0 flex flex-col items-center justify-center p-8 bg-white dark:bg-[#09090b] animate-in zoom-in-95">
+        <div className="size-20 bg-primary/10 rounded-[2rem] flex items-center justify-center text-primary mb-8">
+          <span className="material-symbols-outlined text-4xl">mail</span>
         </div>
+        <h2 className="text-2xl font-black uppercase tracking-tight mb-4">E-mail Enviado</h2>
+        <p className="text-xs font-bold text-zinc-500 text-center uppercase tracking-widest max-w-xs leading-relaxed">
+          Verifique sua caixa de entrada institucional para confirmar sua conta ou redefinir sua senha.
+        </p>
+        <button onClick={() => setView('SIGN_IN')} className="mt-12 text-primary font-black uppercase text-[10px] tracking-widest">Voltar para o Início</button>
       </div>
     );
   }
 
   return (
     <div className="fixed inset-0 flex flex-col bg-white dark:bg-[#09090b] text-zinc-900 dark:text-white animate-in fade-in overflow-y-auto no-scrollbar">
-      <header className="p-6 flex items-center justify-between sticky top-0 z-50 w-full bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md border-b border-zinc-100 dark:border-white/5 shrink-0">
-        <button 
-          onClick={() => view === 'SIGN_IN' ? (onBack?.()) : setView('SIGN_IN')}
-          className="size-12 flex items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900 text-zinc-500 active:scale-90 transition-all border border-zinc-100 dark:border-white/5"
-        >
-          <span className="material-symbols-outlined font-black">arrow_back</span>
-        </button>
-        <span className="text-primary font-black text-lg tracking-tighter uppercase">SIGEA</span>
+      <header className="p-6 flex items-center justify-between shrink-0">
+        <button onClick={() => view === 'SIGN_IN' ? onBack?.() : setView('SIGN_IN')} className="size-12 flex items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900 text-zinc-500 border border-zinc-100 dark:border-white/5"><span className="material-symbols-outlined font-black">arrow_back</span></button>
+        <span className="text-primary font-black text-lg tracking-tighter">SIGEA IFAL</span>
       </header>
 
-      <main className="flex-1 flex flex-col px-6 pb-20 w-full max-w-md mx-auto justify-center min-h-[calc(100dvh-120px)]">
+      <main className="flex-1 flex flex-col px-8 pb-20 max-w-md mx-auto justify-center w-full">
         <div className="space-y-12">
           <header className="space-y-4">
-            <h1 className="text-[48px] font-[1000] tracking-tighter uppercase leading-[0.8] text-slate-900 dark:text-white">
-              {view === 'SIGN_IN' ? 'Acessar' : (view === 'SIGN_UP' ? 'Cadastrar' : 'Recuperar')}
-              <br /><span className="text-primary">Portal</span>
+            <h1 className="text-[48px] font-[1000] tracking-tighter uppercase leading-[0.8]">
+              {view === 'SIGN_IN' ? 'Portal' : (view === 'SIGN_UP' ? 'Novo' : 'Recuperar')}
+              <br /><span className="text-primary">{view === 'FORGOT_PASSWORD' ? 'Senha' : 'Acesso'}</span>
             </h1>
-            <p className="text-[11px] font-black text-zinc-400 dark:text-zinc-500 leading-relaxed uppercase tracking-[0.3em] max-w-[280px]">
-              {view === 'SIGN_IN' ? 'Portal de Identidade Digital e Gestão Acadêmica' : 'Preencha seus dados institucionais abaixo'}
+            <p className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em]">
+              Sistema de Gestão de Eventos Acadêmicos
             </p>
           </header>
 
-          <div className="space-y-10">
-            {view === 'SIGN_IN' && (
-              <div className="space-y-6">
-                {/* BOTÃO GOV.BR CORRIGIDO COM LOGO OFICIAL */}
-                <button 
-                  onClick={handleGovBrLogin}
-                  disabled={loading}
-                  className="w-full h-24 bg-[#004b82] hover:bg-[#00365d] text-white rounded-[2.5rem] shadow-2xl shadow-blue-900/30 flex items-center justify-center gap-6 transition-all active:scale-95 disabled:opacity-50 group border-b-[6px] border-blue-950 relative overflow-hidden"
-                >
-                  <div className="size-16 bg-white rounded-2xl flex items-center justify-center p-2.5 group-hover:rotate-6 transition-transform shadow-inner shrink-0 ml-4">
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/b/b3/Logo-govbr.png" 
-                      alt="gov.br" 
-                      className="w-full h-auto object-contain"
-                      loading="eager"
-                      onError={(e) => {
-                        // Fallback caso a imagem da wikimedia falhe
-                        (e.target as HTMLImageElement).src = 'https://www.gov.br/++theme++padrao_govbr/img/logo-govbr.png';
-                      }}
-                    />
-                  </div>
-                  <div className="flex flex-col items-start leading-none gap-1 pr-6">
-                    <span className="text-[11px] font-black uppercase tracking-[0.2em] opacity-80">Entrar com o</span>
-                    <span className="text-[26px] font-[1000] tracking-tighter uppercase">gov.br</span>
-                  </div>
-                </button>
-                
-                {isBiometryEnabled && (
-                  <button 
-                    onClick={handleBiometricLogin}
-                    disabled={loading}
-                    className="w-full h-18 bg-primary/10 border-2 border-primary/20 text-primary rounded-[2rem] flex items-center justify-center gap-4 transition-all active:scale-95 animate-in zoom-in"
-                  >
-                    <span className="material-symbols-outlined text-3xl font-black">fingerprint</span>
-                    <span className="text-[12px] font-black uppercase tracking-widest">Acesso Biométrico</span>
-                  </button>
-                )}
+          <form onSubmit={handleAuth} className="space-y-8">
+            {error && <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[10px] font-black text-red-500 text-center">{error}</div>}
 
-                <div className="flex items-center gap-4 px-2">
-                  <div className="h-px flex-1 bg-zinc-100 dark:bg-white/5"></div>
-                  <span className="text-[9px] font-black text-zinc-300 dark:text-zinc-700 uppercase tracking-[0.5em]">Ou via e-mail</span>
-                  <div className="h-px flex-1 bg-zinc-100 dark:bg-white/5"></div>
-                </div>
-              </div>
-            )}
-
-            <form onSubmit={handleAuth} className="space-y-8">
-              {error && (
-                <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-[10px] font-black text-red-500 text-center animate-in shake">
-                  {error}
+            <div className="space-y-5">
+              {view === 'SIGN_UP' && (
+                <input required type="text" placeholder="NOME COMPLETO" value={name} onChange={e => setName(e.target.value)} className="w-full h-18 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all uppercase" />
+              )}
+              <input required type="email" placeholder="E-MAIL INSTITUCIONAL" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-18 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all lowercase" />
+              {view !== 'FORGOT_PASSWORD' && (
+                <div className="relative">
+                  <input required type={showPassword ? "text" : "password"} placeholder="SENHA" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-18 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-white/5 rounded-2xl px-6 text-sm font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400"><span className="material-symbols-outlined">{showPassword ? 'visibility_off' : 'visibility'}</span></button>
                 </div>
               )}
+            </div>
 
-              <div className="space-y-5">
-                {view === 'SIGN_UP' && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest ml-4">Nome Completo</label>
-                    <input required type="text" placeholder="SEU NOME AQUI" value={name} onChange={e => setName(e.target.value)} className="w-full h-20 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 rounded-[2rem] px-8 text-base font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all uppercase text-slate-900 dark:text-white" />
-                  </div>
-                )}
+            <button disabled={loading} className="w-full h-20 bg-primary text-white font-[1000] rounded-[2rem] shadow-2xl shadow-primary/30 uppercase text-[12px] tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center">
+              {loading ? <div className="size-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div> : (view === 'SIGN_IN' ? 'Entrar Agora' : 'Confirmar')}
+            </button>
+          </form>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest ml-4">E-mail Institucional</label>
-                  <input required type="email" placeholder="EXEMPLO@EMAIL.COM" value={email} onChange={e => setEmail(e.target.value)} className="w-full h-20 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 rounded-[2rem] px-8 text-base font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all lowercase text-slate-900 dark:text-white" />
-                </div>
-                
-                {view !== 'FORGOT_PASSWORD' && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest ml-4">Senha de Acesso</label>
-                    <div className="relative">
-                      <input required type={showPassword ? "text" : "password"} placeholder="********" value={password} onChange={e => setPassword(e.target.value)} className="w-full h-20 bg-slate-50 dark:bg-zinc-900/50 border border-slate-100 dark:border-white/5 rounded-[2rem] px-8 text-base font-bold outline-none focus:ring-4 focus:ring-primary/10 transition-all text-slate-900 dark:text-white" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 size-12 flex items-center justify-center text-zinc-400 hover:text-primary transition-colors active:scale-90"><span className="material-symbols-outlined text-xl">{showPassword ? 'visibility_off' : 'visibility'}</span></button>
-                    </div>
-                  </div>
-                )}
-              </div>
+          {view === 'SIGN_IN' && canUseBiometrics && (
+            <button onClick={handleBiometricLogin} className="w-full py-4 border-2 border-primary/20 rounded-2xl flex items-center justify-center gap-3 text-primary font-black text-[10px] uppercase tracking-widest animate-in fade-in">
+              <span className="material-symbols-outlined">fingerprint</span> Acesso Biométrico
+            </button>
+          )}
 
-              <button 
-                disabled={loading} 
-                className="w-full h-22 bg-primary text-white font-[1000] rounded-[2.5rem] shadow-2xl shadow-primary/30 flex items-center justify-center uppercase text-[14px] tracking-[0.3em] active:scale-95 transition-all disabled:opacity-50 border-b-[6px] border-secondary"
-              >
-                {loading ? (
-                  <div className="size-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  view === 'SIGN_IN' ? 'ENTRAR AGORA' : (view === 'SIGN_UP' ? 'FINALIZAR CADASTRO' : 'ENVIAR LINK')
-                )}
-              </button>
-            </form>
-          </div>
-
-          <footer className="text-center pt-4 flex flex-col gap-8">
-            {view === 'SIGN_IN' && (
-              <button onClick={() => setView('FORGOT_PASSWORD')} className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.25em] hover:text-primary transition-colors">Perdeu os dados de acesso?</button>
-            )}
-            <button onClick={() => setView(view === 'SIGN_IN' ? 'SIGN_UP' : 'SIGN_IN')} className="text-[12px] font-[1000] text-primary uppercase tracking-[0.2em] hover:underline underline-offset-8 decoration-2">
-              {view === 'SIGN_IN' ? 'Criar nova conta institucional' : 'Já possui cadastro? Entrar'}
+          <footer className="text-center space-y-6">
+            {view === 'SIGN_IN' && <button onClick={() => setView('FORGOT_PASSWORD')} className="text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-primary transition-colors">Esqueci meus dados de acesso</button>}
+            <button onClick={() => setView(view === 'SIGN_IN' ? 'SIGN_UP' : 'SIGN_IN')} className="w-full text-primary font-[1000] uppercase text-[11px] tracking-widest">
+              {view === 'SIGN_IN' ? 'Criar nova conta institucional' : 'Já tenho uma conta'}
             </button>
           </footer>
         </div>
