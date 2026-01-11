@@ -1,143 +1,109 @@
--- Arquitetura de Banco de Dados - SIGEA
 -- Desenvolvido por Viktor Casado
--- Sistema Institucional de Gestão de Eventos Acadêmicos
+-- Projeto SIGEA – Sistema Institucional
+-- Atualização: Schema Completo de Autenticação e Perfis
 
--- [1] Configurações Iniciais
-SET timezone = 'America/Maceio';
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- [2] Enumerações (Tipos Fixos)
-CREATE TYPE tipo_usuario AS ENUM ('ALUNO', 'SERVIDOR', 'PROFESSOR', 'COMUNIDADE_EXTERNA');
-CREATE TYPE status_evento AS ENUM ('RASCUNHO', 'PUBLICADO', 'CANCELADO', 'ENCERRADO');
-CREATE TYPE tipo_certificado AS ENUM ('PARTICIPANTE', 'PALESTRANTE', 'ORGANIZADOR', 'VISITANTE', 'MONITOR');
+-- 1. ENUMS (Tipos Otimizados)
+DO $$ BEGIN
+    CREATE TYPE user_type_enum AS ENUM ('ALUNO', 'SERVIDOR', 'PROFESSOR', 'EXTERNO');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- [3] Tabela de Campi (IFAL)
-CREATE TABLE public.campi (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    nome TEXT NOT NULL,
-    cidade TEXT NOT NULL,
-    sigla TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+DO $$ BEGIN
+    CREATE TYPE user_role_enum AS ENUM ('PARTICIPANT', 'ORGANIZER', 'ADMIN');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- 2. TABELA PROFILES (Perfis de Usuário)
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  nome_completo TEXT NOT NULL,
+  email TEXT NOT NULL,
+  cpf TEXT,
+  tipo_usuario user_type_enum DEFAULT 'EXTERNO',
+  papel user_role_enum DEFAULT 'PARTICIPANT',
+  campus TEXT DEFAULT 'Reitoria',
+  foto_url TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Inserção de dados padrão (Campi do IFAL)
-INSERT INTO public.campi (nome, cidade, sigla) VALUES
-('Campus Maceió', 'Maceió', 'MAC'),
-('Campus Arapiraca', 'Arapiraca', 'ARA'),
-('Campus Palmeira dos Índios', 'Palmeira dos Índios', 'PIN'),
-('Campus Satuba', 'Satuba', 'SAT'),
-('Campus Marechal Deodoro', 'Marechal Deodoro', 'MAL'),
-('Campus Penedo', 'Penedo', 'PEN'),
-('Campus Rio Largo', 'Rio Largo', 'RLA'),
-('Campus Santana do Ipanema', 'Santana do Ipanema', 'SAN'),
-('Campus São Miguel dos Campos', 'São Miguel dos Campos', 'SMC'),
-('Campus Viçosa', 'Viçosa', 'VIC'),
-('Campus Coruripe', 'Coruripe', 'COR'),
-('Campus Murici', 'Murici', 'MUR'),
-('Campus Piranhas', 'Piranhas', 'PIR'),
-('Campus Maragogi', 'Maragogi', 'MAR'),
-('Campus Batalha', 'Batalha', 'BAT'),
-('Campus Benedito Bentes', 'Maceió', 'BEN');
+-- 3. RLS (Segurança)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- [4] Tabela de Perfis (Extensão de auth.users)
-CREATE TABLE public.profiles (
-    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-    full_name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    cpf TEXT UNIQUE,
-    matricula TEXT,
-    tipo_vinculo tipo_usuario DEFAULT 'COMUNIDADE_EXTERNA',
-    campus_id UUID REFERENCES public.campi(id),
-    avatar_url TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+CREATE POLICY "Public profiles are viewable by everyone." ON public.profiles
+  FOR SELECT USING (true);
 
--- [5] Tabela de Eventos
-CREATE TABLE public.eventos (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    titulo TEXT NOT NULL,
-    descricao TEXT,
-    banner_url TEXT,
-    data_inicio TIMESTAMP WITH TIME ZONE NOT NULL,
-    data_fim TIMESTAMP WITH TIME ZONE NOT NULL,
-    local TEXT NOT NULL,
-    campus_id UUID REFERENCES public.campi(id),
-    organizador_id UUID REFERENCES public.profiles(id),
-    status status_evento DEFAULT 'RASCUNHO',
-    carga_horaria INTEGER DEFAULT 4,
-    vagas_totais INTEGER DEFAULT 100,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+CREATE POLICY "Users can insert their own profile." ON public.profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
 
--- [6] Tabela de Inscrições
-CREATE TABLE public.inscricoes (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    evento_id UUID REFERENCES public.eventos(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-    check_in BOOLEAN DEFAULT FALSE,
-    data_check_in TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(evento_id, user_id)
-);
+CREATE POLICY "Users can update own profile." ON public.profiles
+  FOR UPDATE USING (auth.uid() = id);
 
--- [7] Tabela de Certificados
-CREATE TABLE public.certificados (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    inscricao_id UUID REFERENCES public.inscricoes(id) ON DELETE SET NULL,
-    user_id UUID REFERENCES public.profiles(id),
-    evento_id UUID REFERENCES public.eventos(id),
-    codigo_validacao TEXT UNIQUE NOT NULL, -- Hash único para validação pública
-    tipo tipo_certificado DEFAULT 'PARTICIPANTE',
-    texto_conteudo TEXT NOT NULL, -- Texto gerado estático para histórico
-    emitido_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- [8] Tabela de Logs Institucionais
-CREATE TABLE public.logs_sistema (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES public.profiles(id),
-    acao TEXT NOT NULL,
-    detalhes JSONB,
-    ip_address TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- [9] Triggers e Funções
-
--- Função para sincronizar automaticamente Usuário Auth -> Profile
+-- 4. TRIGGER PARA CRIAÇÃO AUTOMÁTICA DE PERFIL (Resiliência)
+-- Esta função cria um perfil automaticamente sempre que um novo usuário se cadastra no Auth
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, email, tipo_vinculo)
+  INSERT INTO public.profiles (id, nome_completo, email, tipo_usuario, papel)
   VALUES (
     new.id,
-    new.raw_user_meta_data->>'full_name',
+    COALESCE(new.raw_user_meta_data->>'full_name', 'Usuário Novo'),
     new.email,
-    COALESCE((new.raw_user_meta_data->>'tipo_vinculo')::tipo_usuario, 'COMUNIDADE_EXTERNA')
+    'EXTERNO',
+    'PARTICIPANT'
   );
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger de criação de usuário
-CREATE OR REPLACE TRIGGER on_auth_user_created
+-- Trigger
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
--- [10] Políticas de Segurança (RLS - Row Level Security)
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.eventos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.inscricoes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.certificados ENABLE ROW LEVEL SECURITY;
+-- 5. TABELA EVENTS (Eventos)
+CREATE TABLE IF NOT EXISTS public.events (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+  location TEXT,
+  cover_image_url TEXT,
+  created_by UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
--- Exemplo: Perfis são visíveis por todos (para listas de presença) mas editáveis apenas pelo dono
-CREATE POLICY "Perfis visíveis publicamente" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Usuários editam próprio perfil" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Events are viewable by everyone." ON public.events FOR SELECT USING (true);
 
--- Exemplo: Eventos visíveis para todos
-CREATE POLICY "Eventos públicos" ON public.eventos FOR SELECT USING (true);
+-- 6. TABELA REGISTRATIONS (Inscrições)
+CREATE TABLE IF NOT EXISTS public.registrations (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  event_id UUID REFERENCES public.events(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  checked_in_at TIMESTAMP WITH TIME ZONE,
+  certificate_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(event_id, user_id)
+);
 
--- Exemplo: Inscrições apenas visíveis pelo usuário ou admins (Admins precisariam de role management mais complexo, simplificado aqui)
-CREATE POLICY "Ver próprias inscrições" ON public.inscricoes FOR SELECT USING (auth.uid() = user_id);
+ALTER TABLE public.registrations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own registrations." ON public.registrations FOR SELECT USING (auth.uid() = user_id);
 
--- [FIM DO ARQUIVO]
+-- 7. TABELA LOGS (Auditoria)
+CREATE TABLE IF NOT EXISTS public.logs (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  action TEXT NOT NULL,
+  details JSONB,
+  user_id UUID REFERENCES public.profiles(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.logs ENABLE ROW LEVEL SECURITY;

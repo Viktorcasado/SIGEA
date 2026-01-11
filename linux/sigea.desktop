@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=SIGEA
+Comment=Sistema Integrado de Gestão de Eventos Acadêmicos
+Exec=/opt/sigea/sigea
+Icon=/opt/sigea/resources/icon.png
+Type=Application
+Categories=Education;Office;
+Terminal=false
+Encoding=UTF-8
+# Desenvolvido por Viktor Casado

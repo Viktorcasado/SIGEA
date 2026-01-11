@@ -1,0 +1,183 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Institutional Palette (Adaptable IFAL/MEC) */
+  --color-primary: 220 37% 20%;
+  /* Dark Blue/Grey for seriousness */
+  --color-primary-light: 217 91% 60%;
+  /* Vibrant Blue for accents */
+  --color-secondary: 340 82% 52%;
+  /* IFAL Red hint */
+  --color-success: 142 76% 36%;
+  --color-background: 210 40% 98%;
+  --color-surface: 0 0% 100%;
+  --color-text: 222 47% 11%;
+  --color-text-muted: 215 16% 47%;
+
+  /* Glass Effect Variables */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  --blur-strength: 12px;
+
+  /* Spacing & Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: 222 47% 11%;
+    --color-surface: 217 33% 17%;
+    --color-text: 210 40% 98%;
+    --color-text-muted: 215 20% 65%;
+
+    --glass-bg: rgba(17, 25, 40, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.125);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: hsl(var(--color-background));
+  color: hsl(var(--color-text));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s var(--ease-smooth), color 0.3s var(--ease-smooth);
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-strength));
+  -webkit-backdrop-filter: blur(var(--blur-strength));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-lg);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  transition: transform 0.2s var(--ease-smooth), box-shadow 0.2s var(--ease-smooth);
+}
+
+.dark .glass-card {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-card:active {
+  transform: scale(0.98);
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+/* Inputs & Forms (iOS Style) */
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  /* No border by default in glass, just bg */
+  background: rgba(0, 0, 0, 0.05);
+  color: inherit;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s var(--ease-smooth);
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  background: rgba(0, 0, 0, 0.02);
+  box-shadow: 0 0 0 2px hsl(var(--color-primary-light));
+}
+
+/* Buttons */
+.btn-primary {
+  background: hsl(var(--color-primary-light));
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  /* Pills for iOS */
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s var(--ease-spring), opacity 0.2s;
+}
+
+.btn-primary:active {
+  transform: scale(0.96);
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: hsl(var(--color-text));
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/**
+ * Desenvolvido por Viktor Casado
+ * Projeto SIGEA – Sistema Institucional
+ */

@@ -1,20 +1,56 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# SIGEA - Sistema Integrado de Gestão de Eventos Acadêmicos
+> Desenvolvido por Viktor Casado
 
-# Run and deploy your AI Studio app
+Sistema institucional multiplataforma (Web, PWA, Android, iOS, Desktop) com foco em experiência premium e arquitetura escalável.
 
-This contains everything you need to run your app locally.
+## 🚀 Tecnologias
 
-View your app in AI Studio: https://ai.studio/apps/drive/1QJHcL5eLwZ_l0kOeDv8D6TarWMmhzV7x
+- **Core**: React 18, TypeScript, Vite
+- **Estilo**: TailwindCSS + Design Tokens (Liquid Glass / iOS Token System)
+- **Backend/Auth**: Supabase (PostgreSQL)
+- **Mobile**: Capacitor (Android/iOS) via Web Wrapper
+- **Desktop**: Electron (Windows/Linux/macOS) via Web Wrapper
+- **Deploy**: Vercel (Web/PWA)
 
-## Run Locally
+## 📁 Estrutura do Projeto
 
-**Prerequisites:**  Node.js
+```bash
+/src
+  /auth         # Contexto de autenticação e Biometria
+  /components   # Componentes UI reutilizáveis
+  /lib          # Clientes externos (Supabase)
+  /pages        # Telas da aplicação
+  /theme        # Design System e Global CSS
+  /electron.js  # Entry-point para Desktop
+/public
+  /pwa          # Ícones e assets do PWA
+/supabase
+  /migrations   # SQL Schema e Policies
+/android        # Configuração nativa Android
+/ios            # Configuração nativa iOS
+/windows        # Instaladores Windows
+/linux          # Wrappers Linux
+/macos          # Configuração macOS
+```
 
+## 🛠️ Como rodar
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Desenvolvimento Web
+```bash
+npm install
+npm run dev
+```
+
+### Build para Produção
+```bash
+npm run build
+```
+
+### Supabase
+O schema do banco de dados está em `/supabase/schema.sql`. Execute no editor SQL do Supabase.
+
+## 📱 Mobile & Desktop
+As pastas `/android` e `/ios` contém as configurações para build nativo. Para Windows, utilize o script NSIS em `/windows`.
+
+---
+© 2024 Instituto Federal de Alagoas - IFAL
