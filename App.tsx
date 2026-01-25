@@ -1,0 +1,234 @@
+import React, { useState, useEffect } from 'react';
+import BottomNavBar from './components/BottomNavBar';
+import HomeScreen from './screens/HomeScreen';
+import EventsScreen from './screens/EventsScreen';
+import CertificatesScreen from './screens/CertificatesScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import EventDetailScreen from './screens/EventDetailScreen';
+import ManageAttendeesScreen from './screens/ManageAttendeesScreen';
+import SecurityScreen from './screens/SecurityScreen';
+import NotificationsScreen from './screens/NotificationsScreen';
+import ValidationScreen from './screens/ValidationScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
+import MySubscriptionsScreen from './screens/MySubscriptionsScreen';
+import HoursHistoryScreen from './screens/HoursHistoryScreen';
+import SupportScreen from './screens/SupportScreen';
+import AuthScreen from './screens/AuthScreen';
+import { Event, Activity } from './types';
+import { useUser } from './contexts/UserContext';
+import Icon from './components/Icon';
+import { supabase } from './services/supabaseClient';
+import FloatingActionButton from './components/FloatingActionButton';
+import AIAssistantModal from './components/AIAssistantModal';
+import AdminDashboardScreen from './screens/AdminDashboardScreen';
+import CreateEventScreen from './screens/CreateEventScreen';
+import CredentialScannerScreen from './screens/CredentialScannerScreen';
+import AddActivityScreen from './screens/AddActivityScreen';
+
+
+export type UserRole = 'participant' | 'organizer';
+
+type MainTabs = 'home' | 'events' | 'certificates' | 'profile';
+
+const App: React.FC = () => {
+  const { user, loading, error } = useUser();
+  const [activeTab, setActiveTab] = useState<MainTabs>('home');
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
+  const [activityToEdit, setActivityToEdit] = useState<Activity | null>(null);
+  const [userRole, setUserRole] = useState<UserRole>('participant');
+  const [activeSubScreen, setActiveSubScreen] = useState<string | null>(null);
+  const [isSplashing, setIsSplashing] = useState(true);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsSplashing(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleSelectEvent = (event: Event) => {
+    setSelectedEvent(event);
+  };
+
+  const handleEditEvent = (event: Event) => {
+    setEventToEdit(event);
+    setActiveSubScreen('Editar Evento');
+  };
+
+  const handleEditActivity = (activity: Activity) => {
+    setActivityToEdit(activity);
+    setSelectedEvent(selectedEvent); // Make sure event context is kept
+    setActiveSubScreen('Adicionar Atividade');
+  };
+
+  const handleBack = () => {
+    setSelectedEvent(null);
+    setEventToEdit(null);
+    setActivityToEdit(null);
+    setActiveSubScreen(null);
+  };
+  
+  const navigateTo = (screenTitle: string) => {
+    setActiveSubScreen(screenTitle);
+  }
+
+  const renderContent = () => {
+    if (activeSubScreen) {
+        switch (activeSubScreen) {
+            case 'Editar Perfil':
+                return <EditProfileScreen onBack={handleBack} />;
+            case 'Segurança':
+                return <SecurityScreen onBack={handleBack} />;
+            case 'Minhas Inscrições':
+                return <MySubscriptionsScreen onBack={handleBack} />;
+            case 'Histórico de Horas':
+                return <HoursHistoryScreen onBack={handleBack} />;
+            case 'Notificações':
+                return <NotificationsScreen onBack={handleBack} />;
+            case 'Central de Suporte':
+                return <SupportScreen onBack={handleBack} />;
+            case 'Validar Certificado':
+                return <ValidationScreen onBack={handleBack} />;
+             case 'Escanear Credencial':
+                if (!selectedEvent) {
+                    // Fallback in case this screen is reached without a selected event
+                    return <AdminDashboardScreen onSelectEvent={handleSelectEvent} onNavigate={navigateTo} onEditEvent={handleEditEvent} />;
+                }
+                return <CredentialScannerScreen event={selectedEvent} onBack={handleBack} />;
+            case 'Criar Novo Evento':
+                return <CreateEventScreen onBack={handleBack} />;
+            case 'Adicionar Atividade':
+                if (!selectedEvent) {
+                     return <AdminDashboardScreen onSelectEvent={handleSelectEvent} onNavigate={navigateTo} onEditEvent={handleEditEvent} />;
+                }
+                return <AddActivityScreen onBack={handleBack} eventId={selectedEvent.id} activityToEdit={activityToEdit} />;
+            case 'Editar Evento':
+                return <CreateEventScreen onBack={handleBack} eventToEdit={eventToEdit} />;
+            default:
+                return <EditProfileScreen onBack={handleBack} />;
+        }
+    }
+    if (selectedEvent) {
+      if (userRole === 'organizer') {
+        return <ManageAttendeesScreen event={selectedEvent} onBack={handleBack} onNavigate={navigateTo} onEditActivity={handleEditActivity} />;
+      }
+      return <EventDetailScreen event={selectedEvent} onBack={handleBack} />;
+    }
+
+    // "IndexedStack" implementation to preserve tab state
+    return (
+      <>
+        <div style={{ display: activeTab === 'home' ? 'block' : 'none' }}>
+            {userRole === 'organizer' ? (
+                <AdminDashboardScreen onSelectEvent={handleSelectEvent} onNavigate={navigateTo} onEditEvent={handleEditEvent} />
+            ) : (
+                <HomeScreen onSelectEvent={handleSelectEvent} onNavigate={navigateTo} />
+            )}
+        </div>
+        <div style={{ display: activeTab === 'events' ? 'block' : 'none' }}>
+            <EventsScreen onSelectEvent={handleSelectEvent} onNavigate={navigateTo} />
+        </div>
+        <div style={{ display: activeTab === 'certificates' ? 'block' : 'none' }}>
+            <CertificatesScreen onNavigate={navigateTo} />
+        </div>
+        <div style={{ display: activeTab === 'profile' ? 'block' : 'none' }}>
+             <ProfileScreen 
+                userRole={userRole} 
+                setUserRole={setUserRole} 
+                onNavigate={navigateTo} 
+            />
+        </div>
+      </>
+    );
+  };
+
+  if (isSplashing) {
+    return (
+        <div className="flex justify-center items-center h-screen bg-black animate-fade-out">
+            <img src="https://i.postimg.cc/SNqD0sSg/sigea-logo-white.png" alt="Sigea Logo" className="w-48" />
+             <style>{`
+                @keyframes fadeOut {
+                    0% { opacity: 1; }
+                    80% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+                .animate-fade-out {
+                    animation: fadeOut 2s ease-in-out forwards;
+                }
+            `}</style>
+        </div>
+    );
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-[#F2F2F7] dark:bg-[#121212]">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-ifal-green"></div>
+      </div>
+    );
+  }
+  
+  // Resilient Error Screen
+  if (error) {
+    // 2. DIAGNÓSTICO DE SESSÃO: Log da sessão atual no console
+    supabase.auth.getSession().then(({ data }) => {
+        console.log("Sessão Atual no momento do erro:", data.session);
+    });
+    
+    const handleLogoutAndLogin = async () => {
+        await supabase.auth.signOut();
+        window.location.reload();
+    };
+
+    return (
+        // 3. INTERFACE E CORES (MODO CLARO): Fundo surface (bg-[#F2F2F7]) e texto onSurface (text-gray-800)
+        <div className="flex flex-col justify-center items-center h-screen bg-[#F2F2F7] dark:bg-[#121212] p-6 text-center">
+            <Icon name="life-buoy" className="w-16 h-16 text-red-500 mb-4" />
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">Ops! Algo deu errado.</h2>
+            {/* 4. LOGS TÉCNICOS: Mensagem amigável, erro técnico no console (via UserContext) */}
+            <p className="text-gray-600 dark:text-gray-400 mt-2 max-w-sm">
+                Não foi possível carregar as informações. Verifique sua conexão ou tente novamente.
+            </p>
+             <p className="mt-2 text-xs text-red-400 dark:text-red-500/80 px-4 py-2 bg-red-500/10 rounded-md max-w-sm">
+                <b>Erro: </b>{error.substring(0, 50)}{error.length > 50 ? '...' : ''}
+            </p>
+            <div className="mt-8 flex flex-col space-y-3 w-full max-w-xs">
+                 <button 
+                    onClick={() => window.location.reload()}
+                    // 3. INTERFACE E CORES (MODO CLARO): Estilo de botão primário
+                    className="w-full bg-ifal-green text-white font-semibold py-3 px-8 rounded-xl hover:bg-emerald-600 transition-colors"
+                >
+                    Tentar Novamente
+                </button>
+                <button 
+                    onClick={handleLogoutAndLogin}
+                    // 2. DIAGNÓSTICO DE SESSÃO: Botão "Ir para Login"
+                    className="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold py-3 px-8 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                    Sair e Ir para Login
+                </button>
+            </div>
+        </div>
+    )
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
+  
+  const showNavBar = !selectedEvent && !activeSubScreen;
+  const showFab = showNavBar && userRole === 'participant';
+
+  return (
+    <div className="min-h-screen font-sans text-gray-900 dark:text-gray-100">
+      <div className="pb-24">
+        {renderContent()}
+      </div>
+      {showNavBar && <BottomNavBar activeTab={activeTab} setActiveTab={setActiveTab} />}
+      {showFab && <FloatingActionButton onClick={() => setIsAIAssistantOpen(true)} />}
+      <AIAssistantModal isOpen={isAIAssistantOpen} onClose={() => setIsAIAssistantOpen(false)} />
+    </div>
+  );
+};
+
+export default App;

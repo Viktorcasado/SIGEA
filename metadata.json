@@ -1,0 +1,7 @@
+{
+  "name": "SIGEA",
+  "description": "An institutional application for IFAL (Instituto Federal de Alagoas) called SIGEA (Integrated System for Academic Event Management). It serves as a dashboard for students to find events, manage their certificates, and view their profile.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
