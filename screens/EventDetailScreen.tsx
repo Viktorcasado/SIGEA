@@ -52,20 +52,33 @@ const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack }) 
     setActivitiesError(null);
 
     try {
-        const [activitiesRes, registrationsRes] = await Promise.all([
-            supabase.from('activities').select('*').eq('event_id', event.id).order('start_time'),
-            supabase.from('activity_registrations').select('activity_id').eq('user_id', user.id)
-        ]);
+        // Buscamos atividades primeiro (dado principal)
+        const { data: actsData, error: actsErr } = await supabase
+            .from('activities')
+            .select('*')
+            .eq('event_id', event.id)
+            .order('start_time');
         
-        if (activitiesRes.error) throw activitiesRes.error;
-        if (registrationsRes.error) throw registrationsRes.error;
+        if (actsErr) throw actsErr;
+        setActivities(actsData as Activity[] || []);
 
-        setActivities(activitiesRes.data as Activity[]);
-        setRegisteredActivities(new Set(registrationsRes.data.map(r => r.activity_id)));
+        // Buscamos inscrições separadamente para não quebrar a tela se falhar (ex: RLS)
+        try {
+            const { data: regsData, error: regsErr } = await supabase
+                .from('activity_registrations')
+                .select('activity_id')
+                .eq('user_id', user.id);
+            
+            if (!regsErr && regsData) {
+                setRegisteredActivities(new Set(regsData.map(r => r.activity_id)));
+            }
+        } catch (innerErr) {
+            console.warn("Aviso: Falha ao carregar inscrições de atividades, mas a programação foi carregada.");
+        }
 
     } catch (err: any) {
-        console.error("Error fetching event activities:", err);
-        setActivitiesError("Não foi possível carregar a programação do evento.");
+        console.error("[SIGEA] Erro ao carregar dados do evento:", err);
+        setActivitiesError(err.message || "Não foi possível carregar a programação.");
     } finally {
         setActivitiesLoading(false);
     }
@@ -229,16 +242,34 @@ const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack }) 
   const renderActivities = () => {
     if (activitiesLoading) {
       return (
-        <div className="flex justify-center items-center h-40">
+        <div className="flex flex-col justify-center items-center h-48 space-y-3">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-ifal-green"></div>
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Carregando Programação...</p>
         </div>
       );
     }
     if (activitiesError) {
-      return <div className="text-center p-8 text-red-500">{activitiesError}</div>;
+      return (
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+            <Icon name="life-buoy" className="w-10 h-10 mx-auto mb-3 text-red-500" />
+            <h4 className="font-bold text-gray-900 dark:text-white">Ops! Erro de Conexão</h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-4">{activitiesError}</p>
+            <button 
+                onClick={fetchEventData}
+                className="bg-ifal-green/10 text-ifal-green px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest"
+            >
+                Tentar Recarregar
+            </button>
+        </div>
+      );
     }
     if (activities.length === 0) {
-      return <div className="text-center p-8 text-gray-500 dark:text-gray-400">Nenhuma atividade cadastrada para este evento.</div>;
+      return (
+        <div className="text-center p-12 bg-gray-50 dark:bg-gray-900 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800">
+            <Icon name="layout" className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-700" />
+            <p className="text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest text-[11px]">Nenhuma atividade disponível</p>
+        </div>
+      );
     }
 
     return (
@@ -345,17 +376,17 @@ const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack }) 
         <div className="bg-ifal-green text-white inline-block px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg mb-4">
             {event.category}
         </div>
-        <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-[1.1] tracking-tight">{event.title}</h1>
+        <h1 className="text-3xl font-black text-gray-900 dark:text-white leading-[1.1] tracking-tight">{event.title}</h1>
 
-        <div className="mt-10 border-t border-gray-200 dark:border-gray-800 pt-8">
-             <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-4">Sobre o Evento</h3>
-             <p className="text-[17px] text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
+        <div className="mt-8 border-t border-gray-200 dark:border-gray-800 pt-8">
+             <h3 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Sobre o Evento</h3>
+             <p className="text-[16px] text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
                 {event.description || "Nenhuma descrição detalhada disponível."}
              </p>
         </div>
 
         <div className="mt-10 pt-8">
-             <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest mb-4">Programação</h3>
+             <h3 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-6">Programação</h3>
              {renderActivities()}
         </div>
       </div>
@@ -374,7 +405,7 @@ const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack }) 
             <button 
                 onClick={handleRegistration}
                 disabled={isRegistering || selectedActivities.size === 0}
-                className="flex-1 bg-ifal-green text-white h-16 rounded-[22px] font-black text-[16px] shadow-2xl shadow-ifal-green/30 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50"
+                className="flex-1 bg-ifal-green text-white h-16 rounded-[22px] font-black text-[15px] shadow-2xl shadow-ifal-green/30 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50"
             >
                 {isRegistering ? 'Sincronizando...' : (selectedActivities.size > 0 ? `Confirmar Inscrição (${selectedActivities.size})` : 'Selecione uma atividade')}
             </button>
