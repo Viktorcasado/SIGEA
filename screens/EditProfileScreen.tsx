@@ -25,6 +25,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isRemovingPhoto, setIsRemovingPhoto] = useState(false);
+  const [showActionSheet, setShowActionSheet] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -63,6 +64,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
       }
       setPreviewUrl(URL.createObjectURL(file));
       setShowError(false);
+      setShowActionSheet(false);
     }
   };
 
@@ -74,6 +76,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
       URL.revokeObjectURL(previewUrl);
     }
     setPreviewUrl(null);
+    setShowActionSheet(false);
   };
 
   const handleSave = async () => {
@@ -89,13 +92,11 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
 
     setIsSaving(true);
     
-    // Lógica de URL do Avatar: 
-    // Se isRemovingPhoto for true, vai para null.
-    // Senão, mantém a atual (sem o query string de cache) ou aguarda o novo upload.
+    // Lógica robusta de URL: se remover, é null. Senão, mantém atual ou nova.
     let finalAvatarUrl = isRemovingPhoto ? null : (user?.avatar_url?.split('?')[0] || null);
 
     try {
-      // 1. Upload de nova imagem se houver
+      // 1. Processar Upload se houver nova foto
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
         const filePath = `${user.id}/${Date.now()}.${fileExt}`;
@@ -118,7 +119,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
 
       const finalRegNumber = (userType === 'aluno' || userType === 'servidor') ? registrationNumber.trim() : '';
 
-      // 2. Sincronização com o Banco de Dados
+      // 2. Persistência no Supabase Profiles
       const updates = { 
         id: user.id,
         full_name: name.trim(), 
@@ -132,7 +133,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
       const { error: upsertError } = await supabase.from('profiles').upsert(updates);
       if (upsertError) throw upsertError;
       
-      // 3. Atualização do Contexto
+      // 3. Atualização do Contexto Global (com cache-busting)
       updateUserContext({ 
         full_name: name.trim(), 
         campus: campus, 
@@ -160,14 +161,17 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
   const registrationLabel = userType === 'aluno' ? 'Número de Matrícula' : 'SIAPE';
 
   return (
-    <div className="h-screen flex flex-col bg-[#F2F2F7] dark:bg-black font-sans">
+    <div className="h-screen flex flex-col bg-[#F2F2F7] dark:bg-black font-sans overflow-hidden">
       <PageHeader title="Editar Perfil" onBack={onBack} />
       
       <main className="flex-grow p-6 space-y-8 overflow-y-auto">
         {/* Avatar Section */}
         <div className="flex flex-col items-center">
             <div className="relative group">
-                <div className={`w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-xl overflow-hidden bg-gray-200 dark:bg-gray-800 transition-all active:scale-95 ${isSaving ? 'opacity-50' : ''}`}>
+                <div 
+                    onClick={() => setShowActionSheet(true)}
+                    className={`w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-xl overflow-hidden bg-gray-200 dark:bg-gray-800 transition-all active:scale-95 cursor-pointer ${isSaving ? 'opacity-50' : ''}`}
+                >
                     {currentAvatarSrc ? (
                         <img 
                           src={currentAvatarSrc} 
@@ -187,29 +191,16 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
                     )}
                 </div>
                 
-                {/* Botão para Alterar (Câmera) */}
                 <button 
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => setShowActionSheet(true)}
                     disabled={isSaving}
                     className="absolute bottom-1 right-1 w-10 h-10 bg-ifal-green rounded-full flex items-center justify-center text-white border-4 border-[#F2F2F7] dark:border-black shadow-lg active:scale-90 transition-all z-10"
                 >
-                    <Icon name="camera" className="w-5 h-5"/>
+                    <Icon name="pencil" className="w-4 h-4"/>
                 </button>
-
-                {/* Botão para Remover (Lixeira) - Visível apenas se houver foto */}
-                {currentAvatarSrc && (
-                  <button 
-                      onClick={handleRemovePhoto}
-                      disabled={isSaving}
-                      className="absolute top-1 right-1 w-8 h-8 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-red-500 border-2 border-[#F2F2F7] dark:border-black shadow-md active:scale-90 transition-all z-10"
-                      title="Remover foto"
-                  >
-                      <Icon name="trash" className="w-4 h-4"/>
-                  </button>
-                )}
             </div>
-            <p className="mt-4 text-[13px] font-bold text-gray-400 uppercase tracking-widest">
-              {currentAvatarSrc ? 'Alterar ou remover foto' : 'Toque na câmera para adicionar'}
+            <p className="mt-4 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+              Toque na foto para editar
             </p>
         </div>
         
@@ -221,7 +212,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
             accept="image/png, image/jpeg"
         />
 
-        <div className="space-y-5">
+        <div className="space-y-5 pb-20">
             <div className="space-y-1.5">
                 <label className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase ml-4 tracking-tighter">Nome Completo</label>
                 <input 
@@ -285,7 +276,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
             </div>
         )}
 
-        <div className="pt-4">
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-[#F2F2F7]/80 dark:bg-black/80 backdrop-blur-xl border-t border-black/5 dark:border-white/5 z-20">
             <button 
                 onClick={handleSave}
                 disabled={isSaving}
@@ -303,8 +294,36 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
         </div>
       </main>
 
+      {/* Action Sheet - Cupertino Style */}
+      {showActionSheet && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm p-3 animate-fade-in" onClick={() => setShowActionSheet(false)}>
+            <div className="bg-white/90 dark:bg-[#1C1C1E]/90 backdrop-blur-xl rounded-[14px] overflow-hidden animate-slide-up" onClick={e => e.stopPropagation()}>
+                <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-4 text-[17px] text-[#007AFF] font-medium border-b border-black/5 dark:border-white/5 active:bg-black/5"
+                >
+                    Escolher Nova Foto
+                </button>
+                {(user?.avatar_url || previewUrl) && (
+                    <button 
+                        onClick={handleRemovePhoto}
+                        className="w-full py-4 text-[17px] text-[#FF3B30] font-medium active:bg-black/5"
+                    >
+                        Remover Foto Atual
+                    </button>
+                )}
+            </div>
+            <button 
+                onClick={() => setShowActionSheet(false)}
+                className="mt-2 bg-white dark:bg-[#1C1C1E] w-full py-4 rounded-[14px] text-[17px] text-[#007AFF] font-bold animate-slide-up active:bg-black/5"
+            >
+                Cancelar
+            </button>
+        </div>
+      )}
+
       {/* Success Toast */}
-      <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 bg-ifal-green text-white px-8 py-4 rounded-full text-sm font-black uppercase tracking-widest shadow-2xl transition-all duration-500 z-50 flex items-center space-x-3 ${showSuccess ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+      <div className={`fixed bottom-24 left-1/2 -translate-x-1/2 bg-ifal-green text-white px-8 py-4 rounded-full text-sm font-black uppercase tracking-widest shadow-2xl transition-all duration-500 z-50 flex items-center space-x-3 ${showSuccess ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
           <Icon name="check" className="w-5 h-5" />
           <span>Perfil Atualizado</span>
       </div>
@@ -312,7 +331,9 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
       <style>{`
         .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
         .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes shake {
           10%, 90% { transform: translate3d(-1px, 0, 0); }
           20%, 80% { transform: translate3d(2px, 0, 0); }
