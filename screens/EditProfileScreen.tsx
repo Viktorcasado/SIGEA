@@ -24,6 +24,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isRemovingPhoto, setIsRemovingPhoto] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -33,76 +34,78 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
       setRegistrationNumber(user.registration_number || '');
     }
     return () => {
-      if (previewUrl) {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [user, previewUrl]);
+  }, [user]);
 
   const campuses = [
-    "Arapiraca (IFAL)",
-    "Arapiraca (UFAL)",
-    "Batalha (IFAL)",
-    "Coruripe (IFAL)",
-    "Delmiro Gouveia (UFAL)",
-    "Maceió (IFAL)",
-    "Maceió - A.C. Simões (UFAL)",
-    "Maragogi (IFAL)",
-    "Marechal Deodoro (IFAL)",
-    "Murici (IFAL)",
-    "Palmeira dos Índios (IFAL)",
-    "Penedo (IFAL)",
-    "Piranhas (IFAL)",
-    "Rio Largo (IFAL)",
-    "Santana do Ipanema (IFAL)",
-    "São Miguel dos Campos (IFAL)",
-    "Satuba (IFAL)",
-    "Viçosa (IFAL)"
+    "Arapiraca (IFAL)", "Arapiraca (UFAL)", "Batalha (IFAL)", "Coruripe (IFAL)",
+    "Delmiro Gouveia (UFAL)", "Maceió (IFAL)", "Maceió - A.C. Simões (UFAL)",
+    "Maragogi (IFAL)", "Marechal Deodoro (IFAL)", "Murici (IFAL)",
+    "Palmeira dos Índios (IFAL)", "Penedo (IFAL)", "Piranhas (IFAL)",
+    "Rio Largo (IFAL)", "Santana do Ipanema (IFAL)", "São Miguel dos Campos (IFAL)",
+    "Satuba (IFAL)", "Viçosa (IFAL)"
   ].sort((a, b) => a.localeCompare(b));
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const file = event.target.files[0];
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        setShowError("A imagem deve ter no máximo 2MB.");
+        return;
+      }
       setSelectedFile(file);
-      if (previewUrl) {
+      setIsRemovingPhoto(false);
+      if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
       setPreviewUrl(URL.createObjectURL(file));
+      setShowError(false);
     }
+  };
+
+  const handleRemovePhoto = () => {
+    if (navigator.vibrate) navigator.vibrate(10);
+    setSelectedFile(null);
+    setIsRemovingPhoto(true);
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
   };
 
   const handleSave = async () => {
     setShowError(false);
     if (!user) {
-      setShowError("Sessão inválida. Por favor, faça login novamente.");
+      setShowError("Sessão expirada. Refaça o login.");
       return;
     }
     if (!name.trim()) {
-      setShowError("O campo Nome não pode estar vazio.");
-      return;
-    }
-    
-    if ((userType === 'aluno' || userType === 'servidor') && !registrationNumber.trim()) {
-      const fieldName = userType === 'aluno' ? 'Número de Matrícula' : 'SIAPE';
-      setShowError(`O campo "${fieldName}" não pode estar vazio.`);
+      setShowError("O nome é obrigatório.");
       return;
     }
 
     setIsSaving(true);
     
-    // The current avatar URL in the context might already have a cache-buster.
-    // We get the clean URL before proceeding.
-    let newAvatarUrl = user?.avatar_url?.split('?')[0] || null;
+    // Lógica de URL do Avatar: 
+    // Se isRemovingPhoto for true, vai para null.
+    // Senão, mantém a atual (sem o query string de cache) ou aguarda o novo upload.
+    let finalAvatarUrl = isRemovingPhoto ? null : (user?.avatar_url?.split('?')[0] || null);
 
     try {
+      // 1. Upload de nova imagem se houver
       if (selectedFile) {
         const fileExt = selectedFile.name.split('.').pop();
-        // The path is stable, so overwriting is possible.
-        const filePath = `${user.id}.${fileExt}`;
+        const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(filePath, selectedFile, { upsert: true });
+          .upload(filePath, selectedFile, { 
+            upsert: true,
+            contentType: selectedFile.type 
+          });
 
         if (uploadError) throw uploadError;
 
@@ -110,84 +113,104 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
           .from('avatars')
           .getPublicUrl(filePath);
 
-        newAvatarUrl = urlData.publicUrl; // This is the clean URL.
+        finalAvatarUrl = urlData.publicUrl;
       }
 
-      const finalRegistrationNumber = (userType === 'aluno' || userType === 'servidor') ? registrationNumber.trim() : '';
+      const finalRegNumber = (userType === 'aluno' || userType === 'servidor') ? registrationNumber.trim() : '';
 
+      // 2. Sincronização com o Banco de Dados
       const updates = { 
         id: user.id,
         full_name: name.trim(), 
         campus: campus,
-        // Always save the clean URL to the database.
-        avatar_url: newAvatarUrl,
+        avatar_url: finalAvatarUrl,
         user_type: userType, 
-        registration_number: finalRegistrationNumber,
+        registration_number: finalRegNumber,
         updated_at: new Date().toISOString()
       };
 
       const { error: upsertError } = await supabase.from('profiles').upsert(updates);
       if (upsertError) throw upsertError;
       
-      // Update the context with a freshly cache-busted URL for immediate UI feedback.
+      // 3. Atualização do Contexto
       updateUserContext({ 
         full_name: name.trim(), 
         campus: campus, 
-        avatar_url: newAvatarUrl ? `${newAvatarUrl}?v=${Date.now()}` : null,
+        avatar_url: finalAvatarUrl ? `${finalAvatarUrl}?t=${Date.now()}` : null,
         user_type: userType,
-        registration_number: finalRegistrationNumber
+        registration_number: finalRegNumber
       });
 
+      if (navigator.vibrate) navigator.vibrate(50);
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
         onBack();
-      }, 2000);
+      }, 1500);
 
     } catch (error: any) {
-      let errorMessage = `LOG TÉCNICO: ${error.message}`;
-      console.error("--- ERRO AO SALVAR PERFIL ---", error);
-      setShowError(errorMessage);
+      console.error("Erro ao atualizar perfil:", error);
+      setShowError(`Erro técnico: ${error.message || 'Falha na conexão'}`);
     } finally {
       setIsSaving(false);
     }
   };
   
-  const currentAvatarSrc = previewUrl || user?.avatar_url;
+  const currentAvatarSrc = isRemovingPhoto ? null : (previewUrl || user?.avatar_url);
   const registrationLabel = userType === 'aluno' ? 'Número de Matrícula' : 'SIAPE';
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-[#F2F2F7] dark:bg-black font-sans">
       <PageHeader title="Editar Perfil" onBack={onBack} />
       
-      {isSaving && (
-        <div className="w-full bg-gray-200 dark:bg-gray-700 h-1 relative overflow-hidden">
-            <div className="w-full h-full bg-ifal-green absolute left-0 animate-pulse"></div>
-        </div>
-      )}
-
-      <main className="flex-grow p-6 space-y-6 overflow-y-auto">
-        <div className="flex flex-col items-center space-y-4">
-            <div className="relative">
-                {currentAvatarSrc ? (
-                    <img 
-                      src={currentAvatarSrc} 
-                      alt="Profile"
-                      className="w-28 h-28 rounded-full border-4 border-ifal-green object-cover bg-gray-300"
-                    />
-                ) : (
-                    <div className="w-28 h-28 rounded-full border-4 border-ifal-green bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                        <Icon name="user" className="w-16 h-16 text-gray-400 dark:text-gray-500" />
-                    </div>
-                )}
+      <main className="flex-grow p-6 space-y-8 overflow-y-auto">
+        {/* Avatar Section */}
+        <div className="flex flex-col items-center">
+            <div className="relative group">
+                <div className={`w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-xl overflow-hidden bg-gray-200 dark:bg-gray-800 transition-all active:scale-95 ${isSaving ? 'opacity-50' : ''}`}>
+                    {currentAvatarSrc ? (
+                        <img 
+                          src={currentAvatarSrc} 
+                          alt="Profile"
+                          className="w-full h-full object-cover animate-fade-in"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center animate-fade-in">
+                            <Icon name="user" className="w-16 h-16 text-gray-400" />
+                        </div>
+                    )}
+                    
+                    {isSaving && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <div className="w-8 h-8 border-4 border-ifal-green border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                </div>
+                
+                {/* Botão para Alterar (Câmera) */}
                 <button 
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 w-9 h-9 bg-ifal-green rounded-full flex items-center justify-center text-white border-2 border-white dark:border-gray-800"
-                    aria-label="Alterar Foto"
+                    disabled={isSaving}
+                    className="absolute bottom-1 right-1 w-10 h-10 bg-ifal-green rounded-full flex items-center justify-center text-white border-4 border-[#F2F2F7] dark:border-black shadow-lg active:scale-90 transition-all z-10"
                 >
                     <Icon name="camera" className="w-5 h-5"/>
                 </button>
+
+                {/* Botão para Remover (Lixeira) - Visível apenas se houver foto */}
+                {currentAvatarSrc && (
+                  <button 
+                      onClick={handleRemovePhoto}
+                      disabled={isSaving}
+                      className="absolute top-1 right-1 w-8 h-8 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-red-500 border-2 border-[#F2F2F7] dark:border-black shadow-md active:scale-90 transition-all z-10"
+                      title="Remover foto"
+                  >
+                      <Icon name="trash" className="w-4 h-4"/>
+                  </button>
+                )}
             </div>
+            <p className="mt-4 text-[13px] font-bold text-gray-400 uppercase tracking-widest">
+              {currentAvatarSrc ? 'Alterar ou remover foto' : 'Toque na câmera para adicionar'}
+            </p>
         </div>
         
         <input 
@@ -198,97 +221,105 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ onBack }) => {
             accept="image/png, image/jpeg"
         />
 
-        <div className="space-y-4">
-            <div>
-                <label htmlFor="full-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome Completo</label>
+        <div className="space-y-5">
+            <div className="space-y-1.5">
+                <label className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase ml-4 tracking-tighter">Nome Completo</label>
                 <input 
                     type="text" 
-                    id="full-name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl p-3 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-ifal-green"
+                    placeholder="Seu nome"
+                    className="w-full bg-white dark:bg-[#1C1C1E] text-gray-900 dark:text-white rounded-[16px] p-4 border border-black/5 dark:border-white/5 focus:outline-none focus:ring-2 focus:ring-ifal-green/50 transition-all"
                 />
             </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Vínculo</label>
-                <div className="flex w-full bg-gray-200 dark:bg-gray-800 rounded-xl p-1 space-x-1">
-                    <button 
-                        onClick={() => setUserType('aluno')}
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${userType === 'aluno' ? 'bg-white dark:bg-gray-900 text-ifal-green' : 'text-gray-600 dark:text-gray-400'}`}
-                    >
-                        Aluno
-                    </button>
-                    <button 
-                        onClick={() => setUserType('servidor')}
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${userType === 'servidor' ? 'bg-white dark:bg-gray-900 text-ifal-green' : 'text-gray-600 dark:text-gray-400'}`}
-                    >
-                        Servidor
-                    </button>
-                     <button 
-                        onClick={() => setUserType('externo')}
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${userType === 'externo' ? 'bg-white dark:bg-gray-900 text-ifal-green' : 'text-gray-600 dark:text-gray-400'}`}
-                    >
-                        Externo
-                    </button>
+            <div className="space-y-1.5">
+                <label className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase ml-4 tracking-tighter">Vínculo Institucional</label>
+                <div className="flex bg-gray-200 dark:bg-[#1C1C1E] rounded-[14px] p-1.5 space-x-1">
+                    {(['aluno', 'servidor', 'externo'] as UserType[]).map(type => (
+                        <button 
+                            key={type}
+                            onClick={() => setUserType(type)}
+                            className={`flex-1 py-2.5 rounded-[10px] text-xs font-black uppercase tracking-widest transition-all ${userType === type ? 'bg-white dark:bg-gray-800 text-ifal-green shadow-md scale-[1.02]' : 'text-gray-500'}`}
+                        >
+                            {type}
+                        </button>
+                    ))}
                 </div>
             </div>
 
             {(userType === 'aluno' || userType === 'servidor') && (
-                <div>
-                    <label htmlFor="registration-number" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{registrationLabel}</label>
+                <div className="space-y-1.5 animate-scale-up">
+                    <label className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase ml-4 tracking-tighter">{registrationLabel}</label>
                     <input 
                         type="number" 
-                        id="registration-number"
                         value={registrationNumber}
                         onChange={(e) => setRegistrationNumber(e.target.value)}
-                        inputMode="numeric"
-                        className="w-full bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl p-3 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-ifal-green"
+                        placeholder={userType === 'aluno' ? "Ex: 2024123456" : "Ex: 1234567"}
+                        className="w-full bg-white dark:bg-[#1C1C1E] text-gray-900 dark:text-white rounded-[16px] p-4 border border-black/5 dark:border-white/5 focus:outline-none focus:ring-2 focus:ring-ifal-green/50 transition-all"
                     />
                 </div>
             )}
 
-             <div>
-                <label htmlFor="campus" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Campus</label>
-                <select 
-                    id="campus"
-                    value={campus}
-                    onChange={(e) => setCampus(e.target.value)}
-                    className="w-full bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl p-3 border border-gray-400 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-ifal-green appearance-none"
-                >
-                    {campuses.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+             <div className="space-y-1.5">
+                <label className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase ml-4 tracking-tighter">Campus de Origem</label>
+                <div className="relative">
+                    <select 
+                        value={campus}
+                        onChange={(e) => setCampus(e.target.value)}
+                        className="w-full bg-white dark:bg-[#1C1C1E] text-gray-900 dark:text-white rounded-[16px] p-4 border border-black/5 dark:border-white/5 focus:outline-none focus:ring-2 focus:ring-ifal-green/50 transition-all appearance-none"
+                    >
+                        {campuses.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <Icon name="chevron-right" className="w-5 h-5 rotate-90" />
+                    </div>
+                </div>
             </div>
         </div>
         
         {showError && (
-            <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl relative text-sm" role="alert">
-                <strong className="font-semibold block mb-1">Falha ao Salvar</strong>
-                <span className="block">{showError}</span>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 p-4 rounded-[16px] flex items-start space-x-3 animate-shake">
+                <Icon name="life-buoy" className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p className="text-sm font-medium">{showError}</p>
             </div>
         )}
 
-        <button 
-            onClick={handleSave}
-            disabled={isSaving}
-            className="w-full bg-ifal-green text-white font-semibold py-3 rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center disabled:bg-emerald-700 disabled:cursor-not-allowed"
-        >
-            {isSaving ? (
-                <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Salvando...
-                </>
-            ) : ( 'Salvar Alterações' )}
-        </button>
+        <div className="pt-4">
+            <button 
+                onClick={handleSave}
+                disabled={isSaving}
+                className="w-full bg-ifal-green text-white font-black py-4 rounded-[18px] shadow-xl shadow-ifal-green/30 active:scale-[0.97] transition-all flex items-center justify-center disabled:opacity-50"
+            >
+                {isSaving ? (
+                    <div className="flex items-center space-x-3">
+                        <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span className="uppercase tracking-widest text-[14px]">Sincronizando...</span>
+                    </div>
+                ) : ( 
+                    <span className="uppercase tracking-widest text-[14px]">Salvar Alterações</span>
+                )}
+            </button>
+        </div>
       </main>
 
-      <div className={`fixed bottom-24 left-1/2 -translate-x-1/2 bg-ifal-green text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-all duration-300 ${showSuccess ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-          Perfil SIGEA Atualizado!
+      {/* Success Toast */}
+      <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 bg-ifal-green text-white px-8 py-4 rounded-full text-sm font-black uppercase tracking-widest shadow-2xl transition-all duration-500 z-50 flex items-center space-x-3 ${showSuccess ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+          <Icon name="check" className="w-5 h-5" />
+          <span>Perfil Atualizado</span>
       </div>
-      
+
+      <style>{`
+        .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes shake {
+          10%, 90% { transform: translate3d(-1px, 0, 0); }
+          20%, 80% { transform: translate3d(2px, 0, 0); }
+          30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+          40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+      `}</style>
     </div>
   );
 };
