@@ -206,7 +206,17 @@ const icons: Record<IconName, React.FC<{className?: string}>> = {
      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M11.412 15.655 9.75 21.75l2.25-8.25H12l-2.25 8.25-1.5-5.25m3-3-2.25 8.25M12 10.5h8.25L9.75 21.75 12 13.5H3.75m9-11.25L12 10.5m0-8.25 3.182 3.182m0 0-3.182 3.182m3.182-3.182L3.75 13.5m14.25-11.25-1.5 5.25m1.5-5.25-3.182 3.182m3.182-3.182-3.182 3.182" />
     </svg>
-  )
+  ),
+  'ellipsis-vertical': ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Zm0 6a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Zm0 6a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+    </svg>
+  ),
+  'lock-closed': ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+    </svg>
+  ),
 };
 
 const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {

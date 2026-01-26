@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Event } from '../types';
 import Icon from './Icon';
+import Logo from './Logo';
 
 interface FullEventCardProps {
   event: Event;
@@ -25,10 +26,8 @@ const FullEventCard: React.FC<FullEventCardProps> = ({ event, onClick }) => {
     >
       <div className="relative h-48 bg-white dark:bg-gray-900 flex items-center justify-center">
         {(!event.imageUrl || imageError) ? (
-          <img 
-            src="https://i.postimg.cc/d1wz2p28/sigea-logo-green.png" 
-            alt="Logo SIGEA" 
-            className="w-28 opacity-60" 
+          <Logo 
+            className="w-28 text-gray-300 dark:text-gray-700" 
           />
         ) : (
           <img 

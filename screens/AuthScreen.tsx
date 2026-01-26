@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import Icon from '../components/Icon';
+import Logo from '../components/Logo';
 
-const AuthScreen: React.FC = () => {
+interface AuthScreenProps {
+  initialView?: 'login' | 'register';
+  onBack?: () => void;
+  onForgotPassword?: () => void;
+}
+
+const AuthScreen: React.FC<AuthScreenProps> = ({ initialView = 'login', onBack, onForgotPassword }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -10,6 +17,10 @@ const AuthScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsLogin(initialView === 'login');
+  }, [initialView]);
 
   const handleAuthAction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +57,13 @@ const AuthScreen: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-[#F2F2F7] dark:bg-[#000000] animate-fade-in font-sans">
       {/* Cupertino Navigation Bar */}
       <header className="sticky top-0 z-20 h-11 flex items-center justify-center bg-white/80 dark:bg-[#1C1C1E]/80 backdrop-blur-xl border-b border-black/5 dark:border-white/5">
+        {onBack && (
+            <div className="absolute left-2">
+                <button onClick={onBack} className="p-2 text-gray-800 dark:text-gray-100 rounded-full hover:bg-gray-500/10 active:bg-gray-500/20">
+                    <Icon name="arrow-left" className="w-6 h-6" />
+                </button>
+            </div>
+        )}
         <h1 className="text-[17px] font-semibold text-gray-900 dark:text-white">
           {isLogin ? 'Entrar no SIGEA' : 'Criar Conta'}
         </h1>
@@ -53,11 +71,7 @@ const AuthScreen: React.FC = () => {
 
       <main className="flex-grow flex flex-col px-8 pt-12">
         <div className="flex justify-center mb-10">
-          <img 
-            src="https://i.postimg.cc/SNqD0sSg/sigea-logo-white.png" 
-            alt="SIGEA Logo" 
-            className="w-40 dark:invert-0 invert brightness-0 dark:brightness-100" 
-          />
+          <Logo className="w-28 h-28 text-ifal-green" />
         </div>
 
         <form onSubmit={handleAuthAction} className="space-y-4">
@@ -134,6 +148,7 @@ const AuthScreen: React.FC = () => {
           {isLogin && (
             <button
               type="button"
+              onClick={onForgotPassword}
               className="w-full text-center text-ifal-green text-[14px] font-medium py-2 active:opacity-50"
             >
               Esqueceu a senha?

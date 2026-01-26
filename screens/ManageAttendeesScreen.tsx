@@ -4,6 +4,8 @@ import Icon from '../components/Icon';
 import PageHeader from '../components/PageHeader';
 import { supabase } from '../services/supabaseClient';
 import ToggleSwitch from '../components/ToggleSwitch';
+import ActionSheet from '../components/ActionSheet';
+import AlertDialog from '../components/AlertDialog';
 
 interface ManageAttendeesScreenProps {
   event: Event;
@@ -41,7 +43,8 @@ const ManageAttendeesScreen: React.FC<ManageAttendeesScreenProps> = ({ event, on
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [isDeletingActivity, setIsDeletingActivity] = useState<number | null>(null);
+    const [selectedActivityForAction, setSelectedActivityForAction] = useState<Activity | null>(null);
+    const [activityToDelete, setActivityToDelete] = useState<Activity | null>(null);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -96,21 +99,16 @@ const ManageAttendeesScreen: React.FC<ManageAttendeesScreenProps> = ({ event, on
     }, [fetchData]);
     
     const handleDeleteActivity = async (activityId: number) => {
-        if (window.confirm("Isso excluirá permanentemente esta atividade. Confirmar?")) {
-            setIsDeletingActivity(activityId);
-            const { error: deleteError } = await supabase
-                .from('activities')
-                .delete()
-                .match({ id: activityId });
-            
-            if (deleteError) {
-                alert(`Erro: ${deleteError.message}`);
-                setIsDeletingActivity(null);
-            } else {
-                if (navigator.vibrate) navigator.vibrate(50);
-                setActivities(prev => prev.filter(a => a.id !== activityId));
-                setIsDeletingActivity(null);
-            }
+        const { error: deleteError } = await supabase
+            .from('activities')
+            .delete()
+            .match({ id: activityId });
+        
+        if (deleteError) {
+            alert(`Erro: ${deleteError.message}`);
+        } else {
+            if (navigator.vibrate) navigator.vibrate(50);
+            setActivities(prev => prev.filter(a => a.id !== activityId));
         }
     };
 
@@ -165,25 +163,13 @@ const ManageAttendeesScreen: React.FC<ManageAttendeesScreenProps> = ({ event, on
                                 {formatTime(activity.start_time)} • {activity.hours}h
                             </p>
                         </div>
-                        <div className="flex items-center space-x-1.5 ml-2">
-                            <button 
-                                onClick={() => onEditActivity(activity)} 
-                                className="w-11 h-11 flex items-center justify-center bg-blue-500/10 text-blue-500 rounded-full active:scale-90 transition-transform"
-                                title="Editar atividade"
+                        <div className="flex items-center ml-2">
+                             <button
+                                onClick={() => setSelectedActivityForAction(activity)}
+                                className="w-11 h-11 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-500/10 active:scale-90 transition-transform"
+                                title="Mais opções"
                             >
-                                <Icon name="pencil" className="w-5 h-5"/>
-                            </button>
-                            <button 
-                                onClick={() => handleDeleteActivity(activity.id)} 
-                                disabled={isDeletingActivity === activity.id}
-                                className="w-11 h-11 flex items-center justify-center bg-red-500/10 text-red-500 rounded-full active:scale-90 transition-transform disabled:opacity-50"
-                                title="Excluir atividade"
-                            >
-                                {isDeletingActivity === activity.id ? (
-                                    <div className="w-5 h-5 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin"></div>
-                                ) : (
-                                    <Icon name="trash" className="w-5 h-5"/>
-                                )}
+                                <Icon name="ellipsis-vertical" className="w-6 h-6" />
                             </button>
                         </div>
                     </div>
@@ -305,6 +291,53 @@ const ManageAttendeesScreen: React.FC<ManageAttendeesScreenProps> = ({ event, on
                     </section>
                 </div>
             </main>
+             <ActionSheet
+                isOpen={!!selectedActivityForAction}
+                onClose={() => setSelectedActivityForAction(null)}
+                title="Gerenciar Atividade"
+                actions={[
+                    {
+                        label: "Editar Programação",
+                        onClick: () => {
+                            if (selectedActivityForAction) {
+                                onEditActivity(selectedActivityForAction);
+                            }
+                            setSelectedActivityForAction(null);
+                        }
+                    },
+                    {
+                        label: "Excluir Atividade",
+                        isDestructive: true,
+                        onClick: () => {
+                            if (selectedActivityForAction) {
+                                setActivityToDelete(selectedActivityForAction);
+                            }
+                            setSelectedActivityForAction(null);
+                        }
+                    }
+                ]}
+            />
+            <AlertDialog
+                isOpen={!!activityToDelete}
+                title="Excluir Atividade?"
+                content="Esta ação não pode ser desfeita e removerá permanentemente a atividade da programação."
+                actions={[
+                    {
+                        label: "Cancelar",
+                        onClick: () => setActivityToDelete(null),
+                    },
+                    {
+                        label: "Excluir",
+                        isDestructive: true,
+                        onClick: () => {
+                            if (activityToDelete) {
+                                handleDeleteActivity(activityToDelete.id);
+                            }
+                            setActivityToDelete(null);
+                        },
+                    },
+                ]}
+            />
         </div>
     );
 };

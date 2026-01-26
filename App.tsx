@@ -13,7 +13,6 @@ import EditProfileScreen from './screens/EditProfileScreen';
 import MySubscriptionsScreen from './screens/MySubscriptionsScreen';
 import HoursHistoryScreen from './screens/HoursHistoryScreen';
 import SupportScreen from './screens/SupportScreen';
-import AuthScreen from './screens/AuthScreen';
 import { Event, Activity } from './types';
 import { useUser } from './contexts/UserContext';
 import Icon from './components/Icon';
@@ -24,6 +23,8 @@ import AdminDashboardScreen from './screens/AdminDashboardScreen';
 import CreateEventScreen from './screens/CreateEventScreen';
 import CredentialScannerScreen from './screens/CredentialScannerScreen';
 import AddActivityScreen from './screens/AddActivityScreen';
+import AuthenticationFlow from './screens/AuthenticationFlow';
+import Logo from './components/Logo';
 
 
 export type UserRole = 'participant' | 'organizer';
@@ -145,7 +146,7 @@ const App: React.FC = () => {
   if (isSplashing) {
     return (
         <div className="flex justify-center items-center h-screen bg-black animate-fade-out">
-            <img src="https://i.postimg.cc/SNqD0sSg/sigea-logo-white.png" alt="Sigea Logo" className="w-48" />
+            <Logo className="w-48 text-white" />
              <style>{`
                 @keyframes fadeOut {
                     0% { opacity: 1; }
@@ -213,7 +214,7 @@ const App: React.FC = () => {
   }
 
   if (!user) {
-    return <AuthScreen />;
+    return <AuthenticationFlow />;
   }
   
   const showNavBar = !selectedEvent && !activeSubScreen;

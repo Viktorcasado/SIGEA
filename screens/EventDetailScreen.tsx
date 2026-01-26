@@ -4,6 +4,7 @@ import Icon from '../components/Icon';
 import { useUser } from '../contexts/UserContext';
 import { supabase } from '../services/supabaseClient';
 import NotificationPermissionModal from '../components/NotificationPermissionModal';
+import Logo from '../components/Logo';
 
 interface EventDetailScreenProps {
   event: Event;
@@ -360,12 +361,16 @@ const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack }) 
   return (
     <div className="min-h-screen pb-40 bg-[#F2F2F7] dark:bg-black font-['-apple-system'] animate-fade-in">
       <div className="relative h-[45vh] bg-white dark:bg-gray-900 flex items-center justify-center overflow-hidden">
-        <img 
-          src={imageError || !event.imageUrl ? "https://i.postimg.cc/d1wz2p28/sigea-logo-green.png" : event.imageUrl} 
-          alt={event.title} 
-          className={imageError || !event.imageUrl ? "w-40 opacity-80" : "w-full h-full object-cover scale-105"} 
-          onError={() => setImageError(true)} 
-        />
+        {imageError || !event.imageUrl ? (
+          <Logo className="w-40 text-gray-200 dark:text-gray-800" />
+        ) : (
+          <img 
+            src={event.imageUrl} 
+            alt={event.title} 
+            className="w-full h-full object-cover scale-105"
+            onError={() => setImageError(true)} 
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#F2F2F7] dark:from-black via-transparent to-transparent"></div>
         <button onClick={onBack} className="absolute top-8 left-6 w-12 h-12 bg-black/20 backdrop-blur-xl rounded-full flex items-center justify-center text-white z-10 active:scale-90 transition-transform">
           <Icon name="arrow-left" className="w-6 h-6" />
