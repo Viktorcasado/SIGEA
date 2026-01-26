@@ -169,7 +169,7 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
 
     return (
         <div className="min-h-screen">
-            <MainHeader title="Certificados" onNavigate={onNavigate} />
+            <MainHeader onNavigate={onNavigate} />
             <main className="p-6">
                 {renderContent()}
             </main>

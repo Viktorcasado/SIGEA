@@ -128,22 +128,10 @@ const EventsScreen: React.FC<EventsScreenProps> = ({ onSelectEvent, onNavigate }
 
   return (
     <div className="min-h-screen">
-      <MainHeader title="Catálogo" onNavigate={onNavigate} />
+      <MainHeader onNavigate={onNavigate} />
       <main className="p-6">
         <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow">
-                    <Icon name="calendar" className="w-5 h-5 text-white" />
-                </div>
-                <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-400 tracking-wider">EVENTOS OFICIAIS IFAL</h2>
-            </div>
-            <button 
-                onClick={fetchEvents} 
-                className="text-gray-400 dark:text-gray-500 hover:text-ifal-green dark:hover:text-emerald-400 transition-colors p-2 rounded-full"
-                aria-label="Recarregar eventos"
-            >
-                <Icon name="arrows-outward" className="w-6 h-6" />
-            </button>
+            <h2 className="text-sm font-semibold text-gray-600 dark:text-gray-400 tracking-wider">TODOS OS EVENTOS</h2>
         </div>
         {renderContent()}
       </main>

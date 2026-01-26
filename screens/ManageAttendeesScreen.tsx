@@ -6,12 +6,14 @@ import { supabase } from '../services/supabaseClient';
 import ToggleSwitch from '../components/ToggleSwitch';
 import ActionSheet from '../components/ActionSheet';
 import AlertDialog from '../components/AlertDialog';
+import ContextMenu from '../components/ContextMenu';
 
 interface ManageAttendeesScreenProps {
   event: Event;
   onBack: () => void;
   onNavigate: (screen: string) => void;
   onEditActivity: (activity: Activity) => void;
+  isDesktop: boolean;
 }
 
 const getInitials = (name: string) => {
@@ -37,7 +39,7 @@ const UserTypeBadge: React.FC<{ type?: UserType }> = ({ type }) => {
     );
 };
 
-const ManageAttendeesScreen: React.FC<ManageAttendeesScreenProps> = ({ event, onBack, onNavigate, onEditActivity }) => {
+const ManageAttendeesScreen: React.FC<ManageAttendeesScreenProps> = ({ event, onBack, onNavigate, onEditActivity, isDesktop }) => {
     const [attendees, setAttendees] = useState<Attendee[]>([]);
     const [activities, setActivities] = useState<Activity[]>([]);
     const [loading, setLoading] = useState(true);
@@ -150,30 +152,71 @@ const ManageAttendeesScreen: React.FC<ManageAttendeesScreenProps> = ({ event, on
                 </div>
             )
         }
+
+        const activityListContainerClasses = isDesktop
+            ? "space-y-2"
+            : "bg-white dark:bg-[#1C1C1E] rounded-[32px] shadow-sm border border-black/5 dark:border-white/5 overflow-hidden";
+
         return (
-             <div className="bg-white dark:bg-[#1C1C1E] rounded-[32px] shadow-sm border border-black/5 dark:border-white/5 overflow-hidden">
-                {activities.map((activity, index) => (
-                    <div key={activity.id} className={`flex items-center p-5 ${index < activities.length - 1 ? 'border-b border-black/5 dark:border-white/5' : ''}`}>
-                         <div className="w-12 h-12 bg-ifal-green/10 dark:bg-ifal-green/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-                            <Icon name="layout" className="w-6 h-6 text-ifal-green" />
+             <div className={activityListContainerClasses}>
+                {activities.map((activity, index) => {
+                    const activityActions = [
+                        {
+                            label: "Editar Atividade",
+                            onClick: () => onEditActivity(activity)
+                        },
+                        {
+                            label: "Excluir Atividade",
+                            isDestructive: true,
+                            onClick: () => setActivityToDelete(activity)
+                        }
+                    ];
+
+                    const cardContent = (
+                        <>
+                            <div className="w-12 h-12 bg-ifal-green/10 dark:bg-ifal-green/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                <Icon name="layout" className="w-6 h-6 text-ifal-green" />
+                            </div>
+                            <div className="flex-1 ml-4 min-w-0">
+                                <p className="font-black text-gray-900 dark:text-gray-100 text-sm truncate leading-tight">{activity.title}</p>
+                                <p className="text-[11px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mt-0.5">
+                                    {formatTime(activity.start_time)} • {activity.hours}h
+                                </p>
+                            </div>
+                            {!isDesktop && (
+                                <div className="flex items-center ml-2">
+                                    <button
+                                        onClick={() => setSelectedActivityForAction(activity)}
+                                        className="w-11 h-11 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-500/10 active:scale-90 transition-transform"
+                                        title="Mais opções"
+                                    >
+                                        <Icon name="ellipsis-vertical" className="w-6 h-6" />
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    );
+
+                    if (isDesktop) {
+                         return (
+                            <ContextMenu
+                                key={activity.id}
+                                actions={activityActions}
+                                trigger={
+                                    <div className="flex items-center p-5 bg-white dark:bg-[#1C1C1E] rounded-xl border border-black/5 dark:border-white/5 group transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-context-menu">
+                                        {cardContent}
+                                    </div>
+                                }
+                            />
+                        );
+                    }
+
+                    return (
+                        <div key={activity.id} className={`flex items-center p-5 ${index < activities.length - 1 ? 'border-b border-black/5 dark:border-white/5' : ''}`}>
+                            {cardContent}
                         </div>
-                        <div className="flex-1 ml-4 min-w-0">
-                            <p className="font-black text-gray-900 dark:text-gray-100 text-sm truncate leading-tight">{activity.title}</p>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mt-0.5">
-                                {formatTime(activity.start_time)} • {activity.hours}h
-                            </p>
-                        </div>
-                        <div className="flex items-center ml-2">
-                             <button
-                                onClick={() => setSelectedActivityForAction(activity)}
-                                className="w-11 h-11 flex items-center justify-center text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-500/10 active:scale-90 transition-transform"
-                                title="Mais opções"
-                            >
-                                <Icon name="ellipsis-vertical" className="w-6 h-6" />
-                            </button>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         )
     }
@@ -292,7 +335,7 @@ const ManageAttendeesScreen: React.FC<ManageAttendeesScreenProps> = ({ event, on
                 </div>
             </main>
              <ActionSheet
-                isOpen={!!selectedActivityForAction}
+                isOpen={!!selectedActivityForAction && !isDesktop}
                 onClose={() => setSelectedActivityForAction(null)}
                 title="Gerenciar Atividade"
                 actions={[

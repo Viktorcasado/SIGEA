@@ -25,6 +25,7 @@ import CredentialScannerScreen from './screens/CredentialScannerScreen';
 import AddActivityScreen from './screens/AddActivityScreen';
 import AuthenticationFlow from './screens/AuthenticationFlow';
 import Logo from './components/Logo';
+import Sidebar from './components/Sidebar';
 
 
 export type UserRole = 'participant' | 'organizer';
@@ -41,6 +42,14 @@ const App: React.FC = () => {
   const [activeSubScreen, setActiveSubScreen] = useState<string | null>(null);
   const [isSplashing, setIsSplashing] = useState(true);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(window.matchMedia('(min-width: 768px)').matches);
+
+   useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    const handleResize = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mediaQuery.addEventListener('change', handleResize);
+    return () => mediaQuery.removeEventListener('change', handleResize);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsSplashing(false), 2000);
@@ -111,7 +120,7 @@ const App: React.FC = () => {
     }
     if (selectedEvent) {
       if (userRole === 'organizer') {
-        return <ManageAttendeesScreen event={selectedEvent} onBack={handleBack} onNavigate={navigateTo} onEditActivity={handleEditActivity} />;
+        return <ManageAttendeesScreen event={selectedEvent} onBack={handleBack} onNavigate={navigateTo} onEditActivity={handleEditActivity} isDesktop={isDesktop} />;
       }
       return <EventDetailScreen event={selectedEvent} onBack={handleBack} />;
     }
@@ -217,6 +226,20 @@ const App: React.FC = () => {
     return <AuthenticationFlow />;
   }
   
+  // DESKTOP LAYOUT
+  if (isDesktop) {
+    return (
+      <div className="h-screen w-screen flex font-sans text-gray-900 dark:text-gray-100 overflow-hidden">
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <main className="flex-1 bg-[#F2F2F7] dark:bg-black overflow-y-auto">
+          {renderContent()}
+        </main>
+        <AIAssistantModal isOpen={isAIAssistantOpen} onClose={() => setIsAIAssistantOpen(false)} />
+      </div>
+    );
+  }
+
+  // MOBILE LAYOUT
   const showNavBar = !selectedEvent && !activeSubScreen;
   const showFab = showNavBar && userRole === 'participant';
 
