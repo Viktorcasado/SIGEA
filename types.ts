@@ -12,6 +12,7 @@ export interface Event {
   document_url?: string;
   cert_pos_x?: number;
   cert_pos_y?: number;
+  cert_orientation?: 'landscape' | 'portrait';
 }
 
 export type IconName = 'home' | 'home_fill' | 'calendar' | 'calendar_fill' | 'star' | 'star_fill' | 'person_circle' | 'person_circle_fill' | 'bell' | 'search' | 'location' | 'robot' | 'layout' | 'arrow-left' | 'clock' | 'users' | 'qrcode' | 'pencil' | 'shield' | 'ticket' | 'bar-chart' | 'swatch' | 'life-buoy' | 'chevron-right' | 'users-group' | 'camera' | 'close' | 'user' | 'sparkles' | 'sparkles_fill' | 'map_fill' | 'plus' | 'trash' | 'check' | 'arrows-outward' | 'arrow-path' | 'clock_fill' | 'bolt' | 'bolt-slash' | 'ellipsis-vertical' | 'lock-closed' | 'list';
