@@ -26,10 +26,9 @@ import AddActivityScreen from './screens/AddActivityScreen';
 import AuthenticationFlow from './screens/AuthenticationFlow';
 import Logo from './components/Logo';
 import Sidebar from './components/Sidebar';
-
+import MainHeader from './components/MainHeader';
 
 export type UserRole = 'participant' | 'organizer';
-
 type MainTabs = 'home' | 'events' | 'certificates' | 'profile';
 
 const App: React.FC = () => {
@@ -44,7 +43,7 @@ const App: React.FC = () => {
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.matchMedia('(min-width: 768px)').matches);
 
-   useEffect(() => {
+  useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 768px)');
     const handleResize = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
     mediaQuery.addEventListener('change', handleResize);
@@ -67,7 +66,6 @@ const App: React.FC = () => {
 
   const handleEditActivity = (activity: Activity) => {
     setActivityToEdit(activity);
-    setSelectedEvent(selectedEvent); // Make sure event context is kept
     setActiveSubScreen('Adicionar Atividade');
   };
 
@@ -85,37 +83,22 @@ const App: React.FC = () => {
   const renderContent = () => {
     if (activeSubScreen) {
         switch (activeSubScreen) {
-            case 'Editar Perfil':
-                return <EditProfileScreen onBack={handleBack} />;
-            case 'Segurança':
-                return <SecurityScreen onBack={handleBack} />;
-            case 'Minhas Inscrições':
-                return <MySubscriptionsScreen onBack={handleBack} />;
-            case 'Histórico de Horas':
-                return <HoursHistoryScreen onBack={handleBack} />;
-            case 'Notificações':
-                return <NotificationsScreen onBack={handleBack} />;
-            case 'Central de Suporte':
-                return <SupportScreen onBack={handleBack} />;
-            case 'Validar Certificado':
-                return <ValidationScreen onBack={handleBack} />;
-             case 'Escanear Credencial':
-                if (!selectedEvent) {
-                    // Fallback in case this screen is reached without a selected event
-                    return <AdminDashboardScreen onSelectEvent={handleSelectEvent} onNavigate={navigateTo} onEditEvent={handleEditEvent} />;
-                }
+            case 'Editar Perfil': return <EditProfileScreen onBack={handleBack} />;
+            case 'Segurança': return <SecurityScreen onBack={handleBack} />;
+            case 'Minhas Inscrições': return <MySubscriptionsScreen onBack={handleBack} />;
+            case 'Histórico de Horas': return <HoursHistoryScreen onBack={handleBack} />;
+            case 'Notificações': return <NotificationsScreen onBack={handleBack} />;
+            case 'Central de Suporte': return <SupportScreen onBack={handleBack} />;
+            case 'Validar Certificado': return <ValidationScreen onBack={handleBack} />;
+            case 'Escanear Credencial':
+                if (!selectedEvent) return <AdminDashboardScreen onSelectEvent={handleSelectEvent} onNavigate={navigateTo} onEditEvent={handleEditEvent} />;
                 return <CredentialScannerScreen event={selectedEvent} onBack={handleBack} />;
-            case 'Criar Novo Evento':
-                return <CreateEventScreen onBack={handleBack} />;
+            case 'Criar Novo Evento': return <CreateEventScreen onBack={handleBack} />;
             case 'Adicionar Atividade':
-                if (!selectedEvent) {
-                     return <AdminDashboardScreen onSelectEvent={handleSelectEvent} onNavigate={navigateTo} onEditEvent={handleEditEvent} />;
-                }
+                if (!selectedEvent) return <AdminDashboardScreen onSelectEvent={handleSelectEvent} onNavigate={navigateTo} onEditEvent={handleEditEvent} />;
                 return <AddActivityScreen onBack={handleBack} eventId={selectedEvent.id} activityToEdit={activityToEdit} />;
-            case 'Editar Evento':
-                return <CreateEventScreen onBack={handleBack} eventToEdit={eventToEdit} />;
-            default:
-                return <EditProfileScreen onBack={handleBack} />;
+            case 'Editar Evento': return <CreateEventScreen onBack={handleBack} eventToEdit={eventToEdit} />;
+            default: return <EditProfileScreen onBack={handleBack} />;
         }
     }
     if (selectedEvent) {
@@ -125,9 +108,8 @@ const App: React.FC = () => {
       return <EventDetailScreen event={selectedEvent} onBack={handleBack} />;
     }
 
-    // "IndexedStack" implementation to preserve tab state
     return (
-      <>
+      <div className="animate-fade-in">
         <div style={{ display: activeTab === 'home' ? 'block' : 'none' }}>
             {userRole === 'organizer' ? (
                 <AdminDashboardScreen onSelectEvent={handleSelectEvent} onNavigate={navigateTo} onEditEvent={handleEditEvent} />
@@ -142,13 +124,9 @@ const App: React.FC = () => {
             <CertificatesScreen onNavigate={navigateTo} />
         </div>
         <div style={{ display: activeTab === 'profile' ? 'block' : 'none' }}>
-             <ProfileScreen 
-                userRole={userRole} 
-                setUserRole={setUserRole} 
-                onNavigate={navigateTo} 
-            />
+             <ProfileScreen userRole={userRole} setUserRole={setUserRole} onNavigate={navigateTo} />
         </div>
-      </>
+      </div>
     );
   };
 
@@ -156,16 +134,6 @@ const App: React.FC = () => {
     return (
         <div className="flex justify-center items-center h-screen bg-black animate-fade-out">
             <Logo className="w-48 text-white" />
-             <style>{`
-                @keyframes fadeOut {
-                    0% { opacity: 1; }
-                    80% { opacity: 1; }
-                    100% { opacity: 0; }
-                }
-                .animate-fade-out {
-                    animation: fadeOut 2s ease-in-out forwards;
-                }
-            `}</style>
         </div>
     );
   }
@@ -178,46 +146,17 @@ const App: React.FC = () => {
     );
   }
   
-  // Resilient Error Screen
   if (error) {
-    // 2. DIAGNÓSTICO DE SESSÃO: Log da sessão atual no console
-    supabase.auth.getSession().then(({ data }) => {
-        console.log("Sessão Atual no momento do erro:", data.session);
-    });
-    
-    const handleLogoutAndLogin = async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
-    };
-
     return (
-        // 3. INTERFACE E CORES (MODO CLARO): Fundo surface (bg-[#F2F2F7]) e texto onSurface (text-gray-800)
         <div className="flex flex-col justify-center items-center h-screen bg-[#F2F2F7] dark:bg-[#121212] p-6 text-center">
             <Icon name="life-buoy" className="w-16 h-16 text-red-500 mb-4" />
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">Ops! Algo deu errado.</h2>
-            {/* 4. LOGS TÉCNICOS: Mensagem amigável, erro técnico no console (via UserContext) */}
             <p className="text-gray-600 dark:text-gray-400 mt-2 max-w-sm">
                 Não foi possível carregar as informações. Verifique sua conexão ou tente novamente.
             </p>
-             <p className="mt-2 text-xs text-red-400 dark:text-red-500/80 px-4 py-2 bg-red-500/10 rounded-md max-w-sm">
-                <b>Erro: </b>{error.substring(0, 50)}{error.length > 50 ? '...' : ''}
-            </p>
-            <div className="mt-8 flex flex-col space-y-3 w-full max-w-xs">
-                 <button 
-                    onClick={() => window.location.reload()}
-                    // 3. INTERFACE E CORES (MODO CLARO): Estilo de botão primário
-                    className="w-full bg-ifal-green text-white font-semibold py-3 px-8 rounded-xl hover:bg-emerald-600 transition-colors"
-                >
-                    Tentar Novamente
-                </button>
-                <button 
-                    onClick={handleLogoutAndLogin}
-                    // 2. DIAGNÓSTICO DE SESSÃO: Botão "Ir para Login"
-                    className="w-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold py-3 px-8 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                    Sair e Ir para Login
-                </button>
-            </div>
+            <button onClick={() => window.location.reload()} className="mt-8 bg-ifal-green text-white font-semibold py-3 px-8 rounded-xl hover:bg-emerald-600 transition-colors">
+                Tentar Novamente
+            </button>
         </div>
     )
   }
@@ -226,20 +165,36 @@ const App: React.FC = () => {
     return <AuthenticationFlow />;
   }
   
-  // DESKTOP LAYOUT
   if (isDesktop) {
     return (
       <div className="h-screen w-screen flex font-sans text-gray-900 dark:text-gray-100 overflow-hidden">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-        <main className="flex-1 bg-[#F2F2F7] dark:bg-black overflow-y-auto">
-          {renderContent()}
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#F8F8FA] dark:bg-black">
+          <header className="h-16 flex items-center justify-between px-8 bg-white dark:bg-gray-900 border-b border-black/5 dark:border-white/5 z-20">
+             <h2 className="text-sm font-black uppercase tracking-widest text-gray-400">
+                {activeSubScreen || (activeTab === 'home' ? 'Painel de Controle' : activeTab)}
+             </h2>
+             <div className="flex items-center space-x-4">
+                <button 
+                  onClick={() => setIsAIAssistantOpen(true)}
+                  className="px-4 py-2 bg-ifal-green/10 text-ifal-green rounded-full text-xs font-black uppercase tracking-widest flex items-center space-x-2 hover:bg-ifal-green/20 transition-all"
+                >
+                   <Icon name="sparkles" className="w-4 h-4" />
+                   <span>Nayara AI</span>
+                </button>
+                <div className="w-px h-6 bg-black/5 dark:bg-white/5" />
+                <MainHeader onNavigate={navigateTo} />
+             </div>
+          </header>
+          <main className="flex-1 overflow-y-auto p-8 max-w-[1200px] mx-auto w-full">
+            {renderContent()}
+          </main>
+        </div>
         <AIAssistantModal isOpen={isAIAssistantOpen} onClose={() => setIsAIAssistantOpen(false)} />
       </div>
     );
   }
 
-  // MOBILE LAYOUT
   const showNavBar = !selectedEvent && !activeSubScreen;
   const showFab = showNavBar && userRole === 'participant';
 

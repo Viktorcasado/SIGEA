@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Certificate, Event } from '../types';
 import CertificateCard from '../components/CertificateCard';
@@ -6,6 +7,7 @@ import CertificateWidget from '../components/CertificateWidget';
 import { supabase } from '../services/supabaseClient';
 import Icon from '../components/Icon';
 import MainHeader from '../components/MainHeader';
+import { generateCertificatePDF } from '../services/pdfService';
 
 interface CertificatesScreenProps {
     onNavigate: (screen: string) => void;
@@ -15,6 +17,7 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
     const { user } = useUser();
     const [certificates, setCertificates] = useState<Certificate[]>([]);
     const [loading, setLoading] = useState(true);
+    const [downloading, setDownloading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
 
@@ -28,7 +31,6 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
         setError(null);
         
         try {
-            // 1. Fetch certificates for the user to get event IDs
             const { data: certsData, error: certsError } = await supabase
                 .from('certificates')
                 .select('id, code, event_id')
@@ -38,34 +40,29 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
 
             if (!certsData || certsData.length === 0) {
                 setCertificates([]);
+                setLoading(false);
                 return;
             }
 
-            // 2. Get unique event IDs to avoid duplicate queries
             const eventIds = [...new Set(certsData.map(cert => cert.event_id))];
 
-            // 3. Fetch all related events in a single query
             const { data: eventsData, error: eventsError } = await supabase
                 .from('events')
-                .select('id, title, date, category, location, image_url, workload, speakers, description, document_url')
+                .select('*') // Buscamos todos os campos, incluindo cert_pos_x e cert_pos_y
                 .in('id', eventIds);
 
             if (eventsError) throw eventsError;
 
-            // 4. Create a Map for efficient event lookup
             const eventsMap = new Map(eventsData.map(e => [e.id, e]));
 
-            // 5. Combine certificates with their event data
             const mappedCertificates = certsData.map((cert: any) => {
-                // FIX: Cast `eventData` to `any` to resolve multiple 'property does not exist on type unknown' errors.
                 const eventData: any = eventsMap.get(cert.event_id);
-                if (!eventData) return null; // Gracefully handle if an event is not found
+                if (!eventData) return null;
 
                 let formattedDate = eventData.date || 'Data não informada';
                 if (eventData.date) {
                     try {
                         const dateObj = new Date(eventData.date);
-                        // Check if the date is valid. If not, use the original string.
                         if (!isNaN(dateObj.getTime())) {
                             formattedDate = new Intl.DateTimeFormat('pt-BR', {
                                 day: '2-digit',
@@ -74,7 +71,6 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
                             }).format(dateObj).replace('.', '');
                         }
                     } catch (e) {
-                        // Keep the original string if parsing fails
                         console.error("Could not parse date:", eventData.date);
                     }
                 }
@@ -86,10 +82,12 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
                     category: eventData.category,
                     location: eventData.location,
                     imageUrl: eventData.image_url,
-                    hours: eventData.workload, // Map 'workload' from DB to 'hours' in type
+                    hours: eventData.workload,
                     speakers: eventData.speakers,
                     description: eventData.description,
                     document_url: eventData.document_url,
+                    cert_pos_x: eventData.cert_pos_x, // Importante para o PDF
+                    cert_pos_y: eventData.cert_pos_y,
                 };
                 
                 return {
@@ -99,7 +97,7 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
                     code: cert.code,
                     event: event,
                 };
-            }).filter((c): c is Certificate => c !== null); // Filter out nulls and type guard
+            }).filter((c): c is Certificate => c !== null);
 
             setCertificates(mappedCertificates);
 
@@ -114,6 +112,19 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
     useEffect(() => {
         fetchCertificates();
     }, [fetchCertificates]);
+
+    const handleDownload = async (certificate: Certificate) => {
+      if (!user) return;
+      setDownloading(true);
+      try {
+        await generateCertificatePDF(certificate, user);
+      } catch (e) {
+        console.error(e);
+        alert("Erro ao gerar o PDF. Verifique sua conexão.");
+      } finally {
+        setDownloading(false);
+      }
+    };
 
     const handleViewCertificate = (certificate: Certificate) => {
         setSelectedCertificate(certificate);
@@ -138,10 +149,7 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
                     <Icon name="life-buoy" className="w-16 h-16 mx-auto mb-4 text-red-500" />
                     <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Ocorreu um Erro</h3>
                     <p className="text-gray-600 dark:text-gray-400 mt-2 max-w-sm mx-auto">{error}</p>
-                    <button
-                        onClick={fetchCertificates}
-                        className="mt-6 bg-ifal-green text-white font-semibold py-2 px-6 rounded-xl hover:bg-emerald-600 transition-colors"
-                    >
+                    <button onClick={fetchCertificates} className="mt-6 bg-ifal-green text-white font-semibold py-2 px-6 rounded-xl hover:bg-emerald-600 transition-colors">
                         Tentar Novamente
                     </button>
                 </div>
@@ -175,16 +183,30 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
             </main>
 
             {selectedCertificate && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-                    <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-xl shadow-lg w-full max-w-sm flex flex-col items-center relative transition-transform duration-300 scale-95 animate-scale-up">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={handleCloseModal}>
+                    <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-xl shadow-lg w-full max-w-sm flex flex-col items-center relative animate-scale-up" onClick={e => e.stopPropagation()}>
                         <button onClick={handleCloseModal} className="absolute -top-3 -right-3 text-white bg-gray-800/50 rounded-full w-8 h-8 flex items-center justify-center z-10">
-                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                           <Icon name="close" className="w-4 h-4" />
                         </button>
                         
                         <CertificateWidget certificate={selectedCertificate} user={user} />
                         
-                        <button className="mt-6 w-full bg-ifal-green text-white font-semibold py-3 rounded-xl hover:bg-emerald-600 transition-colors">
-                            Baixar Certificado (.PDF)
+                        <button 
+                            onClick={() => handleDownload(selectedCertificate)}
+                            disabled={downloading}
+                            className="mt-6 w-full bg-ifal-green text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest shadow-xl shadow-ifal-green/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-3 disabled:opacity-50"
+                        >
+                            {downloading ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <span>Gerando Documento...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Icon name="calendar" className="w-5 h-5" />
+                                    <span>Baixar Certificado (.PDF)</span>
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
