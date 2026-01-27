@@ -33,6 +33,19 @@
   }
 }
 </script>
+<style>
+    @font-face {
+      font-family: 'SigeaFont';
+      src: url('/fonts/SigeaFont-Regular.woff2') format('woff2'),
+           url('/fonts/SigeaFont-Regular.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+    body {
+      font-family: 'SigeaFont', sans-serif;
+    }
+</style>
 <script>
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark')

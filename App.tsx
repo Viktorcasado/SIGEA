@@ -103,7 +103,7 @@ const App: React.FC = () => {
     }
     if (selectedEvent) {
       if (userRole === 'organizer') {
-        return <ManageAttendeesScreen event={selectedEvent} onBack={handleBack} onNavigate={navigateTo} onEditActivity={handleEditActivity} isDesktop={isDesktop} />;
+        return <ManageAttendeesScreen event={selectedEvent} onBack={handleBack} onNavigate={navigateTo} onEditActivity={handleEditActivity} onEditEvent={handleEditEvent} isDesktop={isDesktop} />;
       }
       return <EventDetailScreen event={selectedEvent} onBack={handleBack} />;
     }
@@ -133,7 +133,7 @@ const App: React.FC = () => {
   if (isSplashing) {
     return (
         <div className="flex justify-center items-center h-screen bg-black animate-fade-out">
-            <Logo className="w-48 text-white" />
+            <Logo className="w-48" />
         </div>
     );
   }

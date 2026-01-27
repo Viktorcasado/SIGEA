@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Logo from '../components/Logo';
 
@@ -12,8 +13,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLogin, onRegister }) =>
       <div />
       
       <div className="flex flex-col items-center">
-        <Logo className="w-28 h-28 text-ifal-green mb-4" />
-        <h1 className="text-4xl font-black text-gray-900 dark:text-white">SIGEA</h1>
+        <Logo className="w-40 mb-6" />
         <p className="text-lg text-gray-500 dark:text-gray-400">Portal de Eventos IFAL</p>
         <p className="mt-8 text-base text-gray-600 dark:text-gray-300 max-w-xs">
           Gerencie suas inscrições e certificados de forma simples e rápida.

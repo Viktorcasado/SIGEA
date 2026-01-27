@@ -88,6 +88,7 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
                     document_url: eventData.document_url,
                     cert_pos_x: eventData.cert_pos_x, // Importante para o PDF
                     cert_pos_y: eventData.cert_pos_y,
+                    cert_orientation: eventData.cert_orientation,
                 };
                 
                 return {
@@ -184,8 +185,8 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
 
             {selectedCertificate && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in" onClick={handleCloseModal}>
-                    <div className="bg-white dark:bg-gray-900 p-4 sm:p-6 rounded-xl shadow-lg w-full max-w-sm flex flex-col items-center relative animate-scale-up" onClick={e => e.stopPropagation()}>
-                        <button onClick={handleCloseModal} className="absolute -top-3 -right-3 text-white bg-gray-800/50 rounded-full w-8 h-8 flex items-center justify-center z-10">
+                    <div className="relative w-full max-w-2xl animate-scale-up" onClick={e => e.stopPropagation()}>
+                        <button onClick={handleCloseModal} className="absolute -top-2 -right-2 text-white bg-black/30 rounded-full w-8 h-8 flex items-center justify-center z-10 active:scale-90 transition-transform">
                            <Icon name="close" className="w-4 h-4" />
                         </button>
                         
@@ -194,7 +195,7 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
                         <button 
                             onClick={() => handleDownload(selectedCertificate)}
                             disabled={downloading}
-                            className="mt-6 w-full bg-ifal-green text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest shadow-xl shadow-ifal-green/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-3 disabled:opacity-50"
+                            className="mt-4 w-full bg-ifal-green text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest shadow-xl shadow-ifal-green/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-3 disabled:opacity-50"
                         >
                             {downloading ? (
                                 <>

@@ -71,7 +71,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ initialView = 'login', onBack, 
 
       <main className="flex-grow flex flex-col px-8 pt-12">
         <div className="flex justify-center mb-10">
-          <Logo className="w-28 h-28 text-ifal-green" />
+          <Logo className="w-28 h-28" />
         </div>
 
         <form onSubmit={handleAuthAction} className="space-y-4">

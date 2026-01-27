@@ -35,7 +35,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick }) => {
       <div className="absolute inset-0 bg-white dark:bg-gray-800 flex items-center justify-center">
         {(!event.imageUrl || imageError) ? (
             <Logo 
-                className="w-32 text-gray-200 dark:text-gray-700"
+                className="w-32"
             />
         ) : (
             <img 

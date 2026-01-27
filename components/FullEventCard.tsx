@@ -27,7 +27,7 @@ const FullEventCard: React.FC<FullEventCardProps> = ({ event, onClick }) => {
       <div className="relative h-48 bg-white dark:bg-gray-900 flex items-center justify-center">
         {(!event.imageUrl || imageError) ? (
           <Logo 
-            className="w-28 text-gray-300 dark:text-gray-700" 
+            className="w-28" 
           />
         ) : (
           <img 

@@ -68,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   return (
     <aside className="w-[250px] h-full bg-[#1A1A1A] flex flex-col flex-shrink-0 z-30 shadow-2xl overflow-y-auto">
       <div className="p-8 mb-4">
-        <Logo className="h-8 text-white" />
+        <Logo className="h-8" />
         <p className="text-[9px] text-gray-500 font-black uppercase tracking-[0.3em] mt-3 ml-1">Sistema Integrado</p>
       </div>
 
