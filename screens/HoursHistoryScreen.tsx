@@ -35,6 +35,8 @@ const HoursHistoryScreen: React.FC<HoursHistoryScreenProps> = ({ onBack }) => {
     fetchHistory();
   }, [user]);
 
+  const totalHours = history.reduce((acc, record) => acc + (record.hours || 0), 0);
+
   return (
     <div>
       <PageHeader title="Histórico de Horas" onBack={onBack} />
@@ -43,29 +45,43 @@ const HoursHistoryScreen: React.FC<HoursHistoryScreenProps> = ({ onBack }) => {
              <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ifal-green"></div>
             </div>
-        ) : history.length === 0 ? (
-             <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                <Icon name="bar-chart" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
-                <h3 className="text-xl font-semibold">Nenhuma hora registrada ainda.</h3>
-                <p>Quando você participar de eventos, eles aparecerão aqui.</p>
-            </div>
         ) : (
-          <div className="space-y-4">
-              {history.map(item => (
-                  <div key={item.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl flex justify-between items-center shadow-sm dark:shadow-none">
-                      <div>
-                          <p className="text-gray-900 dark:text-gray-100 font-semibold">{item.event_name}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{item.category}</p>
+          <>
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg mb-8 text-center border border-black/5 dark:border-white/5 animate-scale-up">
+              <Icon name="clock_fill" className="w-12 h-12 text-ifal-green mx-auto mb-4" />
+              <p className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Horas Válidas Acumuladas</p>
+              <p className="text-6xl font-black text-gray-900 dark:text-white tracking-tighter mt-2">{totalHours}</p>
+            </div>
+          
+            {history.length === 0 ? (
+                 <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+                    <Icon name="bar-chart" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
+                    <h3 className="text-xl font-semibold">Nenhuma hora registrada ainda.</h3>
+                    <p>Quando você participar de eventos, eles aparecerão aqui.</p>
+                </div>
+            ) : (
+              <div className="space-y-4">
+                  {history.map(item => (
+                      <div key={item.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl flex justify-between items-center shadow-sm dark:shadow-none">
+                          <div>
+                              <p className="text-gray-900 dark:text-gray-100 font-semibold">{item.event_name}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{item.category}</p>
+                          </div>
+                          <div className="flex items-center space-x-2 text-ifal-green font-semibold text-lg">
+                              <Icon name="clock" className="w-5 h-5" />
+                              <span>{item.hours}h</span>
+                          </div>
                       </div>
-                      <div className="flex items-center space-x-2 text-ifal-green font-semibold text-lg">
-                          <Icon name="clock" className="w-5 h-5" />
-                          <span>{item.hours}h</span>
-                      </div>
-                  </div>
-              ))}
-          </div>
+                  ))}
+              </div>
+            )}
+          </>
         )}
       </main>
+      <style>{`
+          .animate-scale-up { animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+          @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      `}</style>
     </div>
   );
 };

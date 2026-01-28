@@ -4,6 +4,9 @@ import Icon from '../components/Icon';
 import { useUser } from '../contexts/UserContext';
 import { supabase } from '../services/supabaseClient';
 import Logo from '../components/Logo';
+import NotificationPermissionModal from '../components/NotificationPermissionModal';
+import { requestNotificationPermission, scheduleNotificationForActivity, isNotificationScheduled } from '../services/notificationService';
+
 
 interface EventDetailScreenProps {
   event: Event;
@@ -23,6 +26,10 @@ const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack }) 
   const [selectedActivities, setSelectedActivities] = useState<Set<number>>(new Set());
   const [registeredActivities, setRegisteredActivities] = useState<Set<number>>(new Set());
   const [isRegistering, setIsRegistering] = useState(false);
+
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [isPermissionBlocked, setIsPermissionBlocked] = useState(Notification.permission === 'denied');
+  const [activitiesToNotify, setActivitiesToNotify] = useState<Activity[]>([]);
 
   const fetchEventData = useCallback(async () => {
     if (!user) {
@@ -71,9 +78,11 @@ const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack }) 
     setIsRegistering(true);
     
     try {
-        const registrations = Array.from(selectedActivities).map(id => ({ 
+        const justRegisteredActivities = activities.filter(act => selectedActivities.has(act.id));
+        
+        const registrations = justRegisteredActivities.map(act => ({ 
             event_id: event.id, 
-            activity_id: id, 
+            activity_id: act.id, 
             user_id: user.id 
         }));
 
@@ -85,6 +94,20 @@ const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack }) 
         setFeedback({ message: 'Inscrição realizada! ✅', type: 'success' });
         setRegisteredActivities(prev => new Set([...prev, ...selectedActivities]));
         setSelectedActivities(new Set());
+        
+        // Notification Logic
+        if ('Notification' in window) {
+            const permission = Notification.permission;
+            if (permission === 'granted') {
+                justRegisteredActivities.forEach(scheduleNotificationForActivity);
+            } else if (permission === 'default') {
+                setActivitiesToNotify(justRegisteredActivities);
+                setShowNotificationModal(true);
+            } else {
+                setIsPermissionBlocked(true);
+            }
+        }
+
     } catch (e) {
         setFeedback({ message: 'Erro ao processar inscrição.', type: 'error' });
     } finally {
@@ -92,6 +115,25 @@ const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack }) 
         setTimeout(() => setFeedback(null), 3000);
     }
   };
+
+  const handleAllowNotifications = async () => {
+    const permission = await requestNotificationPermission();
+    if (permission === 'granted') {
+        activitiesToNotify.forEach(scheduleNotificationForActivity);
+        setIsPermissionBlocked(false);
+    }
+    if (permission === 'denied') {
+        setIsPermissionBlocked(true);
+    }
+    setShowNotificationModal(false);
+    setActivitiesToNotify([]);
+  };
+
+  const handleDenyNotifications = () => {
+    setShowNotificationModal(false);
+    setActivitiesToNotify([]);
+  };
+
 
   const formatTime = (timeStr: string) => {
     try { return new Date(timeStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); } catch { return '--:--'; }
@@ -257,6 +299,13 @@ const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack }) 
             </button>
         </div>
       </div>
+      
+      <NotificationPermissionModal 
+        isOpen={showNotificationModal}
+        onAllow={handleAllowNotifications}
+        onDeny={handleDenyNotifications}
+        isBlocked={isPermissionBlocked}
+      />
 
       <style>{`
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
