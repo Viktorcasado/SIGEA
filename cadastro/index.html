@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Criar Conta | SIGEA IFAL</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #e8f5e9;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius-lg: 20px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .card { background: var(--surface); width: 100%; max-width: 420px; padding: 40px 32px; border-radius: 32px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-muted); font-size: 13px; font-weight: 700; margin-bottom: 32px; }
+        .header { text-align: center; margin-bottom: 32px; }
+        .header h1 { font-size: 24px; font-weight: 900; }
+        .form-group { margin-bottom: 20px; }
+        .label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+        .input-field { width: 100%; background: var(--bg); border: 1.5px solid var(--border); padding: 16px; border-radius: 16px; font-size: 15px; outline: none; }
+        .btn-submit { width: 100%; background: var(--primary); color: white; padding: 18px; border-radius: 18px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .footer-text { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+        .footer-text a { color: var(--primary); text-decoration: none; font-weight: 800; }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <a href="/" class="back-link">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Voltar ao Início
+        </a>
+        <div class="header"><h1>Criar sua Conta SIGEA</h1></div>
+        <form onsubmit="event.preventDefault(); alert('Cadastro simulado com sucesso. Verifique seu e-mail!'); window.location.href='/login/';">
+            <div class="form-group">
+                <label class="label">Nome Completo</label>
+                <input type="text" class="input-field" placeholder="Seu nome completo" required>
+            </div>
+            <div class="form-group">
+                <label class="label">E-mail Institucional</label>
+                <input type="email" class="input-field" placeholder="exemplo@aluno.ifal.edu.br" required>
+            </div>
+            <div class="form-group">
+                <label class="label">Crie uma Senha</label>
+                <input type="password" class="input-field" placeholder="Pelo menos 8 caracteres" required>
+            </div>
+            <button type="submit" class="btn-submit">Finalizar Cadastro</button>
+        </form>
+        <div style="text-align: center; margin-top: 24px;">
+            <p class="footer-text">Já possui uma conta? <a href="/login/">Faça login</a></p>
+        </div>
+    </main>
+</body>
+</html>

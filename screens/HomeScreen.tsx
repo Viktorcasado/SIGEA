@@ -1,101 +1,96 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import MainHeader from '../components/MainHeader';
-import EventCard from '../components/EventCard';
-import { Event } from '../types';
-import Icon from '../components/Icon';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
+import { Event } from '../types';
+import Logo from '../components/Logo';
+import Icon from '../components/Icon';
+import EventCard from '../components/EventCard';
+import { useNavigate } from 'react-router-dom';
+import Header from '../components/Header';
+import SearchBar from '../components/SearchBar';
+import FloatingActionButton from '../components/FloatingActionButton';
+import AIAssistantModal from '../components/AIAssistantModal';
 
-interface HomeScreenProps {
-  onSelectEvent: (event: Event) => void;
-  onNavigate: (screen: string) => void;
-}
-
-const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectEvent, onNavigate }) => {
-  const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
+const HomeScreen: React.FC = () => {
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchFeaturedEvents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Consumindo dados reais da tabela 'events'
-      const { data, error: dbError } = await supabase
-        .from('events')
-        .select('*')
-        .order('date', { ascending: true })
-        .limit(5);
-
-      if (dbError) throw dbError;
-
-      const mappedEvents: Event[] = data.map((event: any) => ({
-        id: event.id,
-        category: event.category,
-        date: event.date,
-        title: event.title,
-        location: event.location,
-        imageUrl: event.image_url,
-        hours: event.workload,
-        speakers: event.speakers,
-        description: event.description,
-        document_url: event.document_url,
-      }));
-
-      setFeaturedEvents(mappedEvents);
-
-    } catch (e: any) {
-      console.error("ERRO SUPABASE:", e.message);
-      setError("Falha ao sincronizar com o servidor.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchFeaturedEvents();
-  }, [fetchFeaturedEvents]);
-
-  const renderFeaturedContent = () => {
-    if (loading) {
-      return (
-        <div className="flex space-x-4 overflow-x-auto pb-6 scrollbar-hide pl-6 pr-6">
-            {[1, 2, 3].map(i => (
-                <div key={i} className="w-72 h-96 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse flex-shrink-0" />
-            ))}
-        </div>
-      );
-    }
-
-    if (error || featuredEvents.length === 0) {
-        return (
-            <div className="text-center h-80 flex flex-col justify-center items-center text-gray-500 px-6">
-                <Icon name="layout" className="w-12 h-12 mb-3 text-gray-300" />
-                <h3 className="font-bold text-lg">Sem Destaques</h3>
-                <p className="text-sm">Não há eventos agendados para este campus.</p>
-                <button onClick={fetchFeaturedEvents} className="mt-4 text-ifal-green font-bold text-sm">Atualizar</button>
-            </div>
-        );
-    }
-
-    return (
-      <div className="flex space-x-4 overflow-x-auto pb-6 scrollbar-hide pl-6 pr-6">
-        {featuredEvents.map(event => (
-          <EventCard key={event.id} event={event} onClick={() => onSelectEvent(event)} />
-        ))}
-      </div>
-    );
-  };
+    const fetchEvents = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .order('date', { ascending: true })
+          .limit(5);
+        
+        if (error) throw error;
+        setEvents(data || []);
+      } catch (err) {
+        console.error("Erro ao carregar eventos:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
 
   return (
-    <div className="animate-fade-in">
-      <MainHeader onNavigate={onNavigate} />
-      <main>
-        <div className="flex justify-between items-center px-6 mb-4 mt-2">
-          <h2 className="text-[11px] font-extrabold tracking-[0.2em] text-gray-400 border-l-4 border-ifal-green pl-3 uppercase">Destaques</h2>
-          <button onClick={() => onNavigate('events')} className="text-xs font-bold text-ifal-green uppercase">Ver Tudo</button>
+    <div className="pb-10 animate-fade">
+      <Header onNavigate={(target) => navigate(target === 'Editar Perfil' ? '/perfil/editar' : '/')} />
+      <SearchBar />
+
+      <div className="px-6 mb-8">
+        <h2 className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mb-4">Destaques da Semana</h2>
+        <div className="flex overflow-x-auto space-x-6 pb-4 scrollbar-hide snap-x">
+          {loading ? (
+            [1, 2, 3].map(i => <div key={i} className="min-w-[280px] h-96 bg-gray-200 dark:bg-gray-800 rounded-[28px] animate-pulse"></div>)
+          ) : (
+            events.map(event => (
+              <div key={event.id} className="snap-center">
+                <EventCard 
+                  event={event} 
+                  onClick={() => navigate(`/eventos`)} 
+                />
+              </div>
+            ))
+          )}
         </div>
-        {renderFeaturedContent()}
-      </main>
+      </div>
+
+      <div className="px-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Próximos Eventos</h2>
+          <button onClick={() => navigate('/eventos')} className="text-ifal-green text-[10px] font-black uppercase tracking-widest">Ver Todos</button>
+        </div>
+        
+        <div className="space-y-4">
+          {events.slice(0, 3).map(event => (
+            <button 
+              key={event.id} 
+              onClick={() => navigate('/eventos')}
+              className="w-full bg-white dark:bg-gray-800 p-5 rounded-[24px] border border-black/5 dark:border-white/5 flex items-center space-x-4 transition-all active:scale-[0.98] text-left"
+            >
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-900 rounded-2xl overflow-hidden flex-shrink-0">
+                {event.banner_url ? (
+                  <img src={event.banner_url} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <div className="w-full h-full bg-ifal-green/20 flex items-center justify-center"><Icon name="calendar" className="text-ifal-green w-6 h-6" /></div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900 dark:text-white truncate leading-tight">{event.title}</h3>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{new Date(event.date).toLocaleDateString('pt-BR')}</p>
+              </div>
+              <Icon name="chevron-right" className="w-5 h-5 text-gray-300" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <FloatingActionButton onClick={() => setIsAIModalOpen(true)} />
+      <AIAssistantModal isOpen={isAIModalOpen} onClose={() => setIsAIModalOpen(false)} />
     </div>
   );
 };

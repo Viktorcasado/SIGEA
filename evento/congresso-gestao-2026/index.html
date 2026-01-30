@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Congresso de Gestão Pública 2026 | SIGEA</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #00913F; --bg-body: #FFFFFF; --text-main: #0F172A;
+            --text-muted: #64748B; --border: #E2E8F0; --max-width: 1100px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); }
+        .container { max-width: var(--max-width); margin: 0 auto; padding: 0 24px; }
+        header { background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 16px 0; position: sticky; top: 0; z-index: 1000; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: 800; color: var(--primary); text-decoration: none; letter-spacing: -1px; }
+        nav ul { display: flex; gap: 24px; list-style: none; }
+        nav ul li a { text-decoration: none; font-size: 14px; font-weight: 600; color: var(--text-muted); }
+        .breadcrumb { padding: 24px 0 8px; font-size: 13px; color: var(--text-muted); }
+        .breadcrumb a { text-decoration: none; color: var(--text-muted); }
+        .event-header { padding: 40px 0 60px; }
+        .badge-closed { display: inline-flex; align-items: center; gap: 6px; background: #F1F5F9; color: #64748B; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 24px; }
+        .event-header h1 { font-size: clamp(32px, 5vw, 44px); font-weight: 800; line-height: 1.1; margin-bottom: 24px; letter-spacing: -1.5px; }
+        .event-summary { font-size: 18px; color: var(--text-muted); max-width: 850px; margin-bottom: 40px; }
+        .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 64px; padding-bottom: 100px; }
+        .section-title { font-size: 20px; font-weight: 800; margin-bottom: 24px; }
+        .materials-grid { display: grid; gap: 16px; }
+        .material-card { display: flex; align-items: center; padding: 20px; background: #F8FAFC; border: 1px solid var(--border); border-radius: 12px; text-decoration: none; }
+        .cert-widget { background: #F8FAFC; border: 1px solid var(--border); padding: 32px; border-radius: 20px; position: sticky; top: 100px; }
+        .btn { display: inline-flex; justify-content: center; width: 100%; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 700; text-decoration: none; border: none; margin-bottom: 12px; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-outline { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--primary); text-decoration: none; font-weight: 700; font-size: 14px; margin-top: 24px; }
+        footer { padding: 60px 0; border-top: 1px solid var(--border); text-align: center; background: #F8FAFC; }
+        @media (max-width: 992px) { .content-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container header-content">
+            <a href="/" class="logo">SIGEA</a>
+            <nav>
+                <ul>
+                    <li><a href="/">Início</a></li>
+                    <li><a href="/eventos/">Eventos</a></li>
+                    <li><a href="/certificado/">Certificados</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <nav class="breadcrumb">
+            <a href="/">SIGEA</a> <span>/</span> 
+            <a href="/eventos/">Eventos</a> <span>/</span> 
+            Congresso Gestão Pública 2026
+        </nav>
+        <section class="event-header">
+            <div class="badge-closed">Evento Encerrado</div>
+            <h1>Congresso de Gestão Pública 2026: Governança e Futuro</h1>
+        </section>
+
+        <div class="content-grid">
+            <div class="main-content">
+                <section>
+                    <h2 class="section-title">Materiais e Links do Evento</h2>
+                    <div class="materials-grid">
+                        <a href="#" class="material-card"><div><h4>Anais do Congresso (PDF)</h4></div></a>
+                    </div>
+                </section>
+            </div>
+            <aside>
+                <div class="cert-widget">
+                    <h3>Certificação</h3>
+                    <p>Os certificados para este evento já foram emitidos.</p>
+                    <a href="/certificado/" class="btn btn-primary">Validar Certificado</a>
+                    <a href="/eventos/" class="btn btn-outline">Ver Outros Eventos</a>
+                </div>
+            </aside>
+        </div>
+    </main>
+    <footer><p>© 2026 SIGEA — Sistema Integrado de Gestão de Eventos Acadêmicos</p></footer>
+</body>
+</html>

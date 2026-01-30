@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SEMINT 2026 — Detalhes | SIGEA IFAL</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-dark: #1b5e20;
+            --primary-light: #e8f5e9;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.5; padding-bottom: 100px; }
+        .container { padding: 0 20px; max-width: 800px; margin: 0 auto; }
+
+        .top-bar { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); padding: 15px 0; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); }
+        .header-content { display: flex; align-items: center; gap: 15px; }
+        .btn-back { width: 42px; height: 42px; background: var(--bg); border: 1px solid var(--border); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--text); text-decoration: none; transition: var(--transition); }
+        .btn-back:active { transform: scale(0.9); }
+        .page-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+
+        .hero { position: relative; margin-top: 20px; border-radius: var(--radius-xl); overflow: hidden; background: #eee; height: 240px; box-shadow: var(--shadow); }
+        .hero-img { width: 100%; height: 100%; object-fit: cover; }
+        .date-badge { position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.9); padding: 10px 15px; border-radius: 16px; text-align: center; box-shadow: var(--shadow); z-index: 10; }
+        .date-badge .day { display: block; font-weight: 900; font-size: 20px; color: var(--primary); line-height: 1; }
+        .date-badge .month { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
+
+        .event-header { margin-top: 25px; }
+        .status-pill { display: inline-block; padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 900; text-transform: uppercase; margin-bottom: 12px; background: var(--primary-light); color: var(--primary); }
+        .event-title { font-size: 28px; font-weight: 900; line-height: 1.1; letter-spacing: -1px; margin-bottom: 20px; }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
+        .info-card { background: var(--surface); padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+        .info-icon { width: 40px; height: 40px; background: var(--primary-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--primary); flex-shrink: 0; }
+        .info-text .label { display: block; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
+        .info-text .value { font-size: 13px; font-weight: 700; color: var(--text); }
+
+        .access-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .access-btn { background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: var(--radius-lg); display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit; transition: var(--transition); }
+        .access-btn:active { transform: scale(0.96); background: var(--bg); }
+        .access-btn .icon { width: 32px; height: 32px; color: var(--primary); }
+        .access-btn span { font-weight: 800; font-size: 14px; letter-spacing: -0.3px; }
+
+        .section-title { font-size: 14px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 15px; margin-top: 40px; }
+        .about-text { font-size: 15px; color: var(--text-muted); line-height: 1.6; }
+
+        .contact-box { background: var(--bg); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border); margin-top: 40px; text-align: center; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0 25px 0; z-index: 1000; }
+        .nav-item { text-align: center; text-decoration: none; color: var(--text-muted); font-size: 10px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 20%; opacity: 0.6; }
+        .nav-item.is-active { color: var(--primary); opacity: 1; }
+        .nav-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; }
+
+        @media (min-width: 600px) {
+            .access-grid { grid-template-columns: repeat(4, 1fr); }
+            .info-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="container header-content">
+            <a href="/eventos/" class="btn-back">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <h1 class="page-title">Detalhes do Evento</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="hero">
+            <div class="date-badge"><span class="day">23</span><span class="month">Out</span></div>
+            <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80" class="hero-img" alt="SEMINT 2026">
+        </div>
+
+        <div class="event-header">
+            <span class="status-pill">Inscrições abertas</span>
+            <h2 class="event-title">SEMINT 2026 — Semana de Meio Ambiente e Inovação Tecnológica</h2>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></div>
+                <div class="info-text"><span class="label">Local</span><span class="value">Campus Maceió</span></div>
+            </div>
+            <div class="info-card">
+                <div class="info-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
+                <div class="info-text"><span class="label">Data</span><span class="value">23 a 27/10</span></div>
+            </div>
+            <div class="info-card" style="grid-column: span 2;">
+                <div class="info-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                <div class="info-text"><span class="label">Carga Horária</span><span class="value">30 Horas Certificadas</span></div>
+            </div>
+        </div>
+
+        <h3 class="section-title">Sobre o Evento</h3>
+        <p class="about-text">A Semana de Meio Ambiente e Inovação Tecnológica (SEMINT) é o maior evento acadêmico integrado do IFAL. Nesta edição de 2026, exploraremos o nexo entre tecnologias emergentes e soluções sustentáveis para o semiárido e litoral alagoano.</p>
+
+        <h3 class="section-title">Acesso Rápido</h3>
+        <div class="access-grid">
+            <a href="/evento/semint-2026/inscricao/" class="access-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                <span>Inscrição</span>
+            </a>
+            <a href="/evento/semint-2026/atividades/" class="access-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>Atividades</span>
+            </a>
+            <a href="/evento/semint-2026/checkin/" class="access-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>Check-in</span>
+            </a>
+            <a href="/evento/semint-2026/certificado/" class="access-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+                <span>Certificado</span>
+            </a>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            Início
+        </a>
+        <a href="/eventos/" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Eventos
+        </a>
+        <a href="/checkin/" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            Check-in
+        </a>
+        <a href="/certificado/" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+            Certificados
+        </a>
+        <a href="/perfil/" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Perfil
+        </a>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const norm = (p) => {
+                if (!p) return "/";
+                let path = p.replace(/\/{2,}/g, "/");
+                if (path !== '/' && !path.endsWith('/')) path += '/';
+                return path;
+            };
+            const currentPath = norm(window.location.pathname);
+            document.querySelectorAll('.nav-item').forEach(el => {
+                const linkHref = el.getAttribute('href');
+                if (linkHref) {
+                    const route = norm(linkHref);
+                    const isHome = route === "/";
+                    const isActive = isHome ? currentPath === "/" : currentPath.startsWith(route);
+                    if (isActive) el.classList.add('is-active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

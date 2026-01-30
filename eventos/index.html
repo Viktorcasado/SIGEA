@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Eventos — SIGEA IFAL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius-xl: 28px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); padding-top: 70px; padding-bottom: 100px; }
+        .container { padding: 0 20px; max-width: 800px; margin: 0 auto; }
+
+        .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .logo { font-size: 22px; font-weight: 900; color: var(--primary); letter-spacing: -1px; text-decoration: none; }
+
+        .search-box { margin: 20px 0; position: relative; }
+        .search-input { width: 100%; padding: 16px 16px 16px 48px; border-radius: 18px; border: 1px solid var(--border); background: white; font-size: 14px; outline: none; transition: var(--transition); }
+        .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(46,125,50,0.1); }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+
+        .events-grid { display: grid; gap: 16px; }
+        .event-card { background: white; border-radius: var(--radius-xl); border: 1px solid var(--border); overflow: hidden; text-decoration: none; color: inherit; transition: var(--transition); display: flex; flex-direction: column; }
+        .event-card:active { transform: scale(0.98); }
+        .event-img { width: 100%; height: 160px; object-fit: cover; background: #eee; }
+        .event-body { padding: 20px; }
+        .event-tag { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--primary); background: rgba(46,125,50,0.1); padding: 4px 8px; border-radius: 6px; margin-bottom: 8px; display: inline-block; }
+        .event-title { font-size: 18px; font-weight: 800; line-height: 1.2; margin-bottom: 4px; }
+        .event-info { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0 25px 0; z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.02); }
+        .nav-item { text-align: center; text-decoration: none; color: var(--text-muted); font-size: 10px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 20%; opacity: 0.6; }
+        .nav-item.is-active { color: var(--primary); opacity: 1; }
+        .nav-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <a href="/" class="logo">SIGEA</a>
+    </header>
+
+    <main class="container">
+        <div class="search-box">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="searchInput" class="search-input" placeholder="Buscar eventos...">
+        </div>
+
+        <div class="events-grid" id="eventsGrid">
+            <a href="/evento/semint-2026/" class="event-card" data-title="SEMINT 2026 Semana de Informática">
+                <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=80" class="event-img">
+                <div class="event-body">
+                    <span class="event-tag">Inscrições Abertas</span>
+                    <h3 class="event-title">SEMINT 2026 — Semana de Informática</h3>
+                    <p class="event-info">23 Out • Campus Maceió</p>
+                </div>
+            </a>
+            <a href="/evento/feira-ambiental/" class="event-card" data-title="Feira de Ciências Ambientais">
+                <div class="event-body">
+                    <span class="event-tag" style="color:#f59e0b; background:rgba(245,158,11,0.1)">Em breve</span>
+                    <h3 class="event-title">Feira de Ciências Ambientais</h3>
+                    <p class="event-info">Novembro • Marechal Deodoro</p>
+                </div>
+            </a>
+            <a href="/evento/congresso-gestao-2026/" class="event-card" data-title="Congresso de Gestão Pública 2026">
+                 <div class="event-body">
+                    <span class="event-tag" style="color:#ef4444; background:rgba(239,68,68,0.1)">Encerrado</span>
+                    <h3 class="event-title">Congresso de Gestão Pública</h3>
+                    <p class="event-info">Agosto • Campus Arapiraca</p>
+                </div>
+            </a>
+            <a href="#" class="event-card" data-title="Mostra de Projetos de Extensão">
+                <div class="event-body">
+                    <span class="event-tag">Extensão</span>
+                    <h3 class="event-title">Mostra de Projetos de Extensão</h3>
+                    <p class="event-info">Janeiro 2027 • Campus Satuba</p>
+                </div>
+            </a>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+            Início
+        </a>
+        <a href="/eventos/" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Eventos
+        </a>
+        <a href="/checkin/" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            Check-in
+        </a>
+        <a href="/certificado/" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+            Certificados
+        </a>
+        <a href="/perfil/" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Perfil
+        </a>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const norm = (p) => {
+                if (!p) return "/";
+                let path = p.replace(/\/{2,}/g, "/");
+                if (path !== '/' && !path.endsWith('/')) path += '/';
+                return path;
+            };
+            const currentPath = norm(window.location.pathname);
+
+            document.querySelectorAll('.nav-item').forEach(el => {
+                const linkHref = el.getAttribute('href');
+                if (linkHref) {
+                    const route = norm(linkHref);
+                    const isHome = route === "/";
+                    const isActive = isHome ? currentPath === "/" : currentPath.startsWith(route);
+                    if (isActive) el.classList.add('is-active');
+                }
+            });
+
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                document.querySelectorAll('.event-card').forEach(card => {
+                    const title = (card.dataset.title || "").toLowerCase();
+                    card.style.display = title.includes(term) ? 'flex' : 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

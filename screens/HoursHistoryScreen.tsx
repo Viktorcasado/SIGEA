@@ -1,87 +1,91 @@
 import React, { useState, useEffect } from 'react';
-import PageHeader from '../components/PageHeader';
-import Icon from '../components/Icon';
-import { useUser } from '../contexts/UserContext';
 import { supabase } from '../services/supabaseClient';
-import { HoursRecord } from '../types';
+import { useUser } from '../contexts/UserContext';
+import { Registration } from '../types';
+import { Clock, Award, CheckCircle2 } from 'lucide-react';
 
-interface HoursHistoryScreenProps {
-  onBack: () => void;
-}
-
-const HoursHistoryScreen: React.FC<HoursHistoryScreenProps> = ({ onBack }) => {
+const HoursHistoryScreen: React.FC = () => {
   const { user } = useUser();
-  const [history, setHistory] = useState<HoursRecord[]>([]);
+  const [history, setHistory] = useState<Registration[]>([]);
+  const [totalHours, setTotalHours] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchHistory = async () => {
       if (!user) return;
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('hours_history')
-        .select('id, event_name, hours, category')
-        .eq('user_id', user.id)
-        .order('date_confirmed', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching hours history', error);
-      } else {
-        setHistory(data as HoursRecord[]);
+      try {
+        const { data, error } = await supabase
+          .from('registrations')
+          .select('*, events(*)')
+          .eq('user_id', user.id)
+          .eq('status', 'confirmed');
+
+        if (error) throw error;
+
+        const confirmedRegs = data as Registration[];
+        setHistory(confirmedRegs);
+
+        // Lógica de soma automática workload (Prompt Mestre)
+        const total = confirmedRegs.reduce((acc, curr) => acc + (curr.events?.workload || 0), 0);
+        setTotalHours(total);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchHistory();
   }, [user]);
 
-  const totalHours = history.reduce((acc, record) => acc + (record.hours || 0), 0);
-
   return (
-    <div>
-      <PageHeader title="Histórico de Horas" onBack={onBack} />
-      <main className="p-6">
-        {loading ? (
-             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ifal-green"></div>
-            </div>
-        ) : (
-          <>
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg mb-8 text-center border border-black/5 dark:border-white/5 animate-scale-up">
-              <Icon name="clock_fill" className="w-12 h-12 text-ifal-green mx-auto mb-4" />
-              <p className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Horas Válidas Acumuladas</p>
-              <p className="text-6xl font-black text-gray-900 dark:text-white tracking-tighter mt-2">{totalHours}</p>
-            </div>
-          
-            {history.length === 0 ? (
-                 <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                    <Icon name="bar-chart" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
-                    <h3 className="text-xl font-semibold">Nenhuma hora registrada ainda.</h3>
-                    <p>Quando você participar de eventos, eles aparecerão aqui.</p>
+    <div className="max-w-4xl mx-auto space-y-8">
+      <header>
+        <h1 className="text-3xl font-black text-[#1e293b] tracking-tight">Histórico de Horas</h1>
+        <p className="text-gray-500 font-medium">Sua evolução acadêmica documentada</p>
+      </header>
+
+      {/* Contador Centralizado */}
+      <div className="bg-gradient-to-br from-[#2e7d32] to-[#1b5e20] p-10 rounded-[32px] text-white shadow-2xl shadow-green-900/20 relative overflow-hidden text-center">
+        <Clock size={120} className="absolute -right-8 -bottom-8 opacity-10 rotate-12" />
+        <h2 className="text-sm font-black uppercase tracking-[0.2em] opacity-80 mb-2">Total de Carga Horária Válida</h2>
+        <div className="text-7xl font-black tracking-tighter">
+          {totalHours}<span className="text-2xl ml-2 opacity-60">horas</span>
+        </div>
+        <div className="mt-6 flex justify-center items-center space-x-2 text-sm font-bold bg-white/10 w-fit mx-auto px-4 py-2 rounded-full">
+           <Award size={18} />
+           <span>{history.length} Eventos Concluídos</span>
+        </div>
+      </div>
+
+      <h3 className="text-lg font-bold text-gray-800 px-2">Detalhamento por Evento</h3>
+
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2].map(i => <div key={i} className="h-20 bg-gray-100 rounded-2xl animate-pulse"></div>)}
+        </div>
+      ) : history.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
+          <p className="text-gray-400 font-medium">Nenhuma carga horária confirmada ainda.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {history.map(reg => (
+            <div key={reg.id} className="bg-white p-5 rounded-2xl border border-gray-100 flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <CheckCircle2 className="text-[#2e7d32]" size={20} />
+                <div>
+                   <h4 className="font-bold text-gray-900 leading-tight">{reg.events?.title}</h4>
+                   <p className="text-xs text-gray-500 font-medium uppercase mt-1">{reg.events?.category}</p>
                 </div>
-            ) : (
-              <div className="space-y-4">
-                  {history.map(item => (
-                      <div key={item.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl flex justify-between items-center shadow-sm dark:shadow-none">
-                          <div>
-                              <p className="text-gray-900 dark:text-gray-100 font-semibold">{item.event_name}</p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{item.category}</p>
-                          </div>
-                          <div className="flex items-center space-x-2 text-ifal-green font-semibold text-lg">
-                              <Icon name="clock" className="w-5 h-5" />
-                              <span>{item.hours}h</span>
-                          </div>
-                      </div>
-                  ))}
               </div>
-            )}
-          </>
-        )}
-      </main>
-      <style>{`
-          .animate-scale-up { animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-          @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-      `}</style>
+              <div className="text-right">
+                <span className="text-xl font-black text-[#2e7d32]">+{reg.events?.workload}h</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

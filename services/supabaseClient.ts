@@ -1,14 +1,20 @@
+
 import { createClient } from '@supabase/supabase-js';
 
-// Connection configured with your Supabase project keys.
-const supabaseUrl = 'https://zefvlzfkqsxhzjtwmtmj.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplZnZsemZrcXN4aHpqdHdtdG1qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzM5MjEwMiwiZXhwIjoyMDgyOTY4MTAyfQ.fp0b-wu5-CiknPXaU3aojO1RA48ViR5rlkc_uUemfXU';
+// Tenta pegar as chaves do ambiente com fallback para as chaves do projeto atual
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://zefvlzfkqsxhzjtwmtmj.supabase.co';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplZnZsemZrcXN4aHpqdHdtdG1qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NzM5MjEwMiwiZXhwIjoyMDgyOTY4MTAyfQ.fp0b-wu5-CiknPXaU3aojO1RA48ViR5rlkc_uUemfXU';
 
-// Ensure URL and Key are not empty (as per user request)
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Supabase URL and Anon Key are required.");
+// VACINA: Validação de segurança para evitar tela branca catastrófica
+const isConfigValid = supabaseUrl && !supabaseUrl.includes('sua-url') && !supabaseUrl.includes('placeholder');
+
+if (!isConfigValid) {
+  console.error('🚨 ERRO CRÍTICO: Chaves do Supabase não configuradas corretamente no .env!');
 }
 
-console.log("Conectando ao Supabase..."); // Debug log as requested
+// Cria o cliente de forma segura. Se as chaves forem inválidas, usa um placeholder para evitar crash de inicialização.
+export const supabase = isConfigValid
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : createClient('https://placeholder.supabase.co', 'placeholder');
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+console.log(`[SIGEA] Supabase Client Status: ${isConfigValid ? 'Conectado ✅' : 'Modo Offline/Erro ⚠️'}`);

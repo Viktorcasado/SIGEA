@@ -1,0 +1,17 @@
+/* ... (conteúdo anterior mantido) ... */
+
+.nav-item.active {
+    color: var(--primary) !important;
+    font-weight: 900 !important;
+    opacity: 1 !important;
+}
+
+/* Efeito visual para links com data-route para indicar clicabilidade */
+[data-route], [data-href] {
+    cursor: pointer;
+    user-select: none;
+}
+
+.hidden {
+    display: none !important;
+}

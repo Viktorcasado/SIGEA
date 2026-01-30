@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Certificado SEMINT 2026 | SIGEA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #2e7d32; --bg: #f8fafc; --surface: #ffffff; --text: #1e293b; --text-muted: #64748b; --border: #e2e8f0; --radius-xl: 28px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); padding-top: 70px; padding-bottom: 100px; }
+        .container { padding: 0 24px; max-width: 500px; margin: 0 auto; }
+        .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: white; border-bottom: 1px solid var(--border); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .logo { font-size: 22px; font-weight: 900; color: var(--primary); letter-spacing: -1px; text-decoration: none; }
+        .card { background: white; border-radius: var(--radius-xl); padding: 32px; border: 1px solid var(--border); margin-top: 40px; text-align: center; }
+        .section-title { font-size: 24px; font-weight: 800; margin-bottom: 12px; }
+        .section-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 30px; }
+        .input-field { width: 100%; padding: 18px; border-radius: 16px; border: 2px solid var(--border); font-size: 18px; font-weight: 700; text-align: center; text-transform: uppercase; outline: none; }
+        .btn-validate { width: 100%; background: var(--primary); color: white; padding: 18px; border-radius: 16px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 20px; }
+        #result { margin-top: 20px; display: none; padding: 20px; border-radius: 20px; text-align: left; }
+        .success { background: #f0fdf4; border: 1px solid #22c55e; color: #166534; }
+        .error { background: #fef2f2; border: 1px solid #ef4444; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <header class="top-bar"><a href="/" class="logo">SIGEA</a></header>
+    <main class="container">
+        <div class="card">
+            <h2 class="section-title">Certificado SEMINT 2026</h2>
+            <p class="section-desc">Insira o código de autenticidade para validar seu certificado do evento.</p>
+            <form onsubmit="event.preventDefault(); validar();">
+                <input type="text" id="code" class="input-field" placeholder="Ex: ABC123" required>
+                <button type="submit" class="btn-validate">Validar Agora</button>
+            </form>
+            <div id="result"></div>
+        </div>
+         <p style="text-align:center; margin-top:30px; font-size:12px; font-weight:600;">
+            <a href="/evento/semint-2026/" style="color: var(--primary);">Voltar para detalhes do evento</a>
+        </p>
+    </main>
+    <script>
+        function validar() {
+            const val = document.getElementById('code').value.toUpperCase();
+            if(val === 'ABC123') {
+                window.location.href = `/certificado/ABC123/`;
+            } else {
+                const res = document.getElementById('result');
+                res.style.display = 'block';
+                res.className = 'error';
+                res.innerHTML = '<strong>✕ Não Encontrado</strong><br><small>O código não corresponde a um certificado válido para este evento.</small>';
+            }
+        }
+    </script>
+</body>
+</html>

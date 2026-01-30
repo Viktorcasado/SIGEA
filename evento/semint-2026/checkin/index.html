@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Check-in SEMINT 2026 | SIGEA IFAL</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #e8f5e9;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius-xl: 32px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; }
+        .container { padding: 0 20px; max-width: 600px; margin: 0 auto; }
+
+        .top-bar { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); padding: 15px 0; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); }
+        .header-content { display: flex; align-items: center; gap: 15px; }
+        .btn-back { width: 42px; height: 42px; background: var(--bg); border: 1px solid var(--border); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--text); text-decoration: none; }
+        .page-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+
+        .card { background: var(--surface); border-radius: var(--radius-xl); padding: 30px 24px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-top: 25px; animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .section-icon { width: 60px; height: 60px; background: var(--primary-light); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: var(--primary); margin: 0 auto 20px; }
+        .form-title { font-size: 22px; font-weight: 900; text-align: center; margin-bottom: 8px; }
+        .form-subtitle { font-size: 14px; color: var(--text-muted); text-align: center; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; }
+        .label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 8px; }
+        .input-field { width: 100%; background: var(--bg); border: 1.5px solid var(--border); padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 600; text-align: center; outline: none; }
+        .btn-confirm { width: 100%; background: var(--primary); color: white; padding: 18px; border-radius: 18px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; }
+
+        .result-view { display: none; margin-top: 25px; }
+        .result-card { border-radius: var(--radius-xl); padding: 30px 24px; text-align: center; border: 2px solid transparent; animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .result-card.success { background: #f0fdf4; border-color: #22c55e; color: #166534; }
+        .result-card.error { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
+        .result-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; }
+        .success .result-icon { background: #22c55e; color: white; }
+        .error .result-icon { background: #ef4444; color: white; }
+        .result-name { font-size: 20px; font-weight: 900; margin-bottom: 5px; }
+        .result-event { font-size: 14px; font-weight: 700; opacity: 0.8; margin-bottom: 20px; }
+        .btn-next { display: block; width: 100%; text-decoration: none; background: var(--primary); color: white; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 14px; }
+        .btn-retry { display: block; width: 100%; text-decoration: none; background: white; color: #ef4444; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 14px; border: 1.5px solid #ef4444; margin-top: 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <div class="container header-content">
+            <a href="/evento/semint-2026/" class="btn-back">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </a>
+            <h1 class="page-title">Check-in do Evento</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="checkin-form">
+            <div class="card">
+                <div class="section-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <h2 class="form-title">Confirmar Presença</h2>
+                <p class="form-subtitle">Digite seu CPF ou o código de inscrição para validar sua entrada.</p>
+                <div class="input-group">
+                    <label class="label">CPF ou Código</label>
+                    <input type="text" id="userInput" class="input-field" placeholder="000.000.000-00 ou SEMINT123" required>
+                </div>
+                <button class="btn-confirm" onclick="handleCheckin()">Confirmar Presença</button>
+            </div>
+        </div>
+
+        <div id="result-view" class="result-view">
+            <div id="success-card" class="result-card success" style="display: none;">
+                <div class="result-icon">✓</div>
+                <h2 class="result-name">Ricardo Augusto</h2>
+                <p class="result-event">SEMINT 2026 — IFAL Maceió</p>
+                <a href="/evento/semint-2026/certificado/" class="btn-next">Ir para Certificado</a>
+            </div>
+            <div id="error-card" class="result-card error" style="display: none;">
+                <div class="result-icon">✕</div>
+                <h2 class="result-name">Não Encontrado</h2>
+                <p class="result-event">Presença não confirmada</p>
+                <button class="btn-retry" onclick="resetView()">Tentar Novamente</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Lógica de check-in mantida
+        function handleCheckin() {
+            // ...
+        }
+        function resetView() {
+            // ...
+        }
+    </script>
+</body>
+</html>

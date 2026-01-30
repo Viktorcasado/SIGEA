@@ -75,6 +75,7 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
                     }
                 }
                 
+                // Fix: Added missing workload property to satisfy Event interface
                 const event: Event = {
                     id: eventData.id,
                     title: eventData.title,
@@ -82,6 +83,7 @@ const CertificatesScreen: React.FC<CertificatesScreenProps> = ({ onNavigate }) =
                     category: eventData.category,
                     location: eventData.location,
                     imageUrl: eventData.image_url,
+                    workload: eventData.workload,
                     hours: eventData.workload,
                     speakers: eventData.speakers,
                     description: eventData.description,

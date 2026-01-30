@@ -1,6 +1,8 @@
+/* Fix: Corrected imports of User and UserRole from the centralized types file */
+
 import React, { useState } from 'react';
-import { User } from '../types';
-import { UserRole } from '../App';
+import { useNavigate } from 'react-router-dom'; // Importado para navegação moderna
+import { User, UserRole } from '../types';
 import ProfileGroup from '../components/ProfileGroup';
 import ProfileMenuItem from '../components/ProfileMenuItem';
 import ToggleSwitch from '../components/ToggleSwitch';
@@ -18,6 +20,7 @@ interface ProfileScreenProps {
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ userRole, setUserRole, onNavigate }) => {
     const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
     const { user, loading } = useUser();
+    const navigate = useNavigate(); // Hook de navegação
 
     const handleRoleChange = (isOrganizer: boolean) => {
         setUserRole(isOrganizer ? 'organizer' : 'participant');
@@ -85,13 +88,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ userRole, setUserRole, on
 
             <main className="px-4 space-y-6">
                 <ProfileGroup title="Conta">
+                  {/* NOVO: Acesso rápido à credencial para check-in */}
+                  <ProfileMenuItem icon="qrcode" label="Minha Credencial (Check-in)" onClick={() => navigate('/credencial')} />
                   <ProfileMenuItem icon="pencil" label="Editar Perfil" onClick={() => onNavigate('Editar Perfil')} />
                   <ProfileMenuItem icon="shield" label="Segurança" onClick={() => onNavigate('Segurança')} />
                 </ProfileGroup>
 
                 <ProfileGroup title="Acadêmico">
-                  <ProfileMenuItem icon="ticket" label="Minhas Inscrições" onClick={() => onNavigate('Minhas Inscrições')} />
-                  <ProfileMenuItem icon="bar-chart" label="Histórico de Horas" onClick={() => onNavigate('Histórico de Horas')} />
+                  <ProfileMenuItem icon="ticket" label="Minhas Inscrições" onClick={() => navigate('/inscricoes')} />
+                  <ProfileMenuItem icon="bar-chart" label="Histórico de Horas" onClick={() => navigate('/historico')} />
                 </ProfileGroup>
                 
                 <ProfileGroup title="Configurações">

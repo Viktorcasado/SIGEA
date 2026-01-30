@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
-// Tell TypeScript that QRCodeStyling is available on the window object
 declare global {
     interface Window {
         QRCodeStyling: any;
@@ -23,38 +22,49 @@ const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({ url, size, dotsColorO
   const isDarkMode = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   useEffect(() => {
-    if (ref.current && window.QRCodeStyling) {
-       const qrOptions = {
-            width: size,
-            height: size,
-            data: url,
-            dotsOptions: {
-                color: dotsColorOverride || (isDarkMode ? "#00913F" : "#000000"),
-                type: "rounded"
-            },
-            backgroundOptions: {
-                color: backgroundColorOverride || "transparent",
-            },
-            cornersSquareOptions: {
-                color: dotsColorOverride || (isDarkMode ? "#00913F" : "#000000"),
-                type: "extra-rounded"
-            },
-            cornersDotOptions: {
-                color: dotsColorOverride || (isDarkMode ? "#00913F" : "#000000"),
-                type: "dot"
-            }
-        };
+    if (!ref.current || !window.QRCodeStyling) return;
 
-      if (!qrCodeInstanceRef.current) {
-         qrCodeInstanceRef.current = new window.QRCodeStyling(qrOptions);
-         qrCodeInstanceRef.current.append(ref.current);
-      } else {
-         qrCodeInstanceRef.current.update(qrOptions);
-      }
+    const qrOptions = {
+        width: size,
+        height: size,
+        data: url,
+        dotsOptions: {
+            color: dotsColorOverride || (isDarkMode ? "#2e7d32" : "#000000"),
+            type: "rounded"
+        },
+        backgroundOptions: {
+            color: backgroundColorOverride || "transparent",
+        },
+        cornersSquareOptions: {
+            color: dotsColorOverride || (isDarkMode ? "#2e7d32" : "#000000"),
+            type: "extra-rounded"
+        },
+        cornersDotOptions: {
+            color: dotsColorOverride || (isDarkMode ? "#2e7d32" : "#000000"),
+            type: "dot"
+        }
+    };
+
+    try {
+        if (!qrCodeInstanceRef.current) {
+            qrCodeInstanceRef.current = new window.QRCodeStyling(qrOptions);
+            qrCodeInstanceRef.current.append(ref.current);
+        } else {
+            qrCodeInstanceRef.current.update(qrOptions);
+        }
+    } catch (e) {
+        console.warn("[SIGEA] Erro ao gerar QR Code:", e);
     }
+    
+    return () => {
+        if (ref.current) {
+            ref.current.innerHTML = '';
+            qrCodeInstanceRef.current = null;
+        }
+    };
   }, [url, size, isDarkMode, dotsColorOverride, backgroundColorOverride]);
 
-  return <div ref={ref} />;
+  return <div ref={ref} className="flex items-center justify-center min-h-[100px]" />;
 };
 
 export default QrCodeGenerator;

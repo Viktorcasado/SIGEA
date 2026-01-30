@@ -1,139 +1,114 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import PageHeader from '../components/PageHeader';
-import Icon from '../components/Icon';
-import { useUser } from '../contexts/UserContext';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { Subscription } from '../types';
+import { useUser } from '../contexts/UserContext';
+import { Registration } from '../types';
+import { ClipboardList, CheckCircle2, Clock, XCircle } from 'lucide-react';
 
-interface MySubscriptionsScreenProps {
-  onBack: () => void;
-}
-
-const MySubscriptionsScreen: React.FC<MySubscriptionsScreenProps> = ({ onBack }) => {
+const MySubscriptionsScreen: React.FC = () => {
   const { user } = useUser();
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchSubscriptions = useCallback(async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error: dbError } = await supabase
-        .from('event_registrations')
-        .select(`
-          id,
-          status,
-          events (
-            title,
-            date
-          )
-        `)
-        .eq('user_id', user.id);
-      
-      if (dbError) throw dbError;
-
-      const mappedSubscriptions = data
-        .filter(sub => sub.events) // Ensure the related event exists
-        .map((sub: any): Subscription => {
-          let formattedDate = 'Data a confirmar';
-          try {
-             if (sub.events.date) {
-                const dateObj = new Date(sub.events.date);
-                if (!isNaN(dateObj.getTime())) {
-                  formattedDate = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(dateObj);
-                }
-             }
-          } catch(e) {
-            console.error("Could not parse subscription date", sub.events.date);
-          }
-          
-          return {
-            id: sub.id,
-            event_title: sub.events.title,
-            event_date: formattedDate,
-            // Assuming any existing registration is 'Confirmado'. 
-            // A 'Pendente' state would require a different DB schema.
-            status: 'Confirmado',
-          };
-      });
-
-      setSubscriptions(mappedSubscriptions);
-    } catch (e: any) {
-        console.error('Error fetching subscriptions', e);
-        setError("Não foi possível buscar suas inscrições.");
-    } finally {
-        setLoading(false);
-    }
-  }, [user]);
+  const fetchRegistrations = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('registrations')
+      .select('*, events(*)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    
+    if (!error && data) setRegistrations(data as Registration[]);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    fetchSubscriptions();
-  }, [fetchSubscriptions]);
+    fetchRegistrations();
 
-  const renderContent = () => {
-    if (loading) {
-       return (
-           <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ifal-green"></div>
-            </div>
-       );
-    }
+    // REALTIME: Ouvindo mudanças na tabela registrations
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'registrations', filter: `user_id=eq.${user?.id}` },
+        () => {
+          console.log('[SIGEA] Mudança detectada em tempo real');
+          fetchRegistrations();
+        }
+      )
+      .subscribe();
 
-    if (error) {
-        return (
-             <div className="text-center py-16 px-4">
-                <Icon name="life-buoy" className="w-16 h-16 mx-auto mb-4 text-red-500" />
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">{error}</h3>
-                <button onClick={fetchSubscriptions} className="mt-6 bg-ifal-green text-white font-semibold py-2 px-6 rounded-xl">
-                    Tentar Novamente
-                </button>
-            </div>
-        );
-    }
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
-    if (subscriptions.length === 0) {
-        return (
-            <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                <Icon name="ticket" className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-500 mb-4" />
-                <h3 className="text-xl font-semibold">Nenhuma Inscrição</h3>
-                <p>Você ainda não se inscreveu em nenhum evento.</p>
-            </div>
-        );
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'confirmed': return 'bg-green-100 text-green-700 border-green-200';
+      case 'pending': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'canceled': return 'bg-red-100 text-red-700 border-red-200';
+      default: return 'bg-gray-100 text-gray-700';
     }
-    
-    return (
-        <div className="space-y-4">
-            {subscriptions.map(sub => (
-                <div key={sub.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm dark:shadow-none flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center">
-                            <Icon name="ticket" className="w-6 h-6 text-ifal-green" />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">{sub.event_title}</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{sub.event_date}</p>
-                        </div>
-                    </div>
-                    <span className={`px-3 py-1 text-xs font-bold rounded-full ${sub.status === 'Confirmado' ? 'bg-ifal-green/10 text-ifal-green' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                        {sub.status.toUpperCase()}
-                    </span>
-                </div>
-            ))}
-        </div>
-    );
-  }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'confirmed': return <CheckCircle2 size={14} />;
+      case 'pending': return <Clock size={14} />;
+      case 'canceled': return <XCircle size={14} />;
+      default: return null;
+    }
+  };
+
+  const translateStatus = (status: string) => {
+    switch (status) {
+      case 'confirmed': return 'Confirmado';
+      case 'pending': return 'Pendente';
+      case 'canceled': return 'Cancelado';
+      default: return status;
+    }
+  };
 
   return (
-    <div>
-      <PageHeader title="Minhas Inscrições" onBack={onBack} />
-      <main className="p-6">
-        {renderContent()}
-      </main>
+    <div className="max-w-4xl mx-auto space-y-8">
+      <header>
+        <h1 className="text-3xl font-black text-[#1e293b] tracking-tight">Minhas Inscrições</h1>
+        <p className="text-gray-500 font-medium">Acompanhe seu status de participação em tempo real</p>
+      </header>
+
+      {loading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-gray-100 rounded-2xl animate-pulse"></div>)}
+        </div>
+      ) : registrations.length === 0 ? (
+        <div className="bg-white rounded-3xl p-16 text-center border border-gray-100">
+           <ClipboardList size={64} className="mx-auto text-gray-200 mb-4" />
+           <p className="text-gray-400 font-bold">Você ainda não se inscreveu em nenhum evento.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {registrations.map((reg) => (
+            <div key={reg.id} className="bg-white p-5 rounded-2xl border border-gray-100 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-[#2e7d32]/10 rounded-xl flex items-center justify-center text-[#2e7d32]">
+                  <ClipboardList size={24} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 leading-tight">{reg.events?.title}</h3>
+                  <p className="text-xs text-gray-500 font-medium mt-1 uppercase tracking-wider">
+                    Inscrito em: {new Date(reg.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+
+              <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border text-[11px] font-black uppercase tracking-widest ${getStatusStyle(reg.status)}`}>
+                {getStatusIcon(reg.status)}
+                <span>{translateStatus(reg.status)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
