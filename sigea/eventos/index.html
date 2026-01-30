@@ -46,7 +46,12 @@
     </nav>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const norm = p => { let path = (p || '/').replace(/\/{2,}/g, '/'); return path.endsWith('/') ? path : path + '/'; };
+            const norm = (p) => {
+                if (!p) return "/sigea/";
+                let path = p.replace(/\/{2,}/g, "/");
+                if (!path.endsWith('/')) path += '/';
+                return path;
+            };
             const currentPath = norm(window.location.pathname);
             const homePath = '/sigea/';
             document.querySelectorAll('.nav-item[href]').forEach(el => {
