@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Check-in | SIGEA</title>
+    <title>Agenda | SIGEA</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
         :root { --primary: #2e7d32; --bg: #f8fafc; --surface: #ffffff; --text: #1e293b; --text-muted: #64748b; --border: #e2e8f0; --radius-xl: 28px; }
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); padding-top: 120px; padding-bottom: 120px; }
-        .container { padding: 0 24px; max-width: 500px; margin: 0 auto; }
+        .container { padding: 0 24px; max-width: 800px; margin: 0 auto; }
         .top-bar { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .logo { font-size: 22px; font-weight: 900; color: var(--primary); letter-spacing: -1px; text-decoration: none; }
         .submenu { position: fixed; top: 70px; left: 0; right: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 14px; overflow-x: auto; scrollbar-width: none; z-index: 999; }
@@ -19,11 +19,10 @@
         .submenu-container { display: flex; gap: 10px; white-space: nowrap; }
         .submenu-item { display: inline-block; padding: 14px 4px; text-decoration: none; font-size: 14px; font-weight: 700; color: var(--text-muted); border-bottom: 3px solid transparent; transition: all 0.2s ease; }
         .submenu-item.is-active { color: var(--primary); border-bottom-color: var(--primary); }
-        .card { background: white; border-radius: var(--radius-xl); padding: 32px; border: 1px solid var(--border); margin-top: 40px; text-align: center; }
-        h1 { font-size: 24px; font-weight: 800; margin-bottom: 12px; }
-        p { color: var(--text-muted); margin-bottom: 30px; }
-        .input-field { width: 100%; padding: 18px; border-radius: 16px; border: 2px solid var(--border); font-size: 16px; font-weight: 700; text-align: center; outline: none; margin-bottom: 20px; }
-        .btn { display: block; width: 100%; background: var(--primary); color: white; padding: 18px; border-radius: 16px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .page-content { margin-top: 40px; padding: 40px; background: var(--surface); border-radius: var(--radius-xl); border: 1px solid var(--border); text-align: center; }
+        h1 { font-size: 28px; font-weight: 800; margin-bottom: 12px; }
+        p { color: var(--text-muted); line-height: 1.6; max-width: 500px; margin: 0 auto 30px; }
+        .btn-back { display: inline-block; background: var(--bg); color: var(--text); padding: 14px 24px; border-radius: 14px; text-decoration: none; font-weight: 700; border: 1px solid var(--border); }
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 12px 0 25px 0; z-index: 9999; }
         .nav-item { text-align: center; text-decoration: none; color: var(--text-muted); font-size: 10px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 20%; opacity: 0.6; }
         .nav-item.is-active { color: var(--primary); opacity: 1; }
@@ -34,21 +33,18 @@
     <header class="top-bar"><a href="/sigea/" class="logo">SIGEA</a></header>
     <nav class="submenu">
         <div class="submenu-container container">
-            <a href="/sigea/checkin/" class="submenu-item">Check-in no Evento</a>
-            <a href="/sigea/checkin/qr/" class="submenu-item">Escanear QR</a>
-            <a href="/sigea/checkin/minhas-presencas/" class="submenu-item">Minhas Presenças</a>
-            <a href="/sigea/checkin/validar/" class="submenu-item">Validar</a>
-            <a href="/sigea/checkin/relatorios/" class="submenu-item">Relatórios</a>
+            <a href="/sigea/" class="submenu-item">Visão Geral</a>
+            <a href="/sigea/agenda/" class="submenu-item">Agenda</a>
+            <a href="/sigea/meus-eventos/" class="submenu-item">Meus Eventos</a>
+            <a href="/sigea/notificacoes/" class="submenu-item">Notificações</a>
+            <a href="/sigea/ajuda/" class="submenu-item">Ajuda</a>
         </div>
     </nav>
     <main class="container">
-        <div class="card">
-            <h1>Check-in no Evento</h1>
-            <p>Confirme sua presença inserindo o código do evento ou seu CPF.</p>
-            <form onsubmit="event.preventDefault(); alert('Check-in realizado com sucesso!');">
-                <input type="text" class="input-field" placeholder="CPF ou Código do Evento" required>
-                <button type="submit" class="btn">Confirmar Presença</button>
-            </form>
+        <div class="page-content">
+            <h1>Agenda</h1>
+            <p>Visualize seus compromissos e as datas dos próximos eventos em um só lugar.</p>
+            <a href="/sigea/" class="btn-back">Voltar para Início</a>
         </div>
     </main>
     <nav class="bottom-nav">

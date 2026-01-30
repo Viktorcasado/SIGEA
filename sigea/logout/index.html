@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Saindo... | SIGEA</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; color: #64748b; }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Limpa dados de sessão simulados via localStorage.
+            localStorage.removeItem('sigea_last_reg');
+            console.log('Sessão do SIGEA encerrada. Redirecionando...');
+            // Redireciona para a página inicial, impedindo o retorno pelo botão "voltar".
+            window.location.replace('/sigea/');
+        });
+    </script>
+</head>
+<body>
+    <p>Encerrando sessão e redirecionando...</p>
+</body>
+</html>
