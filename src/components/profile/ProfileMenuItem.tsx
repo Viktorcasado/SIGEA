@@ -16,15 +16,15 @@ interface ProfileMenuItemProps {
 
 const ProfileMenuItem = ({ to, icon: Icon, label, description, onClick, variant = 'default' }: ProfileMenuItemProps) => {
   const variants = {
-    default: "bg-gray-50 text-gray-500",
-    danger: "bg-red-50 text-red-500",
-    success: "bg-emerald-50 text-emerald-500"
+    default: "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400",
+    danger: "bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400",
+    success: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 dark:text-emerald-400"
   };
 
   const labelColors = {
-    default: "text-gray-700",
-    danger: "text-red-600",
-    success: "text-emerald-600"
+    default: "text-gray-700 dark:text-gray-200",
+    danger: "text-red-600 dark:text-red-400",
+    success: "text-emerald-600 dark:text-emerald-400"
   };
 
   const content = (
@@ -38,26 +38,26 @@ const ProfileMenuItem = ({ to, icon: Icon, label, description, onClick, variant 
             {label}
           </span>
           {description && (
-            <span className="text-xs text-gray-400 font-medium">
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
               {description}
             </span>
           )}
         </div>
       </div>
-      {to && <ChevronRight className="w-5 h-5 text-gray-300" />}
+      {to && <ChevronRight className="w-5 h-5 text-gray-300 dark:text-gray-700" />}
     </div>
   );
 
   if (onClick) {
     return (
-      <button onClick={onClick} className="w-full text-left hover:bg-gray-50/50 border-b last:border-b-0 border-gray-100 transition-colors">
+      <button onClick={onClick} className="w-full text-left hover:bg-gray-50/50 dark:hover:bg-gray-800/50 border-b last:border-b-0 border-gray-100 dark:border-gray-800 transition-colors">
         {content}
       </button>
     );
   }
 
   return (
-    <Link to={to || '#'} className="block hover:bg-gray-50/50 border-b last:border-b-0 border-gray-100 transition-colors">
+    <Link to={to || '#'} className="block hover:bg-gray-50/50 dark:hover:bg-gray-800/50 border-b last:border-b-0 border-gray-100 dark:border-gray-800 transition-colors">
       {content}
     </Link>
   );
