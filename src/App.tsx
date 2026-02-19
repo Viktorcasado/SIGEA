@@ -17,6 +17,8 @@ import InstitutionPage from './pages/profile/InstitutionPage';
 import DocumentsPage from './pages/profile/DocumentsPage';
 import SecurityPage from './pages/profile/SecurityPage';
 import UserInscriptionsPage from './pages/profile/UserInscriptionsPage';
+import UserPresencesPage from './pages/profile/UserPresencesPage';
+import MyEventsPage from './pages/profile/MyEventsPage';
 import GestorLayout from './pages/gestor/GestorLayout';
 import PainelPage from './pages/gestor/PainelPage';
 import GestorEventosPage from './pages/gestor/GestorEventosPage';
@@ -86,6 +88,8 @@ function AppRoutes() {
           <Route path="/perfil/documentos" element={<DocumentsPage />} />
           <Route path="/perfil/seguranca" element={<SecurityPage />} />
           <Route path="/perfil/eventos-inscritos" element={<div className='bg-gray-50 min-h-screen font-sans'><UserInscriptionsPage /></div>} />
+          <Route path="/perfil/presencas" element={<div className='bg-gray-50 min-h-screen font-sans'><UserPresencesPage /></div>} />
+          <Route path="/perfil/meus-eventos" element={<div className='bg-gray-50 min-h-screen font-sans'><MyEventsPage /></div>} />
           
           <Route path="/sistema/politicas" element={<PoliciesPage />} />
           <Route path="/sistema/termos" element={<TermsPage />} />
