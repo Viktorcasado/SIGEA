@@ -1,7 +1,7 @@
 import { createContext, useState, useContext, ReactNode, FC, useEffect } from 'react';
 import { User } from '@/src/types';
-import { supabase } from '@/src/services/supabase';
-import { AuthChangeEvent, Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { supabase } from '@/src/integrations/supabase/client';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface UserContextType {
   user: User | null;
@@ -17,34 +17,54 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSession = async (supabaseUser: SupabaseUser | null) => {
-      if (supabaseUser) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', supabaseUser.id)
-          .single();
-        
-        if (error) {
-          console.error('Erro ao buscar perfil:', error);
-          setUser(null);
+  const fetchProfile = async (supabaseUser: SupabaseUser | null) => {
+    if (supabaseUser) {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+      
+      if (error) {
+        console.error('Erro ao buscar perfil:', error);
+        // Se o perfil não existir, podemos tentar criar um básico
+        if (error.code === 'PGRST116') {
+           const { data: newProfile } = await supabase
+            .from('profiles')
+            .upsert({
+              id: supabaseUser.id,
+              email: supabaseUser.email,
+              nome: supabaseUser.user_metadata.full_name || supabaseUser.email,
+            })
+            .select()
+            .single();
+           setUser(newProfile as User);
         } else {
-          setUser(profile as User);
+          setUser(null);
         }
       } else {
-        setUser(null);
+        setUser(profile as User);
       }
-      setLoading(false);
-    };
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      fetchSession(session?.user ?? null);
+  useEffect(() => {
+    // Verificar sessão inicial
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      fetchProfile(session?.user ?? null);
     });
 
-    // Fetch initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        fetchSession(session?.user ?? null);
+    // Escutar mudanças na autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        fetchProfile(session?.user ?? null);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -58,67 +78,18 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    const { error } = await supabase.auth.signInWithOAuth({ 
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
     if (error) throw error;
   };
 
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    setUser(null);
-  };
-
-  useEffect(() => {
-    const fetchSession = async (supabaseUser: SupabaseUser | null) => {
-      if (supabaseUser) {
-        await upsertProfile(supabaseUser);
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', supabaseUser.id)
-          .single();
-        
-        if (error) {
-          console.error('Erro ao buscar perfil:', error);
-          setUser(null);
-        } else {
-          setUser(profile as User);
-        }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      fetchSession(session?.user ?? null);
-    });
-
-    // Fetch initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-        fetchSession(session?.user ?? null);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const upsertProfile = async (supabaseUser: SupabaseUser) => {
-    if (!supabaseUser) return;
-
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        nome: supabaseUser.user_metadata.full_name || supabaseUser.email,
-        status: 'ativo_comunidade',
-      }, { onConflict: 'id' });
-
-    if (error) {
-      console.error("Erro no upsert do perfil: ", error);
-    }
   };
 
   return (
