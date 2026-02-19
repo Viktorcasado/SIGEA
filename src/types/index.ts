@@ -23,83 +23,46 @@ export type EventInstitution = 'IFAL' | 'UFAL' | 'Comunidade';
 export interface Event {
   id: string;
   titulo: string;
-  instituicao: EventInstitution;
-  campus: string;
-  dataInicio: Date;
-  dataFim?: Date;
-  modalidade: EventModality;
-  vagas?: number;
-  local: string;
   descricao: string;
+  dataInicio: Date;
+  local: string;
+  campus: string;
+  instituicao: EventInstitution;
+  modalidade: EventModality;
   status: EventStatus;
+  vagas?: number;
   organizer_id?: string;
+  image_url?: string;
 }
-
-export type ActivityType = 'palestra' | 'oficina' | 'minicurso' | 'mesa_redonda' | 'seminario' | 'outro';
 
 export interface Inscricao {
   id: string;
   eventoId: string;
   userId: string;
-  status: 'inscrito' | 'cancelado' | 'confirmada';
+  status: string;
   createdAt: Date;
   event?: Event;
 }
 
-export type VinculoStatus = 'pendente' | 'aprovado' | 'rejeitado';
-
-export interface Vinculo {
+export interface Certificate {
   id: string;
   userId: string;
-  userNome: string;
-  userEmail: string;
-  instituicao: EventInstitution;
-  campus: string;
-  perfilSolicitado: UserProfile;
-  matriculaOuSiape: string;
-  status: VinculoStatus;
-  createdAt: Date;
-}
-
-export interface Presenca {
-  id: string;
-  atividadeId: string;
-  userId: string;
-  presente: boolean;
-  marcadoPor: string; // userId of manager
-  createdAt: Date;
+  eventoId: string;
+  codigo: string;
+  dataEmissao: Date;
+  cargaHoraria?: number;
+  event?: Event;
 }
 
 export interface Activity {
   id: string;
-  eventoId: string;
-  titulo: string;
-  tipo: ActivityType;
-  data: string; // YYYY-MM-DD
-  horaInicio: string; // HH:mm
-  horaFim: string; // HH:mm
-  localOuLink: string;
-  responsavel?: string;
-  cargaHorariaMinutos: number;
-}
-
-export interface Certificate {
-  id: string;
-  eventId: string;
-  codigo: string;
-  cargaHoraria: number;
-  dataEmissao: Date;
-}
-
-export type NotificationType = 'evento' | 'certificado' | 'sistema' | 'vinculo';
-
-export interface Notification {
-  id: string;
-  userId: string;
-  titulo: string;
-  mensagem: string;
-  tipo: NotificationType;
-  lida: boolean;
-  createdAt: Date;
-  referenciaId?: string; // ID do evento ou certificado
+  event_id: string;
+  title: string;
+  description: string;
+  type: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  location: string;
+  hours: number;
 }

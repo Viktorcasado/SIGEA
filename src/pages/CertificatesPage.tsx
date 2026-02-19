@@ -1,104 +1,146 @@
+"use client";
+
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, Download, Copy } from 'lucide-react';
-import { mockCertificates } from '@/src/data/mock';
-import { mockEvents, mockUser } from '@/src/data/mock';
-import { Certificate, Event, User } from '@/src/types';
+import { BadgeCheck, Download, Copy, Award, Search } from 'lucide-react';
+import { useUser } from '@/src/contexts/UserContext';
+import { supabase } from '@/src/integrations/supabase/client';
+import { Certificate, Event } from '@/src/types';
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
-
-const generatePdf = async (certificate: Certificate, event: Event) => {
-    const doc = new jsPDF();
-    const validationUrl = `https://sigea.app/validar-certificado?codigo=${certificate.codigo}`;
-
-    // Header
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('SIGEA - Certificado de Participação', 105, 20, { align: 'center' });
-
-    // Body
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Certificamos que ${mockUser.nome} participou do evento:`, 105, 40, { align: 'center' });
-
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text(event.titulo, 105, 55, { align: 'center' });
-
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Realizado por: ${event.instituicao} - ${event.campus}`, 105, 65, { align: 'center' });
-    doc.text(`Carga Horária: ${certificate.cargaHoraria} horas`, 105, 75, { align: 'center' });
-    doc.text(`Emitido em: ${certificate.dataEmissao.toLocaleDateString('pt-BR')}`, 105, 85, { align: 'center' });
-
-    // Validation Code
-    doc.setFont('courier', 'bold');
-    doc.text(`Código de Validação: ${certificate.codigo}`, 105, 100, { align: 'center' });
-
-    // QR Code
-    try {
-        const qrCodeDataUrl = await QRCode.toDataURL(validationUrl);
-        doc.addImage(qrCodeDataUrl, 'PNG', 85, 110, 40, 40);
-    } catch (err) {
-        console.error('Failed to generate QR code', err);
-    }
-
-    doc.save(`certificado-${certificate.codigo}.pdf`);
-};
-
-const CertificateCard = ({ certificate }: { certificate: Certificate }) => {
-  const event = mockEvents.find(e => e.id === certificate.eventId);
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(certificate.codigo);
-    alert('Código copiado!');
-  };
-
-  if (!event) return null;
-
-  return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-        <div>
-          <h3 className="font-bold text-gray-800 text-lg">{event.titulo}</h3>
-          <p className="text-sm text-gray-500 mt-1">{event.instituicao} - {event.campus}</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 mt-3">
-            <span>Carga Horária: <strong>{certificate.cargaHoraria}h</strong></span>
-            <span>Emissão: <strong>{certificate.dataEmissao.toLocaleDateString('pt-BR')}</strong></span>
-          </div>
-          <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded-md inline-block mt-3">{certificate.codigo}</p>
-        </div>
-        <div className="flex flex-col sm:items-end gap-2 flex-shrink-0">
-            <div className="flex gap-2">
-                <button onClick={() => generatePdf(certificate, event)} className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                    <Download className="w-5 h-5 text-gray-700" />
-                </button>
-                <button onClick={copyToClipboard} className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-                    <Copy className="w-5 h-5 text-gray-700" />
-                </button>
-            </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { motion } from 'motion/react';
 
 export default function CertificatesPage() {
+  const { user } = useUser();
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCertificates = async () => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('certificados')
+        .select(`
+          *,
+          eventos (*)
+        `)
+        .eq('user_id', user.id);
+
+      if (!error && data) {
+        const formatted: Certificate[] = data.map(c => ({
+          id: c.id,
+          userId: c.user_id,
+          eventoId: c.evento_id,
+          codigo: c.codigo_certificado,
+          dataEmissao: new Date(c.emitido_em),
+          event: {
+            id: c.eventos.id,
+            titulo: c.eventos.titulo,
+            instituicao: 'IFAL',
+            campus: c.eventos.campus,
+            dataInicio: new Date(c.eventos.data_inicio),
+            local: '',
+            descricao: '',
+            modalidade: 'Presencial',
+            status: 'publicado'
+          }
+        }));
+        setCertificates(formatted);
+      }
+      setLoading(false);
+    };
+
+    fetchCertificates();
+  }, [user]);
+
+  const generatePdf = async (cert: Certificate) => {
+    if (!cert.event) return;
+    const doc = new jsPDF({ orientation: 'landscape' });
+    const validationUrl = `${window.location.origin}/validar-certificado?codigo=${cert.codigo}`;
+
+    doc.setFillColor(249, 250, 251);
+    doc.rect(0, 0, 297, 210, 'F');
+    
+    doc.setFontSize(40);
+    doc.setTextColor(31, 41, 55);
+    doc.text('CERTIFICADO', 148.5, 60, { align: 'center' });
+
+    doc.setFontSize(16);
+    doc.text('Certificamos para os devidos fins que', 148.5, 85, { align: 'center' });
+    
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text(user?.nome || '', 148.5, 100, { align: 'center' });
+
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`participou do evento "${cert.event.titulo}"`, 148.5, 115, { align: 'center' });
+    doc.text(`realizado em ${cert.event.dataInicio.toLocaleDateString('pt-BR')}.`, 148.5, 125, { align: 'center' });
+
+    const qrCodeDataUrl = await QRCode.toDataURL(validationUrl);
+    doc.addImage(qrCodeDataUrl, 'PNG', 133.5, 140, 30, 30);
+    
+    doc.setFontSize(10);
+    doc.text(`Código de Validação: ${cert.codigo}`, 148.5, 175, { align: 'center' });
+
+    doc.save(`certificado-${cert.codigo}.pdf`);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold text-gray-900">Certificados</h1>
-        <p className="text-gray-500 mt-1">Baixe e valide seus certificados digitais</p>
+        <h1 className="text-3xl font-black text-gray-900">Certificados</h1>
+        <p className="text-gray-500 mt-1">Seus documentos de participação acadêmica</p>
       </header>
 
-      <Link to="/validar-certificado" className="flex items-center justify-center gap-2 w-full bg-indigo-600 text-white font-semibold px-4 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
-        <BadgeCheck className="w-5 h-5" />
+      <Link to="/validar-certificado" className="flex items-center justify-center gap-3 w-full bg-indigo-600 text-white font-bold px-6 py-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+        <BadgeCheck className="w-6 h-6" />
         Validar um certificado
       </Link>
 
       <main className="space-y-4">
-        {mockCertificates.map(cert => (
-          <CertificateCard key={cert.id} certificate={cert} />
-        ))}
+        {loading ? (
+          [1, 2].map(i => <div key={i} className="h-32 bg-gray-100 animate-pulse rounded-2xl" />)
+        ) : certificates.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-3xl border border-gray-100">
+            <Award className="w-16 h-16 mx-auto text-gray-200 mb-4" />
+            <h3 className="text-xl font-bold text-gray-700">Nenhum certificado ainda</h3>
+            <p className="text-gray-500 mt-2">Participe de eventos para receber seus certificados aqui.</p>
+          </div>
+        ) : (
+          certificates.map((cert, index) => (
+            <motion.div 
+              key={cert.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4"
+            >
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 text-lg">{cert.event?.titulo}</h3>
+                <p className="text-sm text-gray-500 font-mono mt-1">{cert.codigo}</p>
+                <p className="text-xs text-gray-400 mt-2">Emitido em {cert.dataEmissao.toLocaleDateString('pt-BR')}</p>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => generatePdf(cert)}
+                  className="p-3 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-colors"
+                  title="Baixar PDF"
+                >
+                  <Download className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => { navigator.clipboard.writeText(cert.codigo); alert('Código copiado!'); }}
+                  className="p-3 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors"
+                  title="Copiar Código"
+                >
+                  <Copy className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          ))
+        )}
       </main>
     </div>
   );
