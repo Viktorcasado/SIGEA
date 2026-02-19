@@ -2,31 +2,37 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useUser } from '@/src/contexts/UserContext';
 import { Activity } from '@/src/types';
-import { ActivityRepositoryMock } from '@/src/repositories/ActivityRepository';
-import { ArrowLeft, PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { ActivityRepository } from '@/src/repositories/ActivityRepository';
+import { ArrowLeft, PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 
 export default function ManageActivitiesPage() {
   const { id: eventId } = useParams<{ id: string }>();
   const { user } = useUser();
   const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (eventId) {
-      ActivityRepositoryMock.listByEvent(eventId).then(setActivities);
+      setLoading(true);
+      ActivityRepository.listByEvent(eventId)
+        .then(setActivities)
+        .finally(() => setLoading(false));
     }
   }, [eventId]);
 
-  const handleDelete = (activityId: string) => {
+  const handleDelete = async (activityId: string) => {
     if (window.confirm('Tem certeza que deseja excluir esta atividade?')) {
-      if (!eventId) return;
-      ActivityRepositoryMock.deleteActivity(eventId, activityId).then(() => {
+      try {
+        await ActivityRepository.deleteActivity(activityId);
         setActivities(prev => prev.filter(a => a.id !== activityId));
-      });
+      } catch (error) {
+        alert('Erro ao excluir atividade');
+      }
     }
   };
 
-  const canManage = user && ['servidor', 'gestor', 'admin'].includes(user.perfil);
+  const canManage = user && (user.is_organizer || user.perfil === 'aluno');
   if (!canManage) navigate('/acesso-restrito');
 
   return (
@@ -45,24 +51,36 @@ export default function ManageActivitiesPage() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div className="space-y-2 p-4">
-          {activities.map(activity => (
-            <div key={activity.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50">
-              <div>
-                <p className="font-semibold text-gray-800">{activity.titulo}</p>
-                <p className="text-sm text-gray-500">{activity.data} | {activity.horaInicio} - {activity.horaFim}</p>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+          </div>
+        ) : activities.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">
+            Nenhuma atividade cadastrada.
+          </div>
+        ) : (
+          <div className="space-y-2 p-4">
+            {activities.map(activity => (
+              <div key={activity.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50">
+                <div>
+                  <p className="font-semibold text-gray-800">{activity.title}</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(activity.date).toLocaleDateString('pt-BR')} | {new Date(activity.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => navigate(`/evento/${eventId}/atividades/${activity.id}/editar`)} className="p-2 text-gray-500 hover:text-indigo-600">
+                    <Edit className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => handleDelete(activity.id)} className="p-2 text-gray-500 hover:text-red-600">
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => navigate(`/evento/${eventId}/atividades/${activity.id}/editar`)} className="p-2 text-gray-500 hover:text-indigo-600">
-                  <Edit className="w-5 h-5" />
-                </button>
-                <button onClick={() => handleDelete(activity.id)} className="p-2 text-gray-500 hover:text-red-600">
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

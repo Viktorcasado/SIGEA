@@ -1,5 +1,5 @@
 import { Presenca } from '@/src/types';
-import { ActivityRepositoryMock } from './ActivityRepository';
+import { ActivityRepository } from './ActivityRepository';
 
 const mockPresencasDB: Presenca[] = [];
 
@@ -29,13 +29,13 @@ export const PresencaRepositoryMock = {
 
   async calcularCargaHoraria(eventoId: string, userId: string): Promise<number> {
     const presencas = mockPresencasDB.filter(p => p.userId === userId && p.presente);
-    const atividadesDoEvento = await ActivityRepositoryMock.listByEvent(eventoId);
+    const atividadesDoEvento = await ActivityRepository.listByEvent(eventoId);
     
     let totalMinutos = 0;
     presencas.forEach(presenca => {
       const atividade = atividadesDoEvento.find(a => a.id === presenca.atividadeId);
       if (atividade) {
-        totalMinutos += atividade.cargaHorariaMinutos;
+        totalMinutos += atividade.hours * 60; // Convertendo horas para minutos
       }
     });
     return totalMinutos;
