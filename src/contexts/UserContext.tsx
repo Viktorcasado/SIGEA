@@ -121,14 +121,18 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return;
+    
+    const profileUpdates: any = {};
+    if (updates.nome !== undefined) profileUpdates.full_name = updates.nome;
+    if (updates.campus !== undefined) profileUpdates.campus = updates.campus;
+    if (updates.matricula !== undefined) profileUpdates.registration_number = updates.matricula;
+    if (updates.avatar_url !== undefined) profileUpdates.avatar_url = updates.avatar_url;
+    if (updates.perfil !== undefined) profileUpdates.user_type = updates.perfil;
+    if (updates.is_organizer !== undefined) profileUpdates.is_organizer = updates.is_organizer;
+
     const { error } = await supabase
       .from('profiles')
-      .update({
-        full_name: updates.nome,
-        campus: updates.campus,
-        registration_number: updates.matricula,
-        avatar_url: updates.avatar_url
-      })
+      .update(profileUpdates)
       .eq('id', user.id);
     
     if (error) throw error;

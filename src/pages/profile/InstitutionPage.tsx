@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useUser } from '@/src/contexts/UserContext';
 import { useNotifications } from '@/src/contexts/NotificationContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Building2, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Building2, GraduationCap } from 'lucide-center';
+import { Building2 as BuildingIcon, GraduationCap as GradIcon } from 'lucide-react';
 import { EventInstitution, UserProfile } from '@/src/types';
 
 export default function InstitutionPage() {
@@ -23,12 +24,16 @@ export default function InstitutionPage() {
     setIsLoading(true);
     
     try {
+      // Se for servidor, ganha status de organizador automaticamente para fins de demonstração
+      const isOrganizer = perfil === 'servidor' || perfil === 'gestor';
+
       await updateProfile({ 
         instituicao,
         campus,
         perfil,
         matricula,
-        status: 'ativo_vinculado'
+        is_organizer: isOrganizer,
+        status: isOrganizer ? 'gestor' : 'ativo_vinculado'
       });
 
       addNotification({
@@ -40,6 +45,7 @@ export default function InstitutionPage() {
       alert('Vínculo atualizado com sucesso!');
       navigate('/perfil');
     } catch (error) {
+      console.error('Erro ao atualizar vínculo:', error);
       alert('Erro ao atualizar vínculo.');
     } finally {
       setIsLoading(false);
@@ -56,7 +62,7 @@ export default function InstitutionPage() {
       <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
         <div className="flex items-center gap-4 mb-8">
           <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
-            <Building2 className="w-6 h-6" />
+            <BuildingIcon className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Vínculo Institucional</h1>
@@ -113,7 +119,7 @@ export default function InstitutionPage() {
                   placeholder="Digite seu número de identificação"
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
                 />
-                <GraduationCap className="absolute right-4 top-3.5 text-gray-400 w-5 h-5" />
+                <GradIcon className="absolute right-4 top-3.5 text-gray-400 w-5 h-5" />
               </div>
             </div>
           )}

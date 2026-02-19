@@ -11,17 +11,16 @@ import {
   LogOut, 
   Calendar, 
   Clock, 
-  PlusCircle, 
   FileQuestion, 
   Info, 
   BookOpen,
   Bell,
-  Settings,
-  Users
+  Settings
 } from 'lucide-react';
 import ProfileHeader from '@/src/components/profile/ProfileHeader';
 import ProfileMenuItem from '@/src/components/profile/ProfileMenuItem';
 import ProfileSection from '@/src/components/profile/ProfileSection';
+import OrganizerMenu from '@/src/components/profile/OrganizerMenu';
 import { motion } from 'motion/react';
 
 export default function ProfilePage() {
@@ -39,34 +38,7 @@ export default function ProfilePage() {
     if (!user) return null;
     
     if (user.is_organizer) {
-      return (
-        <ProfileSection title="Gestão de Eventos" delay={0.2}>
-          <ProfileMenuItem 
-            to="/evento/criar" 
-            icon={PlusCircle} 
-            label="Criar Novo Evento" 
-            description="Publicar na plataforma"
-          />
-          <ProfileMenuItem 
-            to="/perfil/meus-eventos" 
-            icon={Calendar} 
-            label="Meus Eventos" 
-            description="Gerenciar cronogramas e detalhes"
-          />
-          <ProfileMenuItem 
-            to="/perfil/inscritos" 
-            icon={Users} 
-            label="Lista de Inscritos" 
-            description="Ver participantes por evento"
-          />
-          <ProfileMenuItem 
-            to="/perfil/marcar-presenca" 
-            icon={Clock} 
-            label="Controle de Presença" 
-            description="Validar via QR Code ou Lista"
-          />
-        </ProfileSection>
-      );
+      return <OrganizerMenu />;
     }
 
     return (
