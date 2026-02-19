@@ -66,3 +66,16 @@ export interface Activity {
   location: string;
   hours: number;
 }
+
+export type NotificationType = 'evento' | 'certificado' | 'sistema' | 'vinculo';
+
+export interface Notification {
+  id: string;
+  userId: string;
+  titulo: string;
+  mensagem: string;
+  tipo: NotificationType;
+  lida: boolean;
+  createdAt: Date;
+  referenciaId?: string;
+}
