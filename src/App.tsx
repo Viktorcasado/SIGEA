@@ -114,7 +114,8 @@ function AppRoutes() {
           <Route path="/notificacoes" element={<NotificationsPage />} />
           <Route path="/acesso-restrito" element={<RestrictedAccessPage />} />
 
-          <Route element={<ProtectedRoute allowedProfiles={['servidor', 'gestor', 'admin']} />}>
+          {/* Adicionado 'aluno' na lista de perfis permitidos para organizar eventos */}
+          <Route element={<ProtectedRoute allowedProfiles={['servidor', 'gestor', 'admin', 'aluno']} />}>
             <Route path="/evento/criar" element={<div className='bg-gray-50 min-h-screen font-sans'><CreateEventPage /></div>} />
             <Route path="/evento/:id/cronograma" element={<div className='bg-gray-50 min-h-screen font-sans'><SchedulePage /></div>} />
             <Route path="/evento/:id/atividades" element={<div className='bg-gray-50 min-h-screen font-sans'><ManageActivitiesPage /></div>} />

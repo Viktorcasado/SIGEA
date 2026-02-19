@@ -37,31 +37,34 @@ export default function ProfilePage() {
   const renderAcademicMenu = () => {
     if (!user) return null;
     
-    if (user.is_organizer) {
-      return <OrganizerMenu />;
-    }
+    // Agora mostramos o menu de organizador para organizadores E alunos
+    const showOrganizerMenu = user.is_organizer || user.perfil === 'aluno';
 
     return (
-      <ProfileSection title="Minha Participação" delay={0.2}>
-        <ProfileMenuItem 
-          to="/perfil/eventos-inscritos" 
-          icon={Calendar} 
-          label="Inscrições Ativas" 
-          description="Eventos que vou participar"
-        />
-        <ProfileMenuItem 
-          to="/perfil/presencas" 
-          icon={Clock} 
-          label="Histórico de Presença" 
-          description="Atividades confirmadas"
-        />
-        <ProfileMenuItem 
-          to="/certificados" 
-          icon={FileText} 
-          label="Meus Certificados" 
-          description="Baixar documentos emitidos"
-        />
-      </ProfileSection>
+      <>
+        {showOrganizerMenu && <OrganizerMenu />}
+        
+        <ProfileSection title="Minha Participação" delay={0.2}>
+          <ProfileMenuItem 
+            to="/perfil/eventos-inscritos" 
+            icon={Calendar} 
+            label="Inscrições Ativas" 
+            description="Eventos que vou participar"
+          />
+          <ProfileMenuItem 
+            to="/perfil/presencas" 
+            icon={Clock} 
+            label="Histórico de Presença" 
+            description="Atividades confirmadas"
+          />
+          <ProfileMenuItem 
+            to="/certificados" 
+            icon={FileText} 
+            label="Meus Certificados" 
+            description="Baixar documentos emitidos"
+          />
+        </ProfileSection>
+      </>
     );
   };
 

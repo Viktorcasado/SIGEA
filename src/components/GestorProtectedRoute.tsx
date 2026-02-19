@@ -4,7 +4,10 @@ import { Navigate, Outlet } from 'react-router-dom';
 const GestorProtectedRoute = () => {
   const { user } = useUser();
 
-  if (!user || user.perfil !== 'gestor') {
+  // Permitimos gestores, servidores e alunos (conforme solicitado)
+  const allowedProfiles = ['gestor', 'servidor', 'aluno', 'admin'];
+
+  if (!user || !allowedProfiles.includes(user.perfil)) {
     return <Navigate to="/gestor/acesso-restrito" replace />;
   }
 
