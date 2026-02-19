@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, Download, Copy, Award, Search } from 'lucide-react';
+import { BadgeCheck, Download, Copy, Award } from 'lucide-react';
 import { useUser } from '@/src/contexts/UserContext';
 import { supabase } from '@/src/integrations/supabase/client';
-import { Certificate, Event } from '@/src/types';
+import { Certificate } from '@/src/types';
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
 import { motion } from 'motion/react';
@@ -59,30 +59,61 @@ export default function CertificatesPage() {
     const doc = new jsPDF({ orientation: 'landscape' });
     const validationUrl = `${window.location.origin}/validar-certificado?codigo=${cert.codigo}`;
 
-    doc.setFillColor(249, 250, 251);
+    // Fundo e Bordas
+    doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, 297, 210, 'F');
+    doc.setDrawColor(79, 70, 229); // Indigo-600
+    doc.setLineWidth(2);
+    doc.rect(10, 10, 277, 190);
+    doc.setLineWidth(0.5);
+    doc.rect(12, 12, 273, 186);
     
-    doc.setFontSize(40);
+    // Cabeçalho
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text('SISTEMA INTEGRADO DE GESTÃO DE EVENTOS ACADÊMICOS - SIGEA', 148.5, 30, { align: 'center' });
+
+    // Título Principal
+    doc.setFontSize(48);
     doc.setTextColor(31, 41, 55);
-    doc.text('CERTIFICADO', 148.5, 60, { align: 'center' });
-
-    doc.setFontSize(16);
-    doc.text('Certificamos para os devidos fins que', 148.5, 85, { align: 'center' });
-    
-    doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.text(user?.nome || '', 148.5, 100, { align: 'center' });
+    doc.text('CERTIFICADO', 148.5, 65, { align: 'center' });
 
-    doc.setFontSize(16);
+    // Texto de Certificação
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'normal');
-    doc.text(`participou do evento "${cert.event.titulo}"`, 148.5, 115, { align: 'center' });
-    doc.text(`realizado em ${cert.event.dataInicio.toLocaleDateString('pt-BR')}.`, 148.5, 125, { align: 'center' });
-
-    const qrCodeDataUrl = await QRCode.toDataURL(validationUrl);
-    doc.addImage(qrCodeDataUrl, 'PNG', 133.5, 140, 30, 30);
+    doc.setTextColor(75, 85, 99);
+    doc.text('Certificamos para os devidos fins que', 148.5, 90, { align: 'center' });
     
+    // Nome do Usuário
+    doc.setFontSize(32);
+    doc.setTextColor(79, 70, 229);
+    doc.setFont('helvetica', 'bold');
+    doc.text(user?.nome || 'Participante', 148.5, 110, { align: 'center' });
+
+    // Detalhes do Evento
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    doc.text(`participou com êxito do evento "${cert.event.titulo}"`, 148.5, 130, { align: 'center' });
+    doc.text(`realizado em ${cert.event.dataInicio.toLocaleDateString('pt-BR')} no campus ${cert.event.campus}.`, 148.5, 140, { align: 'center' });
+
+    // QR Code e Validação
+    const qrCodeDataUrl = await QRCode.toDataURL(validationUrl);
+    doc.addImage(qrCodeDataUrl, 'PNG', 20, 155, 35, 35);
+    
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Para validar este documento, aponte a câmera para o QR Code', 60, 170);
+    doc.text(`ou acesse o portal de validação com o código: ${cert.codigo}`, 60, 175);
+
+    // Assinatura Simbólica
+    doc.setDrawColor(200, 200, 200);
+    doc.line(180, 175, 260, 175);
     doc.setFontSize(10);
-    doc.text(`Código de Validação: ${cert.codigo}`, 148.5, 175, { align: 'center' });
+    doc.setTextColor(100, 100, 100);
+    doc.text('Coordenação de Eventos', 220, 182, { align: 'center' });
+    doc.text('SIGEA - Plataforma Unificada', 220, 187, { align: 'center' });
 
     doc.save(`certificado-${cert.codigo}.pdf`);
   };

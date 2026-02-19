@@ -6,7 +6,7 @@ import { useNotifications } from '@/src/contexts/NotificationContext';
 import { useUser } from '@/src/contexts/UserContext';
 import { supabase } from '@/src/integrations/supabase/client';
 import { Event } from '@/src/types';
-import { ArrowLeft, Share2, Calendar, MapPin, Users, Clock } from 'lucide-react';
+import { ArrowLeft, Share2, Calendar, MapPin, Award, CheckCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function EventDetailPage() {
@@ -17,6 +17,7 @@ export default function EventDetailPage() {
   
   const [event, setEvent] = useState<Event | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [hasCertificate, setHasCertificate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -24,8 +25,7 @@ export default function EventDetailPage() {
     const fetchEventData = async () => {
       if (!id) return;
 
-      // Busca evento
-      const { data: eventData, error: eventError } = await supabase
+      const { data: eventData } = await supabase
         .from('events')
         .select('*')
         .eq('id', id)
@@ -42,10 +42,9 @@ export default function EventDetailPage() {
           instituicao: 'IFAL',
           modalidade: 'Presencial',
           status: 'publicado',
-          vagas: eventData.workload // Usando workload como exemplo se vagas não existir
+          vagas: eventData.workload
         });
 
-        // Verifica inscrição se usuário logado
         if (user) {
           const { data: regData } = await supabase
             .from('event_registrations')
@@ -55,6 +54,15 @@ export default function EventDetailPage() {
             .maybeSingle();
           
           if (regData) setIsSubscribed(true);
+
+          const { data: certData } = await supabase
+            .from('certificados')
+            .select('id')
+            .eq('evento_id', id)
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (certData) setHasCertificate(true);
         }
       }
       setLoading(false);
@@ -83,15 +91,38 @@ export default function EventDetailPage() {
         tipo: 'evento',
         referenciaId: event.id,
       });
+    }
+    setSubmitting(false);
+  };
+
+  const handleIssueCertificate = async () => {
+    if (!user || !event) return;
+    setSubmitting(true);
+
+    const { error } = await supabase
+      .from('certificados')
+      .insert({
+        evento_id: event.id,
+        user_id: user.id,
+        codigo_validacao: Math.random().toString(36).substring(2, 10).toUpperCase()
+      });
+
+    if (!error) {
+      setHasCertificate(true);
+      addNotification({
+        titulo: 'Certificado Disponível',
+        mensagem: `O certificado do evento "${event.titulo}" foi gerado com sucesso!`,
+        tipo: 'certificado',
+      });
+      alert('Certificado gerado! Você pode visualizá-lo na aba de Certificados.');
     } else {
-      alert('Erro ao realizar inscrição. Tente novamente.');
+      alert('Erro ao gerar certificado.');
     }
     setSubmitting(false);
   };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
-
-  if (!event) return <div className="text-center py-20"><h2 className="text-2xl font-bold">Evento não encontrado</h2><Link to="/" className="text-indigo-600 mt-4 inline-block">Voltar ao Início</Link></div>;
+  if (!event) return <div className="text-center py-20"><h2 className="text-2xl font-bold">Evento não encontrado</h2></div>;
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -130,17 +161,30 @@ export default function EventDetailPage() {
         </div>
 
         <div className="p-6 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-4">
-            {isSubscribed ? (
-                <div className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-green-100 text-green-700 font-bold">
-                    Inscrição Confirmada
-                </div>
-            ) : (
+            {!isSubscribed ? (
                 <button 
                     onClick={handleSubscription}
                     disabled={submitting}
                     className="flex-1 px-6 py-4 rounded-2xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:bg-indigo-300"
                 >
                     {submitting ? 'Processando...' : 'Garantir minha vaga'}
+                </button>
+            ) : hasCertificate ? (
+                <Link 
+                    to="/certificados"
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-green-600 text-white font-bold hover:bg-green-700 transition-all"
+                >
+                    <Award className="w-5 h-5" />
+                    Ver Certificado
+                </Link>
+            ) : (
+                <button 
+                    onClick={handleIssueCertificate}
+                    disabled={submitting}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                >
+                    <CheckCircle className="w-5 h-5" />
+                    Emitir Certificado
                 </button>
             )}
             <button className="px-6 py-4 rounded-2xl bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
