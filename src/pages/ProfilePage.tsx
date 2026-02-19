@@ -12,9 +12,6 @@ import {
   Calendar, 
   Clock, 
   PlusCircle, 
-  LayoutDashboard, 
-  FileBarChart, 
-  ShieldCheck, 
   FileQuestion, 
   Info, 
   BookOpen,
@@ -41,7 +38,6 @@ export default function ProfilePage() {
   const renderAcademicMenu = () => {
     if (!user) return null;
     
-    // Menu para Organizadores (Gestores ou Servidores com permissão)
     if (user.is_organizer) {
       return (
         <ProfileSection title="Gestão de Eventos" delay={0.2}>
@@ -73,7 +69,6 @@ export default function ProfilePage() {
       );
     }
 
-    // Menu para Alunos e Comunidade
     return (
       <ProfileSection title="Minha Participação" delay={0.2}>
         <ProfileMenuItem 
@@ -118,12 +113,6 @@ export default function ProfilePage() {
           icon={Building} 
           label="Vínculo Institucional" 
           description="IFAL, UFAL ou Comunidade"
-        />
-        <ProfileMenuItem 
-          to="/perfil/documentos" 
-          icon={FileText} 
-          label="Documentos e CPF" 
-          description="Necessário para certificados"
         />
         <ProfileMenuItem 
           to="/perfil/seguranca" 

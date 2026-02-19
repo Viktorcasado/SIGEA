@@ -1,44 +1,49 @@
+"use client";
+
 import { useState } from 'react';
 import { useUser } from '@/src/contexts/UserContext';
 import { useNotifications } from '@/src/contexts/NotificationContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Building2, GraduationCap } from 'lucide-react';
 import { EventInstitution, UserProfile } from '@/src/types';
 
 export default function InstitutionPage() {
-  const { user } = useUser();
+  const { user, updateProfile } = useUser();
   const navigate = useNavigate();
-
-  const [instituicao, setInstituicao] = useState<EventInstitution | ''>(user?.instituicao || '');
-  const [campus, setCampus] = useState(user?.campus || '');
-  const [perfil, setPerfil] = useState<UserProfile | ''>(user?.perfil || '');
-  const [matricula, setMatricula] = useState(user?.matricula || '');
-  const [siape, setSiape] = useState(user?.siape || '');
-  const [isLoading, setIsLoading] = useState(false);
   const { addNotification } = useNotifications();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [instituicao, setInstituicao] = useState<EventInstitution>(user?.instituicao || 'IFAL');
+  const [campus, setCampus] = useState(user?.campus || '');
+  const [perfil, setPerfil] = useState<UserProfile>(user?.perfil || 'aluno');
+  const [matricula, setMatricula] = useState(user?.matricula || '');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call for institutional linkage
-    setTimeout(() => {
-      // updateUser({ 
-      //   instituicao: instituicao as EventInstitution,
-      //   campus,
-      //   perfil: perfil as UserProfile,
-      //   matricula,
-      //   siape,
-      //   status: 'ativo_vinculado'
-      // }); // TODO: Implementar com Supabase
+    
+    try {
+      await updateProfile({ 
+        instituicao,
+        campus,
+        perfil,
+        matricula,
+        status: 'ativo_vinculado'
+      });
+
       addNotification({
-        titulo: 'Vínculo Institucional Confirmado',
-        mensagem: 'Seu vínculo com a instituição foi confirmado com sucesso!',
+        titulo: 'Vínculo Atualizado',
+        mensagem: 'Seus dados institucionais foram salvos com sucesso.',
         tipo: 'vinculo',
       });
-      setIsLoading(false);
-      alert('Vínculo confirmado com sucesso! (Modo de Teste)');
+      
+      alert('Vínculo atualizado com sucesso!');
       navigate('/perfil');
-    }, 1500);
+    } catch (error) {
+      alert('Erro ao atualizar vínculo.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,17 +53,85 @@ export default function InstitutionPage() {
         Voltar para o Perfil
       </Link>
 
-      <div className="bg-white p-6 rounded-2xl shadow-lg">
-        <h1 className="text-2xl font-bold text-gray-900">Instituição e Campus</h1>
-        <p className='text-gray-500 mt-1'>Confirme seu vínculo para ter acesso a mais funcionalidades.</p>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          {/* Form fields for institution, campus, profile, matricula, siape */}
-          <div className='flex gap-4'>
-            <button type="submit" disabled={isLoading} className="flex-1 px-4 py-2.5 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400">
-              {isLoading ? 'Confirmando...' : 'Confirmar Vínculo'}
-            </button>
-            <button type="button" onClick={() => navigate('/perfil')} className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200">
+      <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+            <Building2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Vínculo Institucional</h1>
+            <p className="text-gray-500 text-sm">Informe seus dados acadêmicos ou profissionais.</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Instituição</label>
+            <select 
+              value={instituicao} 
+              onChange={(e) => setInstituicao(e.target.value as EventInstitution)}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
+            >
+              <option value="IFAL">IFAL</option>
+              <option value="UFAL">UFAL</option>
+              <option value="Comunidade">Outra / Comunidade</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Campus / Unidade</label>
+            <input 
+              type="text" 
+              value={campus} 
+              onChange={(e) => setCampus(e.target.value)} 
+              placeholder="Ex: Maceió, Arapiraca..."
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Tipo de Vínculo</label>
+            <select 
+              value={perfil} 
+              onChange={(e) => setPerfil(e.target.value as UserProfile)}
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
+            >
+              <option value="aluno">Aluno</option>
+              <option value="servidor">Servidor (Docente/Técnico)</option>
+              <option value="comunidade_externa">Comunidade Externa</option>
+            </select>
+          </div>
+
+          {perfil !== 'comunidade_externa' && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Matrícula ou SIAPE</label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  value={matricula} 
+                  onChange={(e) => setMatricula(e.target.value)} 
+                  placeholder="Digite seu número de identificação"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
+                />
+                <GraduationCap className="absolute right-4 top-3.5 text-gray-400 w-5 h-5" />
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-4 pt-4">
+            <button 
+              type="button" 
+              onClick={() => navigate('/perfil')}
+              className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all"
+            >
               Cancelar
+            </button>
+            <button 
+              type="submit" 
+              disabled={isLoading} 
+              className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:bg-indigo-300"
+            >
+              {isLoading ? 'Salvando...' : 'Salvar Vínculo'}
             </button>
           </div>
         </form>

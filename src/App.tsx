@@ -14,8 +14,8 @@ import EventDetailPage from './pages/EventDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import EditProfilePage from './pages/profile/EditProfilePage';
 import InstitutionPage from './pages/profile/InstitutionPage';
-import DocumentsPage from './pages/profile/DocumentsPage';
 import SecurityPage from './pages/profile/SecurityPage';
+import AppSettingsPage from './pages/profile/AppSettingsPage';
 import UserInscriptionsPage from './pages/profile/UserInscriptionsPage';
 import UserPresencesPage from './pages/profile/UserPresencesPage';
 import MyEventsPage from './pages/profile/MyEventsPage';
@@ -87,8 +87,8 @@ function AppRoutes() {
           
           <Route path="/perfil/editar" element={<EditProfilePage />} />
           <Route path="/perfil/instituicao-campus" element={<InstitutionPage />} />
-          <Route path="/perfil/documentos" element={<DocumentsPage />} />
           <Route path="/perfil/seguranca" element={<SecurityPage />} />
+          <Route path="/perfil/configuracoes" element={<AppSettingsPage />} />
           <Route path="/perfil/eventos-inscritos" element={<div className='bg-gray-50 min-h-screen font-sans'><UserInscriptionsPage /></div>} />
           <Route path="/perfil/presencas" element={<div className='bg-gray-50 min-h-screen font-sans'><UserPresencesPage /></div>} />
           <Route path="/perfil/meus-eventos" element={<div className='bg-gray-50 min-h-screen font-sans'><MyEventsPage /></div>} />

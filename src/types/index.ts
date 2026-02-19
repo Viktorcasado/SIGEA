@@ -6,7 +6,6 @@ export interface User {
   nome: string;
   email: string;
   telefone?: string;
-  cpf: string;
   matricula?: string;
   siape?: string;
   instituicao?: EventInstitution;
