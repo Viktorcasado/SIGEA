@@ -41,12 +41,14 @@ import ActivityFormPage from './pages/event/ActivityFormPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import CertificateTemplatePage from './pages/gestor/CertificateTemplatePage';
 import CertificateEditorPage from './pages/gestor/CertificateEditorPage';
+import { Toaster } from 'react-hot-toast';
 
 export default function App() {
   return (
     <UserProvider>
       <NotificationProvider>
         <BrowserRouter>
+          <Toaster position="top-center" reverseOrder={false} />
           <AppRoutes />
         </BrowserRouter>
       </NotificationProvider>

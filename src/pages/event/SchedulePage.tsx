@@ -6,8 +6,9 @@ import { useUser } from '@/src/contexts/UserContext';
 import { Activity, Event } from '@/src/types';
 import { ActivityRepository } from '@/src/repositories/ActivityRepository';
 import { supabase } from '@/src/integrations/supabase/client';
-import { ArrowLeft, PlusCircle, Settings, Clock, MapPin, Loader2 } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Settings, Clock, MapPin, Loader2, Share2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { shareContent, formatActivityShare } from '@/src/utils/share';
 
 export default function SchedulePage() {
   const { id: eventId } = useParams<{ id: string }>();
@@ -63,6 +64,12 @@ export default function SchedulePage() {
 
   const canManage = user && (user.is_organizer || user.perfil === 'aluno');
 
+  const handleShareActivity = (activity: Activity) => {
+    if (event) {
+      shareContent(formatActivityShare(event, activity));
+    }
+  };
+
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-indigo-600" /></div>;
   if (!event) return <div className="text-center py-20">Evento não encontrado.</div>;
 
@@ -109,11 +116,11 @@ export default function SchedulePage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-4 flex-1">
                     <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600 shrink-0">
                       <Clock className="w-5 h-5" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="font-black text-gray-900 text-lg">{act.title}</p>
                       <div className="flex flex-wrap gap-3 mt-1 text-sm text-gray-500 font-medium">
                         <span className="flex items-center gap-1">
@@ -127,10 +134,19 @@ export default function SchedulePage() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md uppercase">
-                      {act.hours}h
-                    </span>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => handleShareActivity(act)}
+                      className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                      title="Compartilhar Atividade"
+                    >
+                      <Share2 className="w-5 h-5" />
+                    </button>
+                    <div className="text-right">
+                      <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md uppercase">
+                        {act.hours}h
+                      </span>
+                    </div>
                   </div>
                 </motion.div>
               ))}

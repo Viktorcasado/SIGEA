@@ -8,6 +8,7 @@ import { supabase } from '@/src/integrations/supabase/client';
 import { Event } from '@/src/types';
 import { ArrowLeft, Share2, Calendar, MapPin, Award, CheckCircle, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
+import { shareContent, formatEventShare } from '@/src/utils/share';
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -155,6 +156,12 @@ export default function EventDetailPage() {
     setSubmitting(false);
   };
 
+  const handleShare = () => {
+    if (event) {
+      shareContent(formatEventShare(event));
+    }
+  };
+
   if (loading) return <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
   if (!event) return <div className="text-center py-20"><h2 className="text-2xl font-bold">Evento não encontrado</h2></div>;
 
@@ -162,10 +169,17 @@ export default function EventDetailPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-      <header className="mb-6">
-        <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-gray-900 font-semibold mb-4">
+      <header className="mb-6 flex justify-between items-center">
+        <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-gray-900 font-semibold">
           <ArrowLeft className="w-5 h-5 mr-2" />
           Voltar
+        </button>
+        <button 
+          onClick={handleShare}
+          className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm"
+          title="Compartilhar Evento"
+        >
+          <Share2 className="w-5 h-5" />
         </button>
       </header>
 
@@ -231,7 +245,10 @@ export default function EventDetailPage() {
                     Emitir Certificado
                 </button>
             )}
-            <button className="px-6 py-4 rounded-2xl bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+            <button 
+              onClick={handleShare}
+              className="px-6 py-4 rounded-2xl bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
+            >
                 <Share2 className="w-5 h-5" />
                 Compartilhar
             </button>
