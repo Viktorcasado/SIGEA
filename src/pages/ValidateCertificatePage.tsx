@@ -31,7 +31,7 @@ export default function ValidateCertificatePage() {
         setStatus('invalid');
       }
     } catch (err) {
-      console.error(err);
+      console.error("[ValidatePage] Erro na validação:", err);
       setStatus('error');
     }
   };
@@ -40,6 +40,7 @@ export default function ValidateCertificatePage() {
     setIsScanning(true);
     setStatus('idle');
     
+    // Pequeno delay para garantir que o elemento DOM 'reader' exista
     setTimeout(async () => {
       try {
         const html5QrCode = new Html5Qrcode("reader");
@@ -52,14 +53,14 @@ export default function ValidateCertificatePage() {
             qrbox: { width: 250, height: 250 },
           },
           (decodedText) => {
-            // Tenta extrair o código se for uma URL
+            // Tenta extrair o código se for uma URL do SIGEA
             let finalCode = decodedText;
             if (decodedText.includes('codigo=')) {
               try {
                 const url = new URL(decodedText);
                 finalCode = url.searchParams.get('codigo') || decodedText;
               } catch (e) {
-                // Mantém o texto original se falhar
+                // Mantém o texto original se falhar o parse da URL
               }
             }
             
@@ -67,19 +68,23 @@ export default function ValidateCertificatePage() {
             stopScanner();
             handleValidation(finalCode);
           },
-          () => {} 
+          () => {} // Silenciar erros de scan (frame não lido)
         );
       } catch (err) {
-        console.error("Erro ao iniciar câmera:", err);
-        alert("Não foi possível acessar a câmera. Verifique as permissões.");
+        console.error("[ValidatePage] Erro ao iniciar câmera:", err);
+        alert("Não foi possível acessar a câmera. Verifique as permissões do navegador.");
         setIsScanning(false);
       }
-    }, 100);
+    }, 300);
   };
 
   const stopScanner = async () => {
     if (scannerRef.current && scannerRef.current.isScanning) {
-      await scannerRef.current.stop();
+      try {
+        await scannerRef.current.stop();
+      } catch (err) {
+        console.error("[ValidatePage] Erro ao parar scanner:", err);
+      }
     }
     setIsScanning(false);
   };
@@ -90,6 +95,7 @@ export default function ValidateCertificatePage() {
       setCode(urlCode);
       handleValidation(urlCode);
     }
+    
     return () => {
       if (scannerRef.current?.isScanning) {
         scannerRef.current.stop().catch(console.error);
@@ -121,7 +127,7 @@ export default function ValidateCertificatePage() {
 
           <div className="space-y-4">
             {isScanning ? (
-              <div className="relative bg-black rounded-2xl overflow-hidden aspect-square max-w-sm mx-auto">
+              <div className="relative bg-black rounded-2xl overflow-hidden aspect-square max-w-sm mx-auto shadow-2xl">
                 <div id="reader" className="w-full h-full"></div>
                 <button 
                   onClick={stopScanner}
@@ -129,7 +135,7 @@ export default function ValidateCertificatePage() {
                 >
                   <X className="w-6 h-6" />
                 </button>
-                <div className="absolute inset-0 border-2 border-indigo-500/50 pointer-events-none m-12 rounded-xl"></div>
+                <div className="absolute inset-0 border-2 border-indigo-500/50 pointer-events-none m-12 rounded-xl animate-pulse"></div>
               </div>
             ) : (
               <div className="flex flex-col gap-4">
