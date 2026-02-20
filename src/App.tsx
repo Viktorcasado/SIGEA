@@ -38,6 +38,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SchedulePage from './pages/event/SchedulePage';
 import ManageActivitiesPage from './pages/event/ManageActivitiesPage';
 import ActivityFormPage from './pages/event/ActivityFormPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 
 export default function App() {
   return (
@@ -66,6 +67,7 @@ function AppRoutes() {
     <Routes>
       {/* Rotas Públicas */}
       <Route path="/validar-certificado" element={<ValidateCertificatePage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
       
       {!user ? (
         <>

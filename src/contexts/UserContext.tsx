@@ -35,24 +35,17 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     }
 
     try {
-      // Tenta buscar o perfil existente
       let { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .maybeSingle();
       
-      if (error) {
-        console.error('[UserContext] Erro ao buscar perfil:', error);
-      }
-
-      // Se o perfil não existe (o trigger falhou ou ainda não rodou), cria um agora
       if (!profile) {
-        console.log('[UserContext] Perfil não encontrado, criando perfil inicial...');
         const fullName = supabaseUser.user_metadata.full_name || supabaseUser.user_metadata.name || 'Usuário';
         const avatarUrl = supabaseUser.user_metadata.avatar_url || supabaseUser.user_metadata.picture || '';
         
-        const { data: newProfile, error: insertError } = await supabase
+        const { data: newProfile } = await supabase
           .from('profiles')
           .upsert({
             id: supabaseUser.id,
@@ -64,19 +57,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
           .select()
           .single();
 
-        if (insertError) {
-          console.error("[UserContext] Erro ao criar perfil manual:", insertError);
-          // Mesmo com erro no insert, vamos tentar montar um usuário básico para não travar o login
-          profile = { 
-            id: supabaseUser.id, 
-            full_name: fullName, 
-            user_type: 'comunidade_externa', 
-            avatar_url: avatarUrl,
-            is_organizer: false 
-          };
-        } else {
-          profile = newProfile;
-        }
+        profile = newProfile;
       }
 
       if (profile) {
@@ -93,7 +74,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
         } as User);
       }
     } catch (err) {
-      console.error("[UserContext] Erro crítico no fetchProfile:", err);
+      console.error("[UserContext] Erro no fetchProfile:", err);
     } finally {
       setLoading(false);
     }
@@ -112,7 +93,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`[UserContext] Auth Event: ${event}`);
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
         if (session?.user) {
           await fetchProfile(session.user);
@@ -135,9 +115,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: metadata
-      }
+      options: { data: metadata }
     });
     if (error) throw error;
   };
@@ -146,7 +124,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     const { error } = await supabase.auth.signInWithOAuth({ 
       provider: 'google',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: `${window.location.origin}/auth/callback`
       }
     });
     if (error) throw error;
