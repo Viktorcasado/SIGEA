@@ -115,7 +115,13 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   const loginWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({ 
       provider: 'google',
-      options: { redirectTo: window.location.origin }
+      options: { 
+        redirectTo: window.location.origin,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        },
+      }
     });
     if (error) throw error;
   };
@@ -143,7 +149,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     
     if (error) throw error;
     
-    // Atualiza o estado local garantindo que o status seja re-derivado corretamente
     const newUserType = updates.perfil !== undefined ? updates.perfil : user.perfil;
     const newIsOrganizer = updates.is_organizer !== undefined ? updates.is_organizer : user.is_organizer;
     
