@@ -23,31 +23,30 @@ const WhatsAppButton = () => {
           .whatsapp-float {
             position: fixed;
             cursor: pointer;
-            width: 60px;
-            height: 60px;
-            bottom: 100px; /* Ajustado para não sobrepor o menu pílula */
-            right: 24px;
-            transition: 1s;
+            width: 56px;
+            height: 56px;
+            bottom: 80px;
+            right: 20px;
+            transition: 0.3s;
             background-color: var(--background-color);
-            border-radius: 50px;
-            animation: whatsapp-pulse 3s infinite;
-            z-index: 9999;
+            border-radius: 50%;
+            z-index: 999;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           }
           .whatsapp-float:hover {
             background-color: var(--background-hover);
-            transform: scale(1.1);
-          }
-          .whatsapp-float:hover .whatsapp-icon {
-            fill: var(--icon-hover);
+            transform: scale(1.05);
           }
           @keyframes whatsapp-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0, 200, 0, 1); }
-            70% { box-shadow: 0 0 0 15px rgba(0, 200, 0, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(0, 200, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 200, 0, 0); }
             100% { box-shadow: 0 0 0 0 rgba(0, 200, 0, 0); }
+          }
+          .whatsapp-float {
+            animation: whatsapp-pulse 2s infinite;
           }
         `}
       </style>
