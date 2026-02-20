@@ -29,9 +29,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     return 'ativo_comunidade';
   };
 
-  const fetchProfile = async (supabaseUser: SupabaseUser | null) => {
-    if (!supabaseUser) return;
-
+  const fetchProfile = async (supabaseUser: SupabaseUser) => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
@@ -42,14 +40,14 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       if (profile) {
         setUser({
           id: profile.id,
-          nome: profile.full_name || 'Usuário',
+          nome: profile.full_name || supabaseUser.user_metadata?.full_name || 'Usuário',
           email: supabaseUser.email || '',
           perfil: profile.user_type || 'comunidade_externa',
           status: deriveStatus(profile.user_type, profile.is_organizer || false),
           is_organizer: profile.is_organizer || false,
           campus: profile.campus || '',
           matricula: profile.registration_number || '',
-          avatar_url: profile.avatar_url || ''
+          avatar_url: profile.avatar_url || supabaseUser.user_metadata?.avatar_url || ''
         } as User);
       }
     } catch (err) {
@@ -61,27 +59,47 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     let isMounted = true;
 
     const initialize = async () => {
-      // 1. Tenta pegar a sessão atual (recupera do localStorage)
+      // 1. Pega a sessão rapidamente
       const { data: { session: initialSession } } = await supabase.auth.getSession();
       
       if (isMounted) {
         if (initialSession) {
           setSession(initialSession);
-          await fetchProfile(initialSession.user);
+          // Define um usuário básico com metadados do Google/Auth para não ficar vazio
+          setUser({
+            id: initialSession.user.id,
+            nome: initialSession.user.user_metadata?.full_name || 'Usuário',
+            email: initialSession.user.email || '',
+            perfil: 'comunidade_externa',
+            status: 'ativo_comunidade',
+            is_organizer: false,
+            avatar_url: initialSession.user.user_metadata?.avatar_url || ''
+          } as User);
+          
+          // Busca o perfil completo em background
+          fetchProfile(initialSession.user);
         }
-        // Só libera o loading após tentar recuperar a sessão
+        // Libera o loading IMEDIATAMENTE após checar a sessão
         setLoading(false);
       }
     };
 
     initialize();
 
-    // 2. Escuta mudanças (login, logout, etc)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       if (isMounted) {
         setSession(currentSession);
         if (currentSession) {
-          await fetchProfile(currentSession.user);
+          // Atualiza dados básicos
+          setUser(prev => ({
+            ...(prev || {}),
+            id: currentSession.user.id,
+            nome: currentSession.user.user_metadata?.full_name || prev?.nome || 'Usuário',
+            email: currentSession.user.email || '',
+            avatar_url: currentSession.user.user_metadata?.avatar_url || prev?.avatar_url || ''
+          } as User));
+          
+          fetchProfile(currentSession.user);
         } else {
           setUser(null);
         }
