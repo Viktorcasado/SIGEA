@@ -57,7 +57,7 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
       </div>
     );
@@ -89,11 +89,11 @@ function AppRoutes() {
           <Route path="/perfil/instituicao-campus" element={<InstitutionPage />} />
           <Route path="/perfil/seguranca" element={<SecurityPage />} />
           <Route path="/perfil/configuracoes" element={<AppSettingsPage />} />
-          <Route path="/perfil/eventos-inscritos" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><UserInscriptionsPage /></div>} />
-          <Route path="/perfil/presencas" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><UserPresencesPage /></div>} />
-          <Route path="/perfil/meus-eventos" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><MyEventsPage /></div>} />
-          <Route path="/perfil/inscritos" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><InscritosPage /></div>} />
-          <Route path="/perfil/marcar-presenca" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><MarcarPresencaPage /></div>} />
+          <Route path="/perfil/eventos-inscritos" element={<div className='bg-gray-50 min-h-screen font-sans'><UserInscriptionsPage /></div>} />
+          <Route path="/perfil/presencas" element={<div className='bg-gray-50 min-h-screen font-sans'><UserPresencesPage /></div>} />
+          <Route path="/perfil/meus-eventos" element={<div className='bg-gray-50 min-h-screen font-sans'><MyEventsPage /></div>} />
+          <Route path="/perfil/inscritos" element={<div className='bg-gray-50 min-h-screen font-sans'><InscritosPage /></div>} />
+          <Route path="/perfil/marcar-presenca" element={<div className='bg-gray-50 min-h-screen font-sans'><MarcarPresencaPage /></div>} />
           
           <Route path="/sistema/politicas" element={<PoliciesPage />} />
           <Route path="/sistema/termos" element={<TermsPage />} />
@@ -110,20 +110,18 @@ function AppRoutes() {
             </Route>
           </Route>
 
-          <Route path="/evento/:id" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><div className='max-w-4xl mx-auto p-4'><EventDetailPage /></div></div>} />
+          <Route path="/evento/:id" element={<div className='bg-gray-50 min-h-screen font-sans'><div className='max-w-4xl mx-auto p-4'><EventDetailPage /></div></div>} />
           <Route path="/notificacoes" element={<NotificationsPage />} />
           <Route path="/acesso-restrito" element={<RestrictedAccessPage />} />
 
-          {/* Adicionado 'aluno' na lista de perfis permitidos para organizar eventos */}
           <Route element={<ProtectedRoute allowedProfiles={['servidor', 'gestor', 'admin', 'aluno']} />}>
-            <Route path="/evento/criar" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><CreateEventPage /></div>} />
-            <Route path="/evento/:id/cronograma" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><SchedulePage /></div>} />
-            <Route path="/evento/:id/atividades" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><ManageActivitiesPage /></div>} />
-            <Route path="/evento/:id/atividades/criar" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><ActivityFormPage /></div>} />
-            <Route path="/evento/:id/atividades/:activityId/editar" element={<div className='bg-gray-50 dark:bg-gray-950 min-h-screen font-sans'><ActivityFormPage /></div>} />
+            <Route path="/evento/criar" element={<div className='bg-gray-50 min-h-screen font-sans'><CreateEventPage /></div>} />
+            <Route path="/evento/:id/cronograma" element={<div className='bg-gray-50 min-h-screen font-sans'><SchedulePage /></div>} />
+            <Route path="/evento/:id/atividades" element={<div className='bg-gray-50 min-h-screen font-sans'><ManageActivitiesPage /></div>} />
+            <Route path="/evento/:id/atividades/criar" element={<div className='bg-gray-50 min-h-screen font-sans'><ActivityFormPage /></div>} />
+            <Route path="/evento/:id/atividades/:activityId/editar" element={<div className='bg-gray-50 min-h-screen font-sans'><ActivityFormPage /></div>} />
           </Route>
 
-          {/* Fallback para usuários logados */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </>
       )}

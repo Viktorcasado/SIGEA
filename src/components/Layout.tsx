@@ -3,7 +3,7 @@ import BottomBar from './BottomBar';
 
 export default function Layout() {
   return (
-    <div className="bg-gray-50 dark:bg-gray-950 min-h-screen font-sans pb-24 transition-colors duration-300">
+    <div className="bg-gray-50 min-h-screen font-sans pb-24 transition-colors duration-300">
       <main className="max-w-4xl mx-auto p-4">
         <Outlet />
       </main>

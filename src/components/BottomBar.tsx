@@ -13,7 +13,7 @@ export default function BottomBar() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-950/90 backdrop-blur-md border-t border-gray-100 dark:border-gray-800 shadow-lg z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-lg z-50">
       <div className="flex justify-around max-w-md mx-auto px-2">
         {navItems.map(({ path, label, icon: Icon }) => (
           <NavLink
@@ -23,8 +23,8 @@ export default function BottomBar() {
             className={({ isActive }) =>
               `flex flex-col items-center justify-center w-full pt-3 pb-2 text-[10px] font-bold uppercase tracking-tighter transition-all duration-300 ${
                 isActive 
-                  ? 'text-indigo-600 dark:text-indigo-400 scale-110' 
-                  : 'text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-400'
+                  ? 'text-indigo-600 scale-110' 
+                  : 'text-gray-400 hover:text-gray-600'
               }`
             }
           >
