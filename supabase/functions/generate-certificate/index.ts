@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
-import { PDFDocument, rgb, StandardFonts } from 'https://cdn.skypack.dev/pdf-lib?dts'
-import { qrcode } from "https://deno.land/x/qrcode/mod.ts";
+import { PDFDocument, rgb, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -80,11 +79,14 @@ serve(async (req) => {
 
     for (const [fieldId, pos] of Object.entries(mapping)) {
       if (fieldId === 'qr_code') {
-        const validationUrl = `https://sigea.ifal.edu.br/validar-certificado?codigo=${cert.codigo_certificado}`
-        const qrDataUrl = await qrcode(validationUrl)
-        const qrImage = await pdfDoc.embedPng(qrDataUrl)
+        // Usando uma API externa para gerar o QR Code como imagem para simplificar o bundle
+        const validationUrl = encodeURIComponent(`https://sigea.ifal.edu.br/validar-certificado?codigo=${cert.codigo_certificado}`)
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${validationUrl}`
         
-        // Converter % para coordenadas PDF (0,0 é bottom-left)
+        const qrResp = await fetch(qrUrl)
+        const qrBytes = await qrResp.arrayBuffer()
+        const qrImage = await pdfDoc.embedPng(qrBytes)
+        
         const x = (pos.x / 100) * width
         const y = height - ((pos.y / 100) * height)
         const size = pos.size || 80
