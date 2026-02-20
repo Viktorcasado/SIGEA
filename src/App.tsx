@@ -5,7 +5,6 @@ import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import LoginGovBrPage from './pages/LoginGovBrPage';
 import HomePage from './pages/HomePage';
 import ExplorePage from './pages/ExplorePage';
 import CertificatesPage from './pages/CertificatesPage';
@@ -73,7 +72,6 @@ function AppRoutes() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/login-govbr" element={<LoginGovBrPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </>
       ) : (
