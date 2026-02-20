@@ -39,6 +39,8 @@ import SchedulePage from './pages/event/SchedulePage';
 import ManageActivitiesPage from './pages/event/ManageActivitiesPage';
 import ActivityFormPage from './pages/event/ActivityFormPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
+import CertificateTemplatePage from './pages/gestor/CertificateTemplatePage';
+import CertificateEditorPage from './pages/gestor/CertificateEditorPage';
 
 export default function App() {
   return (
@@ -55,7 +57,6 @@ export default function App() {
 function AppRoutes() {
   const { session, loading } = useUser();
 
-  // Enquanto estiver carregando a sessão inicial, mostra o spinner
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -66,12 +67,10 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Rotas Públicas (Sempre acessíveis) */}
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/validar-certificado" element={<ValidateCertificatePage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-      {/* Se NÃO estiver logado */}
       {!session ? (
         <>
           <Route path="/login" element={<LoginPage />} />
@@ -79,7 +78,6 @@ function AppRoutes() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </>
       ) : (
-        /* Se ESTIVER logado */
         <>
           <Route path="/" element={<Layout />}>
             <Route index element={<HomePage />} />
@@ -110,6 +108,8 @@ function AppRoutes() {
               <Route path="vinculos" element={<GestorVinculosPage />} />
               <Route path="relatorios" element={<GestorRelatoriosPage />} />
               <Route path="auditoria" element={<GestorAuditoriaPage />} />
+              <Route path="eventos/:id/certificado-template" element={<CertificateTemplatePage />} />
+              <Route path="eventos/:id/certificado-template/editor" element={<CertificateEditorPage />} />
             </Route>
           </Route>
 
@@ -125,7 +125,6 @@ function AppRoutes() {
             <Route path="/evento/:id/atividades/:activityId/editar" element={<div className='bg-gray-50 min-h-screen font-sans'><ActivityFormPage /></div>} />
           </Route>
 
-          {/* Se tentar acessar login já estando logado, vai para a home */}
           <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="/register" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/src/integrations/supabase/client';
 import { Event } from '@/src/types';
 import { Link } from 'react-router-dom';
-import { MoreVertical, Edit, Trash2, Eye, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Calendar as CalendarIcon, Loader2, Award } from 'lucide-react';
 
 const StatusBadge = ({ date }: { date: Date }) => {
   const now = new Date();
@@ -119,6 +119,13 @@ export default function GestorEventosPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end gap-2">
+                        <Link 
+                          to={`/gestor/eventos/${event.id}/certificado-template`} 
+                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                          title="Configurar Certificado"
+                        >
+                          <Award className="w-5 h-5" />
+                        </Link>
                         <Link 
                           to={`/evento/${event.id}`} 
                           className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"

@@ -1,4 +1,4 @@
-export type UserProfile = 'aluno' | 'servidor' | 'gestor' | 'comunidade_externa';
+export type UserProfile = 'aluno' | 'servidor' | 'gestor' | 'comunidade_externa' | 'admin';
 export type UserStatus = 'ativo_comunidade' | 'ativo_vinculado' | 'gestor' | 'admin';
 
 export interface User {
@@ -35,13 +35,24 @@ export interface Event {
   image_url?: string;
 }
 
-export interface Inscricao {
+export interface CertificateTemplate {
   id: string;
-  eventoId: string;
-  userId: string;
-  status: string;
-  createdAt: Date;
-  event?: Event;
+  event_id: string;
+  template_file_path: string;
+  template_type: 'pdf' | 'image';
+  mapping: CertificateMapping;
+}
+
+export interface CertificateMapping {
+  fields: {
+    [key: string]: {
+      x: number;
+      y: number;
+      fontSize?: number;
+      color?: string;
+      size?: number; // Para QR Code
+    };
+  };
 }
 
 export interface Certificate {
@@ -51,6 +62,7 @@ export interface Certificate {
   codigo: string;
   dataEmissao: Date;
   cargaHoraria?: number;
+  url_pdf?: string;
   event?: Event;
 }
 
