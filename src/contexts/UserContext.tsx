@@ -40,7 +40,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
           console.error('[UserContext] Erro ao buscar perfil:', error);
           setUser(null);
         } else if (!profile) {
-           // Criar perfil se não existir (comum em logins sociais)
            const fullName = supabaseUser.user_metadata.full_name || supabaseUser.user_metadata.name || 'Usuário';
            const { data: newProfile, error: upsertError } = await supabase
             .from('profiles')
@@ -128,7 +127,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    // Usando uma URL de redirecionamento limpa
     const { error } = await supabase.auth.signInWithOAuth({ 
       provider: 'google',
       options: {
