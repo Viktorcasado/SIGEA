@@ -56,16 +56,14 @@ export default function App() {
 }
 
 function AppRoutes() {
-  const { session, loading } = useUser();
-
   return (
     <Routes>
       {/* Rotas Públicas */}
       <Route path="/auth/callback" element={<AuthCallbackPage />} />
       <Route path="/validar-certificado" element={<ValidateCertificatePage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/login" element={!session && !loading ? <LoginPage /> : (session ? <Navigate to="/" replace /> : <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>)} />
-      <Route path="/register" element={!session && !loading ? <RegisterPage /> : (session ? <Navigate to="/" replace /> : <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>)} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       
       <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />

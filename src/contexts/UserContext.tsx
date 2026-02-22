@@ -51,7 +51,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
           avatar_url: profile.avatar_url || ''
         } as User);
       } else {
-        // Caso o perfil não exista no banco ainda, cria um objeto básico
         setUser({
           id: supabaseUser.id,
           nome: supabaseUser.user_metadata?.full_name || 'Usuário',
@@ -70,20 +69,24 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Verifica sessão inicial
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      if (!mounted) return;
-      if (initialSession) {
-        setSession(initialSession);
-        fetchProfile(initialSession.user).then(() => {
-          if (mounted) setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
-    });
+    const initialize = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (!mounted) return;
 
-    // Escuta mudanças de autenticação
+        if (initialSession) {
+          setSession(initialSession);
+          await fetchProfile(initialSession.user);
+        }
+      } catch (err) {
+        console.error("[UserContext] Erro na inicialização:", err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    initialize();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       if (!mounted) return;
       
