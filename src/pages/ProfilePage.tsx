@@ -5,7 +5,6 @@ import { useUser } from '@/src/contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   User as UserIcon, 
-  Building, 
   FileText, 
   Shield, 
   LogOut, 
@@ -69,12 +68,6 @@ export default function ProfilePage() {
           icon={UserIcon} 
           label="Dados Pessoais" 
           description="Nome, e-mail e foto"
-        />
-        <ProfileMenuItem 
-          to="/perfil/instituicao-campus" 
-          icon={Building} 
-          label="Vínculo Institucional" 
-          description={user.campus || "Vincular ao IFAL/UFAL"}
         />
         <ProfileMenuItem 
           to="/perfil/seguranca" 

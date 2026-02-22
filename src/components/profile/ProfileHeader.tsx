@@ -85,14 +85,6 @@ const ProfileHeader = ({ user }: ProfileHeaderProps) => {
           >
             Editar Perfil
           </Link>
-          {user.status === 'ativo_comunidade' && (
-            <Link 
-              to="/perfil/instituicao-campus" 
-              className="text-xs font-bold py-2 px-4 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors"
-            >
-              Validar Vínculo
-            </Link>
-          )}
         </div>
       </div>
     </motion.div>

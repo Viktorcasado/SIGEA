@@ -13,7 +13,6 @@ import ValidateCertificatePage from './pages/ValidateCertificatePage';
 import EventDetailPage from './pages/EventDetailPage';
 import ProfilePage from './pages/ProfilePage';
 import EditProfilePage from './pages/profile/EditProfilePage';
-import InstitutionPage from './pages/profile/InstitutionPage';
 import SecurityPage from './pages/profile/SecurityPage';
 import AppSettingsPage from './pages/profile/AppSettingsPage';
 import UserInscriptionsPage from './pages/profile/UserInscriptionsPage';
@@ -87,7 +86,6 @@ function AppRoutes() {
       {/* Rotas Protegidas Fora do Layout */}
       <Route element={<ProtectedRoute />}>
         <Route path="/perfil/editar" element={<EditProfilePage />} />
-        <Route path="/perfil/instituicao-campus" element={<InstitutionPage />} />
         <Route path="/perfil/seguranca" element={<SecurityPage />} />
         <Route path="/perfil/configuracoes" element={<AppSettingsPage />} />
         <Route path="/perfil/eventos-inscritos" element={<div className='bg-gray-50 min-h-screen font-sans'><UserInscriptionsPage /></div>} />
