@@ -34,7 +34,7 @@ serve(async (req) => {
     // 1. Verify registration and 10-minute rule
     const { data: registration, error: regError } = await supabase
       .from('event_registrations')
-      .select('registered_at')
+      .select('registered_at, events(workload)')
       .eq('event_id', event_id)
       .eq('user_id', user.id)
       .single()
@@ -62,6 +62,7 @@ serve(async (req) => {
     // 3. Generate codes
     const validationCode = Math.random().toString(36).substring(2, 10).toUpperCase();
     const certCode = `SIGEA-${event_id.substring(0,4)}-${new Date().getFullYear().toString().slice(-2)}`;
+    const workload = registration.events?.workload || 0;
 
     // 4. Insert record using service role
     const { data: cert, error: insertError } = await supabase
@@ -70,7 +71,8 @@ serve(async (req) => {
         evento_id: event_id,
         user_id: user.id,
         codigo_validacao: validationCode,
-        codigo_certificado: certCode
+        codigo_certificado: certCode,
+        carga_horaria: workload
       })
       .select()
       .single()

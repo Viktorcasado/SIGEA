@@ -64,7 +64,7 @@ export interface Certificate {
   eventoId: string;
   codigo: string;
   dataEmissao: Date;
-  cargaHoraria?: number;
+  carga_horaria: number;
   url_pdf?: string;
   event?: Event;
 }

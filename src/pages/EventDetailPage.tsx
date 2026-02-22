@@ -214,12 +214,19 @@ export default function EventDetailPage() {
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         <div className="p-8">
             <h1 className="text-4xl font-black text-gray-900 mb-4 leading-tight">{event.titulo}</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">
                     <Calendar className="w-6 h-6 text-indigo-600" />
                     <div>
                         <p className="text-xs font-bold text-gray-400 uppercase">Data</p>
                         <p className="font-bold text-gray-800">{event.dataInicio.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">
+                    <Clock className="w-6 h-6 text-indigo-600" />
+                    <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase">Carga Horária</p>
+                        <p className="font-bold text-gray-800">{event.carga_horaria} horas</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">

@@ -45,6 +45,7 @@ export default function EventCard({ event, variant = 'horizontal', isFavorite, o
                     <p className="text-sm text-gray-500 mt-1.5">{event.instituicao} - {event.campus}</p>
                     <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600 mt-3">
                         <div className="flex items-center"><Calendar className="w-4 h-4 mr-1.5 text-gray-400" /> {event.dataInicio.toLocaleDateString('pt-BR')}</div>
+                        <div className="flex items-center"><Clock className="w-4 h-4 mr-1.5 text-gray-400" /> {event.carga_horaria}h</div>
                         <ModalityIcon modality={event.modalidade} />
                         {event.vagas != null && event.vagas > 0 && <div className="flex items-center"><Users className="w-4 h-4 mr-1.5 text-gray-400" /> {event.vagas} vagas</div>}
                     </div>
@@ -65,7 +66,7 @@ export default function EventCard({ event, variant = 'horizontal', isFavorite, o
         <div className="flex justify-between items-start">
           <div>
             <h3 className="font-semibold text-gray-800">{event.titulo}</h3>
-            <p className="text-sm text-gray-500 mt-1">{event.campus}</p>
+            <p className="text-sm text-gray-500 mt-1">{event.campus} • {event.carga_horaria}h</p>
           </div>
           {event.status && <StatusBadge status={event.status} />}
         </div>
@@ -79,7 +80,10 @@ export default function EventCard({ event, variant = 'horizontal', isFavorite, o
         <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
           <Calendar className="w-6 h-6 text-gray-500" />
         </div>
-        <p className="text-sm font-semibold text-indigo-600">{event.dataInicio.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).toUpperCase()}</p>
+        <div className="flex justify-between items-center">
+          <p className="text-sm font-semibold text-indigo-600">{event.dataInicio.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).toUpperCase()}</p>
+          <span className="text-[10px] font-black text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{event.carga_horaria}H</span>
+        </div>
         <h3 className="font-semibold text-gray-800 mt-1">{event.titulo}</h3>
         <p className="text-sm text-gray-500 flex items-center mt-2">
           <MapPin className="w-4 h-4 mr-1.5 text-gray-400" />

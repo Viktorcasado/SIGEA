@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, Download, Copy, Award, Search, Loader2 } from 'lucide-react';
+import { BadgeCheck, Download, Copy, Award, Search, Loader2, Clock } from 'lucide-react';
 import { useUser } from '@/src/contexts/UserContext';
 import { supabase } from '@/src/integrations/supabase/client';
 import { Certificate } from '@/src/types';
@@ -34,7 +34,6 @@ export default function CertificatesPage() {
 
         if (!error && data) {
           const formatted: Certificate[] = data.map(c => {
-            // Trata o caso onde o Supabase pode retornar um array para a relação
             const eventData = Array.isArray(c.events) ? c.events[0] : c.events;
             
             return {
@@ -43,6 +42,7 @@ export default function CertificatesPage() {
               eventoId: c.evento_id,
               codigo: c.codigo_certificado,
               dataEmissao: new Date(c.emitido_em),
+              carga_horaria: c.carga_horaria || eventData?.workload || 0,
               event: eventData ? {
                 id: eventData.id,
                 titulo: eventData.title,
@@ -106,7 +106,7 @@ export default function CertificatesPage() {
     doc.text(`realizado em ${cert.event.dataInicio.toLocaleDateString('pt-BR')} no campus ${cert.event.campus}`, 148.5, 140, { align: 'center' });
     
     doc.setFont('helvetica', 'bold');
-    doc.text(`com carga horária total de ${cert.event.carga_horaria} horas.`, 148.5, 150, { align: 'center' });
+    doc.text(`com carga horária total de ${cert.carga_horaria} horas.`, 148.5, 150, { align: 'center' });
 
     const qrCodeDataUrl = await QRCode.toDataURL(validationUrl);
     doc.addImage(qrCodeDataUrl, 'PNG', 20, 155, 35, 35);
@@ -166,8 +166,14 @@ export default function CertificatesPage() {
             >
               <div className="flex-1">
                 <h3 className="font-bold text-gray-900 text-lg">{cert.event?.titulo || 'Evento não encontrado'}</h3>
-                <p className="text-sm text-gray-500 font-mono mt-1">{cert.codigo}</p>
-                <p className="text-xs text-gray-400 mt-2">Emitido em {cert.dataEmissao.toLocaleDateString('pt-BR')} • {cert.event?.carga_horaria}h</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-sm text-gray-500 font-mono">{cert.codigo}</p>
+                  <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {cert.carga_horaria}H
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Emitido em {cert.dataEmissao.toLocaleDateString('pt-BR')}</p>
               </div>
               <div className="flex gap-2">
                 <button 
