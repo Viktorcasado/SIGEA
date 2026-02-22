@@ -19,8 +19,10 @@ export default function ExplorePage() {
     let isMounted = true;
 
     const fetchEvents = async () => {
+      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
+      
       try {
         const { data, error: supabaseError } = await supabase
           .from('events')

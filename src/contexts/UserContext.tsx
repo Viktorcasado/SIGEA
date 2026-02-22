@@ -69,24 +69,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    const initialize = async () => {
-      try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        if (!mounted) return;
-        
-        setSession(initialSession);
-        if (initialSession) {
-          await fetchProfile(initialSession.user);
-        }
-      } catch (err) {
-        console.error("[UserContext] Erro na inicialização:", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    initialize();
-
+    // Escuta mudanças de autenticação (inclui o estado inicial)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       if (!mounted) return;
       
@@ -127,12 +110,15 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   };
 
   const logout = async () => {
+    setLoading(true);
     try {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
     } catch (err) {
       console.error("[UserContext] Erro no logout:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -154,6 +140,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
 
     if (error) throw error;
     
+    // Atualiza o estado local após o sucesso no banco
     setUser(prev => prev ? { ...prev, ...updates } : null);
   };
 

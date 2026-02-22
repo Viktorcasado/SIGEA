@@ -17,12 +17,12 @@ const ProtectedRoute = ({ allowedProfiles }: ProtectedRouteProps) => {
     );
   }
 
-  // Se não estiver logado, vai para o login em vez de "Acesso Restrito"
+  // Se não estiver logado, vai para o login
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Se estiver logado mas o perfil não estiver na lista (raro, pois a lista cobre quase tudo)
+  // Se estiver logado mas o perfil não estiver na lista
   if (!allowedProfiles.includes(user.perfil)) {
     return <Navigate to="/acesso-restrito" replace />;
   }
