@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useUser } from '@/src/contexts/UserContext';
 import { Link } from 'react-router-dom';
 import { Loader2, ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import Logo from '@/src/components/Logo';
 
 export default function LoginPage() {
   const { login, loginWithGoogle, loading } = useUser();
@@ -42,14 +41,16 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4 font-sans">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-3xl shadow-xl border border-gray-100">
+      <div className="w-full max-md p-8 space-y-6 bg-white rounded-3xl shadow-xl border border-gray-100">
         <div className="text-center flex flex-col items-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-6 text-indigo-600 font-bold hover:text-indigo-700 transition-colors self-start">
             <ArrowLeft className="w-4 h-4" />
             Voltar ao Início
           </Link>
           
-          <Logo size="lg" className="mb-2" />
+          <h1 className="text-4xl font-black text-gray-900 tracking-tighter mb-2">
+            SIGEA<span className="text-indigo-600">.</span>
+          </h1>
           <p className="text-gray-500 font-medium">Bem-vindo de volta!</p>
         </div>
 
