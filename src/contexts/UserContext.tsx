@@ -28,7 +28,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const initialized = useRef(false);
+  const isInitialMount = useRef(true);
 
   const fetchProfile = useCallback(async (supabaseUser: SupabaseUser) => {
     try {
@@ -39,7 +39,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
         .maybeSingle();
       
       if (profile && !error) {
-        setUser({
+        return {
           id: profile.id,
           nome: profile.full_name || supabaseUser.user_metadata?.full_name || 'Usuário',
           username: profile.full_name?.split(' ')[0].toLowerCase() || supabaseUser.email?.split('@')[0] || 'user',
@@ -50,57 +50,71 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
           campus: profile.campus || '',
           matricula: profile.registration_number || '',
           avatar_url: profile.avatar_url || ''
-        } as User);
-      } else {
-        setUser({
-          id: supabaseUser.id,
-          nome: supabaseUser.user_metadata?.full_name || 'Usuário',
-          email: supabaseUser.email || '',
-          perfil: 'comunidade_externa',
-          status: 'ativo_comunidade',
-          is_organizer: false,
-          username: supabaseUser.email?.split('@')[0] || 'user'
-        } as User);
+        } as User;
       }
+      
+      return {
+        id: supabaseUser.id,
+        nome: supabaseUser.user_metadata?.full_name || 'Usuário',
+        email: supabaseUser.email || '',
+        perfil: 'comunidade_externa',
+        status: 'ativo_comunidade',
+        is_organizer: false,
+        username: supabaseUser.email?.split('@')[0] || 'user'
+      } as User;
     } catch (err) {
       console.error("[UserContext] Erro ao buscar perfil:", err);
+      return null;
     }
   }, []);
 
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
+    let mounted = true;
 
     const initializeAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+
         if (initialSession) {
           setSession(initialSession);
-          await fetchProfile(initialSession.user);
+          const profile = await fetchProfile(initialSession.user);
+          if (mounted) setUser(profile);
         }
       } catch (err) {
-        console.error("[UserContext] Erve na inicialização:", err);
+        console.error("[UserContext] Erro na inicialização:", err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
-    initializeAuth();
+    if (isInitialMount.current) {
+      initializeAuth();
+      isInitialMount.current = false;
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      if (!mounted) return;
+
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setSession(currentSession);
         if (currentSession) {
-          await fetchProfile(currentSession.user);
+          const profile = await fetchProfile(currentSession.user);
+          if (mounted) {
+            setUser(profile);
+            setLoading(false);
+          }
         }
       } else if (event === 'SIGNED_OUT') {
         setSession(null);
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
@@ -120,27 +134,36 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({ 
+    const { error } = await supabase.auth.signInWithOAuth({ 
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` }
     });
+    if (error) throw error;
   };
 
   const logout = async () => {
+    setLoading(true);
     await supabase.auth.signOut();
   };
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return;
-    const { error } = await supabase.from('profiles').update({
-      full_name: updates.nome,
-      campus: updates.campus,
-      registration_number: updates.matricula,
-      avatar_url: updates.avatar_url,
-      user_type: updates.perfil,
-      is_organizer: updates.is_organizer
-    }).eq('id', user.id);
+    
+    const payload: any = {};
+    if (updates.nome !== undefined) payload.full_name = updates.nome;
+    if (updates.campus !== undefined) payload.campus = updates.campus;
+    if (updates.matricula !== undefined) payload.registration_number = updates.matricula;
+    if (updates.avatar_url !== undefined) payload.avatar_url = updates.avatar_url;
+    if (updates.perfil !== undefined) payload.user_type = updates.perfil;
+    if (updates.is_organizer !== undefined) payload.is_organizer = updates.is_organizer;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update(payload)
+      .eq('id', user.id);
+
     if (error) throw error;
+    
     setUser(prev => prev ? { ...prev, ...updates } : null);
   };
 
