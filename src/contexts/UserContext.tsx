@@ -31,7 +31,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
 
   const fetchProfile = async (supabaseUser: SupabaseUser) => {
     try {
-      // Fallback imediato para não deixar o usuário como "visitante"
       const basicUser: User = {
         id: supabaseUser.id,
         nome: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'Usuário',
@@ -102,9 +101,15 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       setLoading(false);
     });
 
+    // Timeout de segurança para garantir que o loading saia da tela
+    const timeout = setTimeout(() => {
+      if (isMounted && loading) setLoading(false);
+    }, 5000);
+
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+      clearTimeout(timeout);
     };
   }, []);
 

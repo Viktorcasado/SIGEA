@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, Compass, Award, Calendar } from 'lucide-react';
+import { Bell, Compass, Award, Calendar, AlertCircle } from 'lucide-react';
 import { useNotifications } from '@/src/contexts/NotificationContext';
 import { useUser } from '@/src/contexts/UserContext';
 import { supabase } from '@/src/integrations/supabase/client';
@@ -14,17 +14,21 @@ export default function HomePage() {
   const { unreadCount } = useNotifications();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const { data, error } = await supabase
+        setError(null);
+        const { data, error: supabaseError } = await supabase
           .from('events')
           .select('*')
           .order('date', { ascending: true })
           .limit(10);
 
-        if (!error && data) {
+        if (supabaseError) throw supabaseError;
+
+        if (data) {
           setEvents(data.map(e => ({
             id: e.id,
             titulo: e.title,
@@ -34,11 +38,13 @@ export default function HomePage() {
             campus: e.campus || '',
             instituicao: 'IFAL',
             modalidade: 'Presencial',
-            status: 'publicado'
+            status: 'publicado',
+            carga_horaria: e.workload || 0
           })));
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Erro ao carregar eventos:", err);
+        setError("Não foi possível carregar os eventos. Verifique sua conexão.");
       } finally {
         setLoading(false);
       }
@@ -69,6 +75,12 @@ export default function HomePage() {
         {loading ? (
           <div className="flex gap-4 overflow-hidden">
             {[1, 2, 3].map(i => <div key={i} className="w-64 h-40 bg-gray-100 animate-pulse rounded-xl flex-shrink-0" />)}
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 p-6 rounded-2xl border border-red-100 text-center">
+            <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-2" />
+            <p className="text-red-700 font-medium">{error}</p>
+            <button onClick={() => window.location.reload()} className="mt-3 text-sm font-bold text-red-600 underline">Tentar novamente</button>
           </div>
         ) : events.length > 0 ? (
           <div className="flex overflow-x-auto pb-4 -mx-4 px-4 no-scrollbar">

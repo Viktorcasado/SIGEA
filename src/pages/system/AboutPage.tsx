@@ -14,12 +14,12 @@ export default function AboutPage() {
 
       <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 overflow-hidden relative">
         <div className="absolute top-0 right-0 p-8 opacity-5">
-          <img src="/public/assets/logo-light.jpg" alt="Sigea Watermark" className="w-32 h-32 object-contain" />
+          <img src="/assets/logo-light.jpg" alt="Sigea Watermark" className="w-32 h-32 object-contain" />
         </div>
 
         <header className="mb-8">
           <div className="flex items-center gap-4 mb-4">
-            <img src="/public/assets/logo-light.jpg" alt="SIGEA Logo" className="w-16 h-16 rounded-2xl shadow-sm object-contain" />
+            <img src="/assets/logo-light.jpg" alt="SIGEA Logo" className="w-16 h-16 rounded-2xl shadow-sm object-contain" />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-black text-gray-900 tracking-tighter">SIGEA</h1>
