@@ -69,18 +69,23 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    const checkSession = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      if (!mounted) return;
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (!mounted) return;
 
-      if (initialSession) {
-        setSession(initialSession);
-        await fetchProfile(initialSession.user);
+        if (initialSession) {
+          setSession(initialSession);
+          await fetchProfile(initialSession.user);
+        }
+      } catch (err) {
+        console.error("[UserContext] Erro na inicialização:", err);
+      } finally {
+        if (mounted) setLoading(false);
       }
-      setLoading(false);
     };
 
-    checkSession();
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       if (!mounted) return;
@@ -88,12 +93,11 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setSession(currentSession);
         if (currentSession) await fetchProfile(currentSession.user);
-        setLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setSession(null);
         setUser(null);
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => {

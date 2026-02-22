@@ -16,6 +16,7 @@ export default function ExplorePage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchEvents = useCallback(async () => {
+    // Evita múltiplos fetches simultâneos
     setIsLoading(true);
     setError(null);
     
@@ -51,11 +52,12 @@ export default function ExplorePage() {
     }
   }, []);
 
+  // Executa apenas uma vez na montagem
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
 
-  const toggleFavorite = (eventId: string) => {
+  const toggleFavorite = useCallback((eventId: string) => {
     setFavorites(prev => {
       const newFavs = new Set(prev);
       if (newFavs.has(eventId)) {
@@ -65,7 +67,7 @@ export default function ExplorePage() {
       }
       return newFavs;
     });
-  };
+  }, []);
 
   const filteredEvents = useMemo(() => {
     let filtered = events;

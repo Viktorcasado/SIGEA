@@ -13,29 +13,27 @@ export default function AuthCallbackPage() {
     if (processed.current) return;
     
     const handleCallback = async () => {
-      // O Supabase processa o hash da URL automaticamente ao chamar getSession ou onAuthStateChange
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error("Erro no callback:", error);
-        navigate('/login?erro=oauth', { replace: true });
-        return;
-      }
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) throw error;
 
-      if (session) {
-        processed.current = true;
-        // Limpa a URL para remover tokens e hashes
-        window.history.replaceState({}, document.title, "/");
-        navigate('/', { replace: true });
-      } else {
-        // Se não encontrou sessão de imediato, pode ser delay do hash. 
-        // Vamos esperar o evento do onAuthStateChange no UserContext resolver.
-        const timeout = setTimeout(() => {
-          if (!processed.current) {
-            navigate('/login?erro=oauth', { replace: true });
-          }
-        }, 5000);
-        return () => clearTimeout(timeout);
+        if (session) {
+          processed.current = true;
+          // Limpa a URL para remover tokens e hashes sensíveis
+          window.history.replaceState({}, document.title, "/");
+          navigate('/', { replace: true });
+        } else {
+          // Se não houver sessão após 3 segundos, redireciona para login
+          setTimeout(() => {
+            if (!processed.current) {
+              navigate('/login', { replace: true });
+            }
+          }, 3000);
+        }
+      } catch (err) {
+        console.error("[AuthCallback] Erro:", err);
+        navigate('/login?error=auth_callback', { replace: true });
       }
     };
 

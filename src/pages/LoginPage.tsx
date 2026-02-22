@@ -21,7 +21,9 @@ export default function LoginPage() {
   useEffect(() => {
     if (!loading && user) {
       const from = (location.state as any)?.from?.pathname || "/";
-      navigate(from, { replace: true });
+      // Evita redirecionar para o próprio login
+      const target = from === '/login' ? '/' : from;
+      navigate(target, { replace: true });
     }
   }, [user, loading, navigate, location]);
 
@@ -32,6 +34,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
+      // O redirecionamento é tratado pelo useEffect acima
     } catch (err: any) {
       setError('E-mail ou senha incorretos.');
       setIsSubmitting(false);
