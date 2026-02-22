@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/src/contexts/UserContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -10,21 +10,19 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login, loginWithGoogle, session, loading } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
 
   // Redireciona se já estiver logado
   useEffect(() => {
     if (!loading && session) {
-      navigate('/', { replace: true });
+      const from = (location.state as any)?.from?.pathname || "/";
+      navigate(from, { replace: true });
     }
-  }, [session, loading, navigate]);
+  }, [session, loading, navigate, location]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
-      setError('A senha deve ter no mínimo 6 caracteres.');
-      return;
-    }
     
     setIsLoading(true);
     setError(null);
@@ -103,7 +101,7 @@ export default function LoginPage() {
           </div>
 
           <div className="text-right">
-            <Link to="/forgot-password" theme="light" className="text-sm font-bold text-indigo-600 hover:underline">
+            <Link to="/forgot-password" title="Recuperar Senha" className="text-sm font-bold text-indigo-600 hover:underline">
               Esqueci minha senha
             </Link>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Search, SlidersHorizontal, Star, Loader2, Calendar, AlertCircle } from 'lucide-react';
 import { supabase } from '@/src/integrations/supabase/client';
 import { Event } from '@/src/types';
@@ -15,52 +15,45 @@ export default function ExplorePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchEvents = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error: supabaseError } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true });
 
-    const fetchEvents = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const { data, error: supabaseError } = await supabase
-          .from('events')
-          .select('*')
-          .order('date', { ascending: true });
+      if (supabaseError) throw supabaseError;
 
-        if (supabaseError) throw supabaseError;
-
-        if (isMounted && data) {
-          const formattedEvents: Event[] = data.map(e => ({
-            id: e.id,
-            titulo: e.title,
-            descricao: e.description || '',
-            dataInicio: new Date(e.date),
-            local: e.location || '',
-            campus: e.campus || '',
-            instituicao: 'IFAL',
-            modalidade: 'Presencial',
-            status: 'publicado',
-            vagas: e.workload || 0,
-            carga_horaria: e.workload || 0
-          }));
-          setEvents(formattedEvents);
-        }
-      } catch (err: any) {
-        console.error("[ExplorePage] Erro ao buscar eventos:", err);
-        if (isMounted) setError("Não foi possível carregar os eventos.");
-      } finally {
-        if (isMounted) setIsLoading(false);
+      if (data) {
+        const formattedEvents: Event[] = data.map(e => ({
+          id: e.id,
+          titulo: e.title,
+          descricao: e.description || '',
+          dataInicio: new Date(e.date),
+          local: e.location || '',
+          campus: e.campus || '',
+          instituicao: 'IFAL',
+          modalidade: 'Presencial',
+          status: 'publicado',
+          vagas: e.workload || 0,
+          carga_horaria: e.workload || 0
+        }));
+        setEvents(formattedEvents);
       }
-    };
-
-    fetchEvents();
-
-    return () => {
-      isMounted = false;
-    };
+    } catch (err: any) {
+      console.error("[ExplorePage] Erro ao buscar eventos:", err);
+      setError("Não foi possível carregar os eventos.");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
   const toggleFavorite = (eventId: string) => {
     setFavorites(prev => {
@@ -143,7 +136,7 @@ export default function ExplorePage() {
           <div className="text-center py-20 bg-white rounded-3xl border border-red-100">
             <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-gray-700">{error}</h3>
-            <button onClick={() => window.location.reload()} className="mt-4 text-indigo-600 font-bold hover:underline">Tentar novamente</button>
+            <button onClick={fetchEvents} className="mt-4 text-indigo-600 font-bold hover:underline">Tentar novamente</button>
           </div>
         ) : filteredEvents.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">

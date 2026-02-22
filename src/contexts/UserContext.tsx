@@ -51,6 +51,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
           avatar_url: profile.avatar_url || ''
         } as User);
       } else {
+        // Caso o perfil não exista no banco ainda, cria um objeto básico
         setUser({
           id: supabaseUser.id,
           nome: supabaseUser.user_metadata?.full_name || 'Usuário',
@@ -69,7 +70,20 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   useEffect(() => {
     let mounted = true;
 
-    // Escuta mudanças de autenticação (inclui o estado inicial)
+    // Verifica sessão inicial
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      if (!mounted) return;
+      if (initialSession) {
+        setSession(initialSession);
+        fetchProfile(initialSession.user).then(() => {
+          if (mounted) setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Escuta mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       if (!mounted) return;
       
@@ -140,7 +154,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
 
     if (error) throw error;
     
-    // Atualiza o estado local após o sucesso no banco
     setUser(prev => prev ? { ...prev, ...updates } : null);
   };
 
