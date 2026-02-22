@@ -5,7 +5,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/src/integrations/supabase/client';
 import { CertificateTemplateRepository } from '@/src/repositories/CertificateTemplateRepository';
 import { CertificateTemplate, CertificateMapping } from '@/src/types';
-import { ArrowLeft, Save, Type, QrCode, Trash2, Loader2, Move } from 'lucide-react';
+import { ArrowLeft, Save, Type, QrCode, Trash2, Loader2, Move, CheckCircle, FileText } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const AVAILABLE_FIELDS = [
@@ -176,7 +176,7 @@ export default function CertificateEditorPage() {
             }}
           >
             {/* Renderização dos campos mapeados */}
-            {Object.entries(mapping.fields).map(([id, pos]) => {
+            {Object.entries(mapping.fields).map(([id, pos]: [string, any]) => {
               const fieldInfo = AVAILABLE_FIELDS.find(f => f.id === id);
               return (
                 <div

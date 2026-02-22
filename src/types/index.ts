@@ -9,6 +9,7 @@ export interface User {
   avatar_url?: string;
   matricula?: string;
   siape?: string;
+  cpf?: string;
   instituicao?: EventInstitution;
   campus?: string;
   perfil: UserProfile;
@@ -25,6 +26,7 @@ export interface Event {
   titulo: string;
   descricao: string;
   dataInicio: Date;
+  dataFim?: Date;
   local: string;
   campus: string;
   instituicao: EventInstitution;

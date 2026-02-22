@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import { PDFDocument, rgb, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1'
@@ -90,7 +91,7 @@ serve(async (req) => {
       certificate_code: cert.codigo_certificado
     }
 
-    for (const [fieldId, pos] of Object.entries(mapping)) {
+    for (const [fieldId, pos]: [string, any] of Object.entries(mapping)) {
       if (fieldId === 'qr_code') {
         const validationUrl = encodeURIComponent(`https://sigea.ifal.edu.br/validar-certificado?codigo=${cert.codigo_certificado}`)
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${validationUrl}`

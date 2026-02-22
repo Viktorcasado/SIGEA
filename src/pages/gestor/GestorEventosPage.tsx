@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/src/integrations/supabase/client';
 import { Event } from '@/src/types';
 import { Link } from 'react-router-dom';
-import { MoreVertical, Edit, Trash2, Eye, Calendar as CalendarIcon, Loader2, Award } from 'lucide-react';
+import { Edit, Trash2, Eye, Calendar as CalendarIcon, Loader2, Award } from 'lucide-react';
 
 const StatusBadge = ({ date }: { date: Date }) => {
   const now = new Date();
@@ -44,7 +44,8 @@ export default function GestorEventosPage() {
           instituicao: 'IFAL',
           modalidade: 'Presencial',
           status: 'publicado',
-          vagas: e.workload || 0
+          vagas: e.workload || 0,
+          carga_horaria: e.workload || 0
         }));
         setEvents(formattedEvents);
       }

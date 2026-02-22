@@ -36,7 +36,8 @@ export default function MyEventsPage() {
           instituicao: 'IFAL',
           modalidade: 'Presencial',
           status: 'publicado',
-          vagas: 0
+          vagas: 0,
+          carga_horaria: e.workload || 0
         }));
         setEvents(formattedEvents);
       }

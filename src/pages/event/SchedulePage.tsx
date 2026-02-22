@@ -112,7 +112,7 @@ export default function SchedulePage() {
           <div key={date} className="mb-8">
             <h3 className="font-black text-sm text-indigo-600 uppercase tracking-widest mb-4 px-2">{date}</h3>
             <div className="space-y-4">
-              {acts.map(act => (
+              {(acts as Activity[]).map(act => (
                 <motion.div 
                   key={act.id}
                   initial={{ opacity: 0, y: 10 }}
