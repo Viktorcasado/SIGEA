@@ -20,8 +20,11 @@ export default function Sidebar() {
   return (
     <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-gray-100 h-screen sticky top-0 p-6">
       <div className="mb-10 px-2">
-        <Link to="/" className="text-2xl font-black text-gray-900 tracking-tighter">
-          SIGEA<span className="text-indigo-600">.</span>
+        <Link to="/" className="flex items-center gap-3">
+          <img src="/public/assets/logo-light.jpg" alt="SIGEA" className="w-10 h-10 rounded-xl object-contain" />
+          <span className="text-2xl font-black text-gray-900 tracking-tighter">
+            SIGEA<span className="text-indigo-600">.</span>
+          </span>
         </Link>
       </div>
 
@@ -49,9 +52,13 @@ export default function Sidebar() {
         {user ? (
           <>
             <div className="flex items-center gap-3 px-2 mb-6">
-              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
-                {user.nome.substring(0, 2).toUpperCase()}
-              </div>
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt={user.nome} className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                  {user.nome.substring(0, 2).toUpperCase()}
+                </div>
+              )}
               <div className="flex flex-col overflow-hidden">
                 <span className="font-bold text-sm text-gray-900 truncate">{user.nome}</span>
                 <span className="text-xs text-gray-500 truncate">{user.email}</span>

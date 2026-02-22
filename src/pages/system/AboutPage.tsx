@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Info, ShieldCheck, Code2, Heart } from 'lucide-react';
+import { ArrowLeft, Info, ShieldCheck, Code2, Heart, Mail } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function AboutPage() {
@@ -14,15 +14,20 @@ export default function AboutPage() {
 
       <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 overflow-hidden relative">
         <div className="absolute top-0 right-0 p-8 opacity-5">
-          <Info className="w-32 h-32" />
+          <img src="/public/assets/logo-light.jpg" alt="Sigea Watermark" className="w-32 h-32 object-contain" />
         </div>
 
         <header className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <h1 className="text-3xl font-black text-gray-900 tracking-tighter">SIGEA</h1>
-            <span className="px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-black rounded-md uppercase">v1.0.0</span>
+          <div className="flex items-center gap-4 mb-4">
+            <img src="/public/assets/logo-light.jpg" alt="SIGEA Logo" className="w-16 h-16 rounded-2xl shadow-sm object-contain" />
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-black text-gray-900 tracking-tighter">SIGEA</h1>
+                <span className="px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-black rounded-md uppercase">v1.0.0</span>
+              </div>
+              <p className="text-gray-500 font-medium">Sistema Integrado de Gestão de Eventos Acadêmicos</p>
+            </div>
           </div>
-          <p className="text-gray-500 font-medium">Sistema Integrado de Gestão de Eventos Acadêmicos</p>
         </header>
 
         <div className="space-y-8 text-gray-600 leading-relaxed">
@@ -45,10 +50,12 @@ export default function AboutPage() {
             </div>
             <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
               <div className="flex items-center gap-2 text-gray-900 font-bold mb-1">
-                <Code2 className="w-4 h-4 text-indigo-600" />
-                Tecnologia
+                <Mail className="w-4 h-4 text-indigo-600" />
+                Suporte
               </div>
-              <p className="text-xs">React 19 + Supabase</p>
+              <a href="mailto:sigea@eventosmd.tech" className="text-xs text-indigo-600 hover:underline font-medium">
+                sigea@eventosmd.tech
+              </a>
             </div>
           </div>
 
