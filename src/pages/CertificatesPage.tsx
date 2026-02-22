@@ -43,7 +43,8 @@ export default function CertificatesPage() {
           local: c.events.location || '',
           descricao: c.events.description || '',
           modalidade: 'Presencial',
-          status: 'publicado'
+          status: 'publicado',
+          carga_horaria: c.events.workload || 0
         } : undefined
       }));
       setCertificates(formatted);
@@ -83,13 +84,18 @@ export default function CertificatesPage() {
     doc.setFontSize(32);
     doc.setTextColor(79, 70, 229);
     doc.setFont('helvetica', 'bold');
-    doc.text(user?.nome || 'Participante', 148.5, 110, { align: 'center' });
+    // USA O NOME DO CERTIFICADO SE EXISTIR, SENÃO O NOME DO APP
+    doc.text(user?.nome_certificado || user?.nome || 'Participante', 148.5, 110, { align: 'center' });
 
     doc.setFontSize(18);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(75, 85, 99);
     doc.text(`participou com êxito do evento "${cert.event.titulo}"`, 148.5, 130, { align: 'center' });
-    doc.text(`realizado em ${cert.event.dataInicio.toLocaleDateString('pt-BR')} no campus ${cert.event.campus}.`, 148.5, 140, { align: 'center' });
+    doc.text(`realizado em ${cert.event.dataInicio.toLocaleDateString('pt-BR')} no campus ${cert.event.campus}`, 148.5, 140, { align: 'center' });
+    
+    // ADICIONA A CARGA HORÁRIA NO TEXTO
+    doc.setFont('helvetica', 'bold');
+    doc.text(`com carga horária total de ${cert.event.carga_horaria} horas.`, 148.5, 150, { align: 'center' });
 
     const qrCodeDataUrl = await QRCode.toDataURL(validationUrl);
     doc.addImage(qrCodeDataUrl, 'PNG', 20, 155, 35, 35);
@@ -143,7 +149,7 @@ export default function CertificatesPage() {
               <div className="flex-1">
                 <h3 className="font-bold text-gray-900 text-lg">{cert.event?.titulo || 'Evento não encontrado'}</h3>
                 <p className="text-sm text-gray-500 font-mono mt-1">{cert.codigo}</p>
-                <p className="text-xs text-gray-400 mt-2">Emitido em {cert.dataEmissao.toLocaleDateString('pt-BR')}</p>
+                <p className="text-xs text-gray-400 mt-2">Emitido em {cert.dataEmissao.toLocaleDateString('pt-BR')} • {cert.event?.carga_horaria}h</p>
               </div>
               <div className="flex gap-2">
                 <button 

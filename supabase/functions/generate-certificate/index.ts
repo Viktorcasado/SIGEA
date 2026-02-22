@@ -21,16 +21,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // 1. Buscar Template e Mapeamento
     const { data: template, error: tError } = await supabase
       .from('certificate_templates')
       .select('*')
       .eq('event_id', event_id)
       .single()
 
-    if (tError || !template) throw new Error("Template não encontrado para este evento.")
+    if (tError || !template) throw new Error("Template não encontrado.")
 
-    // 2. Buscar Dados do Certificado, Usuário e Evento
     const { data: cert, error: cError } = await supabase
       .from('certificados')
       .select('*, profiles(*), events(*)')
@@ -39,7 +37,6 @@ serve(async (req) => {
 
     if (cError || !cert) throw new Error("Dados do certificado não encontrados.")
 
-    // 3. Carregar o Template Base
     const { data: templateFile, error: fError } = await supabase.storage
       .from('certificate-templates')
       .download(template.template_file_path)
@@ -66,10 +63,10 @@ serve(async (req) => {
     const { width, height } = firstPage.getSize()
     const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-    // 4. Aplicar Mapeamento
     const mapping = template.mapping.fields
     const dataMap = {
-      participant_name: cert.profiles.full_name,
+      // PRIORIZA O NOME DO CERTIFICADO
+      participant_name: cert.profiles.certificate_full_name || cert.profiles.full_name,
       cpf: cert.profiles.registration_number || '---',
       event_title: cert.events.title,
       workload_hours: `${cert.events.workload || 0} horas`,
@@ -79,7 +76,6 @@ serve(async (req) => {
 
     for (const [fieldId, pos] of Object.entries(mapping)) {
       if (fieldId === 'qr_code') {
-        // Usando uma API externa para gerar o QR Code como imagem para simplificar o bundle
         const validationUrl = encodeURIComponent(`https://sigea.ifal.edu.br/validar-certificado?codigo=${cert.codigo_certificado}`)
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${validationUrl}`
         
@@ -113,7 +109,6 @@ serve(async (req) => {
       }
     }
 
-    // 5. Salvar e Upload do PDF Final
     const pdfBytes = await pdfDoc.save()
     const finalPath = `issued/${event_id}/${user_id}/${cert.codigo_certificado}.pdf`
     
@@ -126,7 +121,6 @@ serve(async (req) => {
 
     if (uError) throw uError
 
-    // 6. Atualizar registro no banco
     await supabase
       .from('certificados')
       .update({ url_pdf: finalPath })

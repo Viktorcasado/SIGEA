@@ -41,6 +41,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
         setUser({
           id: profile.id,
           nome: profile.full_name || supabaseUser.user_metadata?.full_name || 'Usuário',
+          nome_certificado: profile.certificate_full_name || profile.full_name || '',
           email: supabaseUser.email || '',
           perfil: profile.user_type || 'comunidade_externa',
           status: deriveStatus(profile.user_type, profile.is_organizer || false),
@@ -59,13 +60,11 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     let isMounted = true;
 
     const initialize = async () => {
-      // 1. Pega a sessão rapidamente
       const { data: { session: initialSession } } = await supabase.auth.getSession();
       
       if (isMounted) {
         if (initialSession) {
           setSession(initialSession);
-          // Define um usuário básico com metadados do Google/Auth para não ficar vazio
           setUser({
             id: initialSession.user.id,
             nome: initialSession.user.user_metadata?.full_name || 'Usuário',
@@ -76,10 +75,8 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
             avatar_url: initialSession.user.user_metadata?.avatar_url || ''
           } as User);
           
-          // Busca o perfil completo em background
           fetchProfile(initialSession.user);
         }
-        // Libera o loading IMEDIATAMENTE após checar a sessão
         setLoading(false);
       }
     };
@@ -90,7 +87,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       if (isMounted) {
         setSession(currentSession);
         if (currentSession) {
-          // Atualiza dados básicos
           setUser(prev => ({
             ...(prev || {}),
             id: currentSession.user.id,
@@ -143,6 +139,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     if (!user) return;
     const { error } = await supabase.from('profiles').update({
       full_name: updates.nome,
+      certificate_full_name: updates.nome_certificado,
       campus: updates.campus,
       registration_number: updates.matricula,
       avatar_url: updates.avatar_url,

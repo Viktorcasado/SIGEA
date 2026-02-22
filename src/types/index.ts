@@ -3,7 +3,8 @@ export type UserStatus = 'ativo_comunidade' | 'ativo_vinculado' | 'gestor' | 'ad
 
 export interface User {
   id: string;
-  nome: string;
+  nome: string; // Nome de exibição no App
+  nome_certificado?: string; // Nome que aparecerá no certificado
   email: string;
   telefone?: string;
   avatar_url?: string;
@@ -31,6 +32,7 @@ export interface Event {
   modalidade: EventModality;
   status: EventStatus;
   vagas?: number;
+  carga_horaria: number; // Campo obrigatório para certificados
   organizer_id?: string;
   image_url?: string;
 }
