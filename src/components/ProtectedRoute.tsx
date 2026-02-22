@@ -13,12 +13,11 @@ const ProtectedRoute = () => {
     );
   }
 
-  // Se não estiver logado, vai para o login
+  // Se não estiver logado, vai para o login, mas salva a página que tentou acessar
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Acesso liberado para todos os usuários autenticados
   return <Outlet />;
 };
 
