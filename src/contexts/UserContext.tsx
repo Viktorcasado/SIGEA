@@ -31,7 +31,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
 
   const fetchProfile = async (supabaseUser: SupabaseUser) => {
     try {
-      // Primeiro, definimos um usuário básico baseado nos metadados da conta (fallback imediato)
+      // Fallback imediato para não deixar o usuário como "visitante"
       const basicUser: User = {
         id: supabaseUser.id,
         nome: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'Usuário',
@@ -44,14 +44,13 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       
       setUser(basicUser);
 
-      // Agora buscamos os dados detalhados na tabela profiles
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .maybeSingle();
       
-      if (profile) {
+      if (profile && !error) {
         setUser({
           id: profile.id,
           nome: profile.full_name || basicUser.nome,
@@ -74,29 +73,33 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     let isMounted = true;
 
     const initialize = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      
-      if (isMounted) {
-        if (initialSession) {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (isMounted) {
           setSession(initialSession);
-          await fetchProfile(initialSession.user);
+          if (initialSession) {
+            await fetchProfile(initialSession.user);
+          }
         }
-        setLoading(false);
+      } catch (err) {
+        console.error("[UserContext] Erro na inicialização:", err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
     initialize();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      if (isMounted) {
-        setSession(currentSession);
-        if (currentSession) {
-          await fetchProfile(currentSession.user);
-        } else {
-          setUser(null);
-        }
-        setLoading(false);
+      if (!isMounted) return;
+      
+      setSession(currentSession);
+      if (currentSession) {
+        await fetchProfile(currentSession.user);
+      } else {
+        setUser(null);
       }
+      setLoading(false);
     });
 
     return () => {
@@ -128,7 +131,13 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
 
   const logout = async () => {
     setLoading(true);
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setSession(null);
+      setUser(null);
+      setLoading(false);
+    }
   };
 
   const updateProfile = async (updates: Partial<User>) => {

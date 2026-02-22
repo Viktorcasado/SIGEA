@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/src/contexts/UserContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -12,7 +12,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
-  // Se já houver sessão e não estiver carregando, vai para a home
+  // Redireciona se já estiver logado
   useEffect(() => {
     if (!loading && session) {
       navigate('/', { replace: true });
@@ -25,16 +25,19 @@ export default function LoginPage() {
       setError('A senha deve ter no mínimo 6 caracteres.');
       return;
     }
+    
     setIsLoading(true);
     setError(null);
+    
     try {
       await login(email, password);
-      // O useEffect acima cuidará do redirecionamento
+      // O redirecionamento será feito pelo useEffect acima
     } catch (err: any) {
-      if (err.message.includes('Invalid login credentials')) {
+      console.error("Erro no login:", err);
+      if (err.message?.includes('Invalid login credentials')) {
         setError('E-mail ou senha inválidos.');
       } else {
-        setError('Sem conexão. Tente novamente.');
+        setError('Erro ao tentar entrar. Verifique sua conexão.');
       }
       setIsLoading(false);
     }
@@ -46,71 +49,101 @@ export default function LoginPage() {
     try {
       await loginWithGoogle();
     } catch (err: any) {
-      setError('Ocorreu um erro ao tentar login com o Google.');
+      setError('Erro ao tentar login com o Google.');
       setIsLoading(false);
     }
   };
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-lg border border-transparent">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-3xl shadow-xl border border-gray-100">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Entrar</h1>
-          <p className="text-gray-600 mt-2">Acesse para se inscrever e emitir certificados.</p>
+          <h1 className="text-3xl font-black text-gray-900">Entrar</h1>
+          <p className="text-gray-500 mt-2">Acesse sua conta para gerenciar eventos.</p>
         </div>
+
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">E-mail</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1">E-mail</label>
             <input
-              id="email"
               type="email"
-              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-900"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+              placeholder="seu@email.com"
             />
           </div>
-          <div className='relative'>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Senha</label>
+
+          <div className="relative">
+            <label className="block text-sm font-bold text-gray-700 mb-1">Senha</label>
             <input
-              id="password"
               type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white text-gray-900"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+              placeholder="Sua senha"
             />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 top-6 pr-3 flex items-center text-gray-500">
-              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            <button 
+              type="button" 
+              onClick={() => setShowPassword(!showPassword)} 
+              className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
+
           <div className="text-right">
-            <Link to="/forgot-password" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">Esqueci minha senha</Link>
+            <Link to="/forgot-password" theme="light" className="text-sm font-bold text-indigo-600 hover:underline">
+              Esqueci minha senha
+            </Link>
           </div>
-          {error && <p className="text-sm text-red-600 text-center">{error}</p>}
-          <div>
-            <button type="submit" disabled={isLoading} className="w-full px-4 py-3 font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-400 transition-colors">
-              {isLoading ? 'Entrando...' : 'Entrar'}
-            </button>
-          </div>
+
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl text-center font-medium">
+              {error}
+            </div>
+          )}
+
+          <button 
+            type="submit" 
+            disabled={isLoading} 
+            className="w-full py-4 bg-indigo-600 text-white font-black rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:bg-indigo-300 flex items-center justify-center gap-2"
+          >
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Entrar'}
+          </button>
         </form>
-        <div className="relative flex items-center justify-center my-2">
+
+        <div className="relative flex items-center justify-center my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
+            <div className="w-full border-t border-gray-100"></div>
           </div>
-          <div className="relative px-2 bg-white text-sm text-gray-500">ou</div>
+          <div className="relative px-4 bg-white text-xs font-black text-gray-400 uppercase">ou</div>
         </div>
-        <div className="space-y-3">
-            <button onClick={handleGoogleLogin} disabled={isLoading} className="w-full flex items-center justify-center gap-3 px-4 py-3 font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:bg-gray-100 transition-colors">
-                <span>Entrar com Google</span>
-            </button>
-        </div>
-        <div className="text-center text-sm text-gray-600 mt-6">
-            Ainda não tem conta? <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">Criar primeiro acesso</Link>
+
+        <button 
+          onClick={handleGoogleLogin} 
+          disabled={isLoading} 
+          className="w-full flex items-center justify-center gap-3 px-4 py-4 font-bold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+        >
+          <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+          Entrar com Google
+        </button>
+
+        <div className="text-center text-sm text-gray-500 mt-8">
+          Ainda não tem conta?{' '}
+          <Link to="/register" className="font-black text-indigo-600 hover:underline">
+            Criar primeiro acesso
+          </Link>
         </div>
       </div>
     </div>
