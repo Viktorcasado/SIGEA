@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState, useContext, ReactNode, FC, useEffect, useCallback, useRef } from 'react';
+import { createContext, useState, useContext, ReactNode, FC, useEffect, useCallback } from 'react';
 import { User, UserStatus } from '@/src/types';
 import { supabase } from '@/src/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -37,7 +37,9 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
         .eq('id', supabaseUser.id)
         .maybeSingle();
       
-      const userData: User = profile && !error ? {
+      if (error) throw error;
+
+      const userData: User = profile ? {
         id: profile.id,
         nome: profile.full_name || supabaseUser.user_metadata?.full_name || 'Usuário',
         username: profile.full_name?.split(' ')[0].toLowerCase() || supabaseUser.email?.split('@')[0] || 'user',
@@ -69,15 +71,21 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     let mounted = true;
 
     const initialize = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      if (!mounted) return;
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
 
-      if (initialSession) {
-        setSession(initialSession);
-        const profile = await fetchProfile(initialSession.user);
-        if (mounted) setUser(profile);
+        if (initialSession) {
+          setSession(initialSession);
+          const profile = await fetchProfile(initialSession.user);
+          if (mounted) setUser(profile);
+        }
+      } catch (err) {
+        console.error("[UserContext] Erro na inicialização:", err);
+      } finally {
+        if (mounted) setLoading(false);
       }
-      if (mounted) setLoading(false);
     };
 
     initialize();
@@ -106,37 +114,25 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   }, [fetchProfile]);
 
   const login = async (email: string, password: string) => {
-    setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setLoading(false);
-      throw error;
-    }
+    if (error) throw error;
   };
 
   const signUp = async (email: string, password: string, metadata: any) => {
-    setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: metadata }
     });
-    if (error) {
-      setLoading(false);
-      throw error;
-    }
+    if (error) throw error;
   };
 
   const loginWithGoogle = async () => {
-    setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({ 
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` }
     });
-    if (error) {
-      setLoading(false);
-      throw error;
-    }
+    if (error) throw error;
   };
 
   const logout = async () => {

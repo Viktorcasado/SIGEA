@@ -16,14 +16,16 @@ export default function LoginPage() {
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLocalLoading) return;
+
     setError(null);
     setIsLocalLoading(true);
 
     try {
       await login(email, password);
-      // O redirecionamento é feito automaticamente pelo ProtectedRoute/PublicRoute no App.tsx
+      // O redirecionamento será tratado pelo PublicRoute no App.tsx assim que o estado mudar
     } catch (err: any) {
-      setError('E-mail ou senha incorretos.');
+      setError('E-mail ou senha incorretos. Tente novamente.');
       setIsLocalLoading(false);
     }
   };

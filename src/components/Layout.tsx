@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import BottomBar from './BottomBar';
 import Sidebar from './Sidebar';
-import WhatsAppButton from './WhatsAppButton';
 import { usePlatform } from '@/src/hooks/usePlatform';
 
 export default function Layout() {
@@ -20,8 +19,6 @@ export default function Layout() {
 
       {/* BottomBar visível apenas no Mobile */}
       {isMobile && <BottomBar />}
-      
-      <WhatsAppButton />
     </div>
   );
 }

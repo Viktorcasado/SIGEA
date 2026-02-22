@@ -13,6 +13,7 @@ const PublicRoute = () => {
     );
   }
 
+  // Se o usuário já estiver logado, não permite acessar páginas públicas como Login/Register
   if (user) {
     return <Navigate to="/" replace />;
   }
