@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/src/contexts/UserContext';
 import { useNotifications } from '@/src/contexts/NotificationContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Building2 as BuildingIcon, GraduationCap as GradIcon, ShieldCheck, MapPin } from 'lucide-react';
+import { ArrowLeft, Building2 as BuildingIcon, GraduationCap as GradIcon, MapPin } from 'lucide-react';
 import { EventInstitution, UserProfile } from '@/src/types';
 
 const CAMPUSES: Record<EventInstitution, string[]> = {
@@ -44,13 +44,12 @@ export default function InstitutionPage() {
     setIsLoading(true);
     
     try {
-      const isOrganizer = perfil === 'servidor' || perfil === 'gestor';
-
+      // Users can no longer set is_organizer themselves. 
+      // This must be done via the approval flow by a manager.
       await updateProfile({ 
         campus,
         perfil,
-        matricula,
-        is_organizer: isOrganizer
+        matricula
       });
 
       await addNotification({

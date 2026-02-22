@@ -13,13 +13,29 @@ serve(async (req) => {
   }
 
   try {
-    const { event_id, user_id, certificate_id } = await req.json()
-    console.log(`[generate-certificate] Iniciando geração para Evento: ${event_id}, Usuário: ${user_id}`);
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
+    }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
+
+    // Verify JWT
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !authUser) throw new Error("Invalid token")
+
+    const { event_id, user_id, certificate_id } = await req.json()
+    
+    // Security Check: Ensure the user is requesting their own certificate
+    if (authUser.id !== user_id) {
+      throw new Error("Unauthorized: You can only generate your own certificates.")
+    }
+
+    console.log(`[generate-certificate] Generating for Event: ${event_id}, User: ${user_id}`);
 
     const { data: template, error: tError } = await supabase
       .from('certificate_templates')
@@ -27,7 +43,7 @@ serve(async (req) => {
       .eq('event_id', event_id)
       .single()
 
-    if (tError || !template) throw new Error("Template não encontrado.")
+    if (tError || !template) throw new Error("Template not found.")
 
     const { data: cert, error: cError } = await supabase
       .from('certificados')
@@ -35,13 +51,14 @@ serve(async (req) => {
       .eq('id', certificate_id)
       .single()
 
-    if (cError || !cert) throw new Error("Dados do certificado não encontrados.")
+    if (cError || !cert) throw new Error("Certificate data not found.")
+    if (cert.user_id !== authUser.id) throw new Error("Ownership mismatch.")
 
     const { data: templateFile, error: fError } = await supabase.storage
       .from('certificate-templates')
       .download(template.template_file_path)
 
-    if (fError) throw new Error("Erro ao baixar arquivo do template.")
+    if (fError) throw new Error("Error downloading template file.")
 
     const templateBytes = await templateFile.arrayBuffer()
     let pdfDoc;
@@ -65,7 +82,6 @@ serve(async (req) => {
 
     const mapping = template.mapping.fields
     const dataMap = {
-      // PRIORIZA O NOME DO CERTIFICADO
       participant_name: cert.profiles.certificate_full_name || cert.profiles.full_name,
       cpf: cert.profiles.registration_number || '---',
       event_title: cert.events.title,
@@ -131,7 +147,7 @@ serve(async (req) => {
     })
 
   } catch (error: any) {
-    console.error("[generate-certificate] Erro:", error.message);
+    console.error("[generate-certificate] Error:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

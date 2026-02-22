@@ -32,8 +32,17 @@ export default function ManageActivitiesPage() {
     }
   };
 
-  const canManage = user && (user.is_organizer || user.perfil === 'aluno');
-  if (!canManage) navigate('/acesso-restrito');
+  // Only organizers or admins can manage activities. Students should not have access.
+  const canManage = user && (user.is_organizer || user.perfil === 'admin');
+  
+  useEffect(() => {
+    if (!loading && !canManage) {
+      navigate('/perfil');
+    }
+  }, [canManage, loading, navigate]);
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-indigo-600" /></div>;
+  if (!canManage) return null;
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
@@ -51,11 +60,7 @@ export default function ManageActivitiesPage() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-          </div>
-        ) : activities.length === 0 ? (
+        {activities.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             Nenhuma atividade cadastrada.
           </div>

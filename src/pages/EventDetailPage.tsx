@@ -159,19 +159,14 @@ export default function EventDetailPage() {
     if (!user || !event || !canIssueCertificate()) return;
     setSubmitting(true);
 
-    const validationCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const fallbackCertCode = `SIGEA-${event.id.substring(0,4)}-${new Date().getFullYear().toString().slice(-2)}`;
-
-    const { error } = await supabase
-      .from('certificados')
-      .insert({
-        evento_id: event.id,
-        user_id: user.id,
-        codigo_validacao: validationCode,
-        codigo_certificado: fallbackCertCode
+    try {
+      // Securely issue certificate via Edge Function
+      const { data, error } = await supabase.functions.invoke('issue-certificate', {
+        body: { event_id: event.id }
       });
 
-    if (!error) {
+      if (error || data.error) throw new Error(error?.message || data.error);
+
       setHasCertificate(true);
       addNotification({
         titulo: 'Certificado Disponível',
@@ -179,10 +174,11 @@ export default function EventDetailPage() {
         tipo: 'certificado',
       });
       showToast('Certificado gerado com sucesso!');
-    } else {
-      showToast('Erro ao gerar certificado.', 'error');
+    } catch (err: any) {
+      showToast(err.message || 'Erro ao gerar certificado.', 'error');
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const onShare = () => {
