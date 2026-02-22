@@ -1,11 +1,26 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@/src/contexts/UserContext';
 import { useNotifications } from '@/src/contexts/NotificationContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Building2 as BuildingIcon, GraduationCap as GradIcon, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Building2 as BuildingIcon, GraduationCap as GradIcon, ShieldCheck, MapPin } from 'lucide-react';
 import { EventInstitution, UserProfile } from '@/src/types';
+
+const CAMPUSES: Record<EventInstitution, string[]> = {
+  'IFAL': [
+    'Maceió', 'Arapiraca', 'Palmeira dos Índios', 'Satuba', 'Marechal Deodoro', 
+    'Murici', 'Penedo', 'Piranhas', 'Rio Largo', 'Santana do Ipanema', 
+    'São Miguel dos Campos', 'Viçosa', 'Coruripe', 'Benedito Bentes', 'Batalha'
+  ],
+  'UFAL': [
+    'A. C. Simões (Maceió)', 'Arapiraca', 'Delmiro Gouveia', 'Palmeira dos Índios', 
+    'Penedo', 'Santana do Ipanema', 'Viçosa'
+  ],
+  'Comunidade': [
+    'Online / Remoto', 'Outra Instituição'
+  ]
+};
 
 export default function InstitutionPage() {
   const { user, updateProfile } = useUser();
@@ -18,12 +33,18 @@ export default function InstitutionPage() {
   const [matricula, setMatricula] = useState(user?.matricula || '');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Reset campus if it's not in the new institution's list
+  useEffect(() => {
+    if (!CAMPUSES[instituicao].includes(campus)) {
+      setCampus(CAMPUSES[instituicao][0]);
+    }
+  }, [instituicao]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
     try {
-      // Servidores e Gestores são marcados como organizadores
       const isOrganizer = perfil === 'servidor' || perfil === 'gestor';
 
       await updateProfile({ 
@@ -37,7 +58,7 @@ export default function InstitutionPage() {
 
       addNotification({
         titulo: 'Vínculo Atualizado',
-        mensagem: `Seu perfil agora está vinculado como ${perfil} no ${instituicao}.`,
+        mensagem: `Seu perfil agora está vinculado como ${perfil} no ${instituicao} - ${campus}.`,
         tipo: 'vinculo',
       });
       
@@ -64,7 +85,7 @@ export default function InstitutionPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Vínculo Institucional</h1>
-            <p className="text-gray-500 text-sm">Informe seus dados acadêmicos ou profissionais para validar seu acesso.</p>
+            <p className="text-gray-500 text-sm">Informe seus dados acadêmicos ou profissionais.</p>
           </div>
         </div>
 
@@ -99,14 +120,19 @@ export default function InstitutionPage() {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Campus / Unidade</label>
-            <input 
-              type="text" 
-              value={campus} 
-              onChange={(e) => setCampus(e.target.value)} 
-              placeholder="Ex: Maceió, Arapiraca, Palmeira dos Índios..."
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-              required
-            />
+            <div className="relative">
+              <select 
+                value={campus} 
+                onChange={(e) => setCampus(e.target.value)} 
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all appearance-none"
+                required
+              >
+                {CAMPUSES[instituicao].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <MapPin className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
+            </div>
           </div>
 
           {perfil !== 'comunidade_externa' && (
