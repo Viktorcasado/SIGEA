@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useUser } from '@/src/contexts/UserContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Save, User, Image as ImageIcon, Upload, Loader2, FileText } from 'lucide-react';
+import { ArrowLeft, Save, User, Upload, Loader2 } from 'lucide-react';
 import { supabase } from '@/src/integrations/supabase/client';
 
 export default function EditProfilePage() {
@@ -11,11 +11,20 @@ export default function EditProfilePage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [nome, setNome] = useState(user?.nome || '');
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
+  const [nome, setNome] = useState('');
+  const [username, setUsername] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setNome(user.nome || '');
+      setUsername(user.username || '');
+      setAvatarUrl(user.avatar_url || '');
+    }
+  }, [user]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -26,20 +35,14 @@ export default function EditProfilePage() {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      setError('A imagem deve ter no máximo 2MB.');
-      return;
-    }
-
     setIsUploading(true);
     setError(null);
 
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      // Nota: Certifique-se que o bucket 'profiles' existe no seu Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('profiles')
         .upload(filePath, file);
@@ -52,8 +55,7 @@ export default function EditProfilePage() {
 
       setAvatarUrl(publicUrl);
     } catch (err: any) {
-      console.error('Erro no upload:', err);
-      setError('Erro ao subir imagem. Verifique se o bucket "profiles" existe.');
+      setError('Erro ao subir imagem. Verifique as permissões.');
     } finally {
       setIsUploading(false);
     }
@@ -62,7 +64,7 @@ export default function EditProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nome) {
-      setError('O nome de exibição é obrigatório.');
+      setError('O nome é obrigatório.');
       return;
     }
 
@@ -76,7 +78,6 @@ export default function EditProfilePage() {
       alert('Perfil atualizado com sucesso!');
       navigate('/perfil');
     } catch (err: any) {
-      console.error('Erro ao atualizar:', err);
       setError('Erro ao atualizar perfil. Tente novamente.');
     } finally {
       setIsLoading(false);
@@ -97,7 +98,7 @@ export default function EditProfilePage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Editar Perfil</h1>
-            <p className="text-gray-500 text-sm">Mantenha seus dados sempre atualizados.</p>
+            <p className="text-gray-500 text-sm">Personalize sua identidade no SIGEA.</p>
           </div>
         </div>
 
@@ -108,17 +109,15 @@ export default function EditProfilePage() {
                 <img 
                   src={avatarUrl} 
                   alt="Preview" 
-                  className="w-32 h-32 rounded-full object-cover border-4 border-indigo-50 shadow-md transition-opacity group-hover:opacity-75"
+                  className="w-32 h-32 rounded-full object-cover border-4 border-indigo-50 shadow-md"
                 />
               ) : (
-                <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-4 border-dashed border-gray-200 group-hover:border-indigo-300 transition-colors">
+                <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 border-4 border-dashed border-gray-200">
                   <User className="w-16 h-16" />
                 </div>
               )}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="bg-black/40 p-2 rounded-full text-white">
-                  <Upload className="w-6 h-6" />
-                </div>
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-full">
+                <Upload className="w-8 h-8 text-white" />
               </div>
               {isUploading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-full">
@@ -127,10 +126,20 @@ export default function EditProfilePage() {
               )}
             </div>
             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-            <p className="text-xs text-gray-400 mt-3 font-medium">Clique na imagem para alterar sua foto</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Nome de Usuário</label>
+              <input 
+                type="text" 
+                value={username} 
+                disabled
+                className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
+              />
+              <p className="text-[10px] text-gray-400 mt-1">O nome de usuário é gerado automaticamente.</p>
+            </div>
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label>
               <input 
@@ -138,38 +147,18 @@ export default function EditProfilePage() {
                 value={nome} 
                 onChange={(e) => setNome(e.target.value)} 
                 required 
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-                placeholder="Seu nome completo"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
               />
-              <p className="text-[10px] text-gray-400 mt-2 font-medium">Este nome será utilizado no sistema e nos seus certificados.</p>
             </div>
           </div>
 
-          {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl text-center">
-              {error}
-            </div>
-          )}
+          {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-xl text-center">{error}</div>}
 
           <div className="flex gap-4 pt-4">
-            <button 
-              type="button" 
-              onClick={() => navigate('/perfil')}
-              className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all"
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              disabled={isLoading || isUploading} 
-              className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 disabled:bg-indigo-300"
-            >
-              {isLoading ? 'Salvando...' : (
-                <>
-                  <Save className="w-5 h-5" />
-                  Salvar Alterações
-                </>
-              )}
+            <button type="button" onClick={() => navigate('/perfil')} className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl">Cancelar</button>
+            <button type="submit" disabled={isLoading || isUploading} className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl flex items-center justify-center gap-2">
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+              Salvar Alterações
             </button>
           </div>
         </form>

@@ -7,7 +7,7 @@ import { useUser } from '@/src/contexts/UserContext';
 import { useToast } from '@/src/contexts/ToastContext';
 import { supabase } from '@/src/integrations/supabase/client';
 import { Event } from '@/src/types';
-import { ArrowLeft, Share2, Calendar, MapPin, Award, CheckCircle, Clock, Settings } from 'lucide-react';
+import { ArrowLeft, Share2, Calendar, MapPin, Award, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { shareContent, formatEventShare } from '@/src/utils/share';
 
@@ -82,9 +82,7 @@ export default function EventDetailPage() {
   }, [id, user]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 10000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 10000);
     return () => clearInterval(timer);
   }, []);
 
@@ -126,13 +124,33 @@ export default function EventDetailPage() {
       setRegistrationDate(now);
       addNotification({
         titulo: 'Inscrição Realizada',
-        mensagem: `Sua vaga no evento "${event.titulo}" está garantida! O certificado estará disponível em 10 minutos.`,
+        mensagem: `Sua vaga no evento "${event.titulo}" está garantida! Comprovante enviado para ${user.email}.`,
         tipo: 'evento',
         referenciaId: event.id,
       });
-      showToast('Inscrição realizada com sucesso!');
+      showToast('Inscrição realizada! Comprovante enviado por e-mail.');
     } else {
       showToast('Erro ao realizar inscrição.', 'error');
+    }
+    setSubmitting(false);
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!user || !event || !window.confirm('Deseja realmente cancelar sua inscrição?')) return;
+    setSubmitting(true);
+
+    const { error } = await supabase
+      .from('event_registrations')
+      .delete()
+      .eq('event_id', event.id)
+      .eq('user_id', user.id);
+
+    if (!error) {
+      setIsSubscribed(false);
+      setRegistrationDate(null);
+      showToast('Inscrição cancelada com sucesso.');
+    } else {
+      showToast('Erro ao cancelar inscrição.', 'error');
     }
     setSubmitting(false);
   };
@@ -168,9 +186,7 @@ export default function EventDetailPage() {
   };
 
   const onShare = () => {
-    if (event) {
-      shareContent(formatEventShare(event), showToast);
-    }
+    if (event) shareContent(formatEventShare(event), showToast);
   };
 
   if (loading) return <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
@@ -188,20 +204,12 @@ export default function EventDetailPage() {
         </button>
         <div className="flex gap-2">
           {isOrganizer && (
-            <Link 
-              to={`/gestor/eventos/${event.id}/certificado-template`}
-              className="p-2.5 bg-white border border-gray-200 rounded-xl text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm flex items-center gap-2"
-              title="Configurar Certificado"
-            >
+            <Link to={`/gestor/eventos/${event.id}/certificado-template`} className="p-2.5 bg-white border border-gray-200 rounded-xl text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm flex items-center gap-2">
               <Award className="w-5 h-5" />
               <span className="text-xs font-bold hidden sm:inline">Certificado</span>
             </Link>
           )}
-          <button 
-            onClick={onShare}
-            className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm"
-            title="Compartilhar Evento"
-          >
+          <button onClick={onShare} className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 hover:text-indigo-600 transition-all shadow-sm">
             <Share2 className="w-5 h-5" />
           </button>
         </div>
@@ -210,7 +218,6 @@ export default function EventDetailPage() {
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
         <div className="p-8">
             <h1 className="text-4xl font-black text-gray-900 mb-4 leading-tight">{event.titulo}</h1>
-            
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl">
                     <Calendar className="w-6 h-6 text-indigo-600" />
@@ -227,7 +234,6 @@ export default function EventDetailPage() {
                     </div>
                 </div>
             </div>
-
             <div className="prose max-w-none text-gray-600 leading-relaxed mb-8">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Sobre o evento</h3>
                 <p>{event.descricao}</p>
@@ -236,46 +242,36 @@ export default function EventDetailPage() {
 
         <div className="p-6 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-4">
             {!isSubscribed ? (
-                <button 
-                    onClick={handleSubscription}
-                    disabled={submitting}
-                    className="flex-1 px-6 py-4 rounded-2xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:bg-indigo-300"
-                >
+                <button onClick={handleSubscription} disabled={submitting} className="flex-1 px-6 py-4 rounded-2xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 disabled:bg-indigo-300">
                     {submitting ? 'Processando...' : 'Garantir minha vaga'}
                 </button>
             ) : hasCertificate ? (
-                <Link 
-                    to="/certificados"
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-green-600 text-white font-bold hover:bg-green-700 transition-all"
-                >
+                <Link to="/certificados" className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-green-600 text-white font-bold hover:bg-green-700 transition-all">
                     <Award className="w-5 h-5" />
                     Ver Certificado
                 </Link>
-            ) : !canIssueCertificate() ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-4 bg-amber-50 border border-amber-100 rounded-2xl">
-                    <div className="flex items-center gap-2 text-amber-700 font-bold mb-1">
-                        <Clock className="w-5 h-5" />
-                        Certificado em processamento
-                    </div>
-                    <p className="text-xs text-amber-600">Disponível em aproximadamente {minutesLeft} {minutesLeft === 1 ? 'minuto' : 'minutos'}</p>
-                </div>
             ) : (
-                <button 
-                    onClick={handleIssueCertificate}
-                    disabled={submitting}
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
-                >
-                    <CheckCircle className="w-5 h-5" />
-                    Emitir Certificado
-                </button>
+                <div className="flex-1 flex flex-col sm:flex-row gap-3">
+                    {!canIssueCertificate() ? (
+                        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-amber-50 border border-amber-100 rounded-2xl">
+                            <div className="flex items-center gap-2 text-amber-700 font-bold mb-1">
+                                <Clock className="w-5 h-5" />
+                                Certificado em processamento
+                            </div>
+                            <p className="text-xs text-amber-600">Disponível em {minutesLeft} min</p>
+                        </div>
+                    ) : (
+                        <button onClick={handleIssueCertificate} disabled={submitting} className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-all">
+                            <CheckCircle className="w-5 h-5" />
+                            Emitir Certificado
+                        </button>
+                    )}
+                    <button onClick={handleCancelSubscription} disabled={submitting} className="px-6 py-4 rounded-2xl bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-all flex items-center justify-center gap-2">
+                        <XCircle className="w-5 h-5" />
+                        Cancelar Inscrição
+                    </button>
+                </div>
             )}
-            <button 
-              onClick={onShare}
-              className="px-6 py-4 rounded-2xl bg-white border border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-            >
-                <Share2 className="w-5 h-5" />
-                Compartilhar
-            </button>
         </div>
       </div>
     </motion.div>

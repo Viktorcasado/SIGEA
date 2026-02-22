@@ -25,7 +25,7 @@ export default function CreateEventPage() {
     if (!user) return;
 
     if (!titulo || !data || !campus) {
-      alert('Por favor, preencha os campos obrigatórios (Título, Data e Campus).');
+      alert('Por favor, preencha os campos obrigatórios.');
       return;
     }
 
@@ -48,17 +48,18 @@ export default function CreateEventPage() {
 
       if (error) throw error;
 
-      addNotification({
-        titulo: 'Evento Criado',
-        mensagem: `O evento "${titulo}" foi publicado com sucesso!`,
-        tipo: 'evento',
-        referenciaId: newEvent.id,
+      // Notificação Global (user_id: null)
+      await supabase.from('notifications').insert({
+        user_id: null,
+        title: 'Novo Evento Publicado',
+        content: `O evento "${titulo}" acaba de ser publicado no campus ${campus}. Confira!`,
+        type: 'evento',
+        is_read: false
       });
 
       alert('Evento criado com sucesso!');
       navigate(`/evento/${newEvent.id}`);
     } catch (error: any) {
-      console.error('Erro ao criar evento:', error);
       alert('Erro ao criar evento: ' + error.message);
     } finally {
       setIsLoading(false);
@@ -79,108 +80,47 @@ export default function CreateEventPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Criar Novo Evento</h1>
-            <p className="text-gray-500 text-sm">Preencha os detalhes para publicar seu evento.</p>
+            <p className="text-gray-500 text-sm">Publique seu evento para toda a comunidade.</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Título do Evento *</label>
-            <input 
-              type="text" 
-              value={titulo} 
-              onChange={(e) => setTitulo(e.target.value)} 
-              placeholder="Ex: I Semana de Tecnologia"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-              required
-            />
+            <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex: I Semana de Tecnologia" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" required />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Descrição</label>
-            <div className="relative">
-              <textarea 
-                value={descricao} 
-                onChange={(e) => setDescricao(e.target.value)} 
-                placeholder="Conte mais sobre o evento..."
-                rows={4}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-              />
-              <AlignLeft className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
-            </div>
+            <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Conte mais sobre o evento..." rows={4} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Data do Evento *</label>
-              <input 
-                type="datetime-local" 
-                value={data} 
-                onChange={(e) => setData(e.target.value)} 
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-                required
-              />
+              <input type="datetime-local" value={data} onChange={(e) => setData(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" required />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Carga Horária (Horas)</label>
-              <div className="relative">
-                <input 
-                  type="number" 
-                  value={cargaHoraria} 
-                  onChange={(e) => setCargaHoraria(Number(e.target.value))} 
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-                />
-                <Users className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
-              </div>
+              <input type="number" value={cargaHoraria} onChange={(e) => setCargaHoraria(Number(e.target.value))} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Campus *</label>
-              <input 
-                type="text" 
-                value={campus} 
-                onChange={(e) => setCampus(e.target.value)} 
-                placeholder="Ex: Maceió"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-                required
-              />
+              <input type="text" value={campus} onChange={(e) => setCampus(e.target.value)} placeholder="Ex: Maceió" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" required />
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Local / Link</label>
-              <div className="relative">
-                <input 
-                  type="text" 
-                  value={local} 
-                  onChange={(e) => setLocal(e.target.value)} 
-                  placeholder="Auditório ou Link do Meet"
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-                />
-                <MapPin className="absolute left-3 top-3.5 text-gray-400 w-5 h-5" />
-              </div>
+              <input type="text" value={local} onChange={(e) => setLocal(e.target.value)} placeholder="Auditório ou Link" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" />
             </div>
           </div>
 
           <div className="flex gap-4 pt-4">
-            <button 
-              type="button" 
-              onClick={() => navigate('/perfil')}
-              className="flex-1 py-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all"
-            >
-              Cancelar
-            </button>
-            <button 
-              type="submit" 
-              disabled={isLoading} 
-              className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 disabled:bg-indigo-300"
-            >
-              {isLoading ? 'Publicando...' : (
-                <>
-                  <Save className="w-5 h-5" />
-                  Publicar Evento
-                </>
-              )}
+            <button type="button" onClick={() => navigate('/perfil')} className="flex-1 py-4 bg-gray-100 text-gray-700 font-bold rounded-xl">Cancelar</button>
+            <button type="submit" disabled={isLoading} className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-xl flex items-center justify-center gap-2">
+              {isLoading ? 'Publicando...' : <><Save className="w-5 h-5" /> Publicar Evento</>}
             </button>
           </div>
         </form>

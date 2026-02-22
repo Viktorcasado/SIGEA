@@ -31,7 +31,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
 
   const fetchProfile = async (supabaseUser: SupabaseUser) => {
     try {
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
@@ -40,15 +40,15 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       if (profile) {
         setUser({
           id: profile.id,
-          nome: profile.full_name || supabaseUser.user_metadata?.full_name || 'Usuário',
-          nome_certificado: profile.full_name || '', // Usando full_name como fallback
+          nome: profile.full_name || 'Usuário',
+          username: profile.full_name?.split(' ')[0].toLowerCase() || 'user',
           email: supabaseUser.email || '',
           perfil: profile.user_type || 'comunidade_externa',
           status: deriveStatus(profile.user_type, profile.is_organizer || false),
           is_organizer: profile.is_organizer || false,
           campus: profile.campus || '',
           matricula: profile.registration_number || '',
-          avatar_url: profile.avatar_url || supabaseUser.user_metadata?.avatar_url || ''
+          avatar_url: profile.avatar_url || ''
         } as User);
       }
     } catch (err) {
@@ -65,17 +65,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       if (isMounted) {
         if (initialSession) {
           setSession(initialSession);
-          setUser({
-            id: initialSession.user.id,
-            nome: initialSession.user.user_metadata?.full_name || 'Usuário',
-            email: initialSession.user.email || '',
-            perfil: 'comunidade_externa',
-            status: 'ativo_comunidade',
-            is_organizer: false,
-            avatar_url: initialSession.user.user_metadata?.avatar_url || ''
-          } as User);
-          
-          fetchProfile(initialSession.user);
+          await fetchProfile(initialSession.user);
         }
         setLoading(false);
       }
@@ -87,15 +77,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       if (isMounted) {
         setSession(currentSession);
         if (currentSession) {
-          setUser(prev => ({
-            ...(prev || {}),
-            id: currentSession.user.id,
-            nome: currentSession.user.user_metadata?.full_name || prev?.nome || 'Usuário',
-            email: currentSession.user.email || '',
-            avatar_url: currentSession.user.user_metadata?.avatar_url || prev?.avatar_url || ''
-          } as User));
-          
-          fetchProfile(currentSession.user);
+          await fetchProfile(currentSession.user);
         } else {
           setUser(null);
         }
@@ -138,13 +120,12 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return;
     
-    // Mapeia apenas as colunas que existem na tabela 'profiles'
     const payload: any = {};
-    if (updates.nome) payload.full_name = updates.nome;
-    if (updates.campus) payload.campus = updates.campus;
-    if (updates.matricula) payload.registration_number = updates.matricula;
-    if (updates.avatar_url) payload.avatar_url = updates.avatar_url;
-    if (updates.perfil) payload.user_type = updates.perfil;
+    if (updates.nome !== undefined) payload.full_name = updates.nome;
+    if (updates.campus !== undefined) payload.campus = updates.campus;
+    if (updates.matricula !== undefined) payload.registration_number = updates.matricula;
+    if (updates.avatar_url !== undefined) payload.avatar_url = updates.avatar_url;
+    if (updates.perfil !== undefined) payload.user_type = updates.perfil;
     if (updates.is_organizer !== undefined) payload.is_organizer = updates.is_organizer;
 
     const { error } = await supabase
@@ -153,6 +134,8 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       .eq('id', user.id);
 
     if (error) throw error;
+    
+    // Atualiza o estado local após sucesso no DB
     setUser(prev => prev ? { ...prev, ...updates } : null);
   };
 

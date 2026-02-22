@@ -3,10 +3,9 @@ export type UserStatus = 'ativo_comunidade' | 'ativo_vinculado' | 'gestor' | 'ad
 
 export interface User {
   id: string;
-  nome: string; // Nome de exibição no App
-  nome_certificado?: string; // Nome que aparecerá no certificado
+  nome: string; // Nome completo (full_name no DB)
+  username?: string; // Nome de usuário/apelido
   email: string;
-  telefone?: string;
   avatar_url?: string;
   matricula?: string;
   siape?: string;
@@ -32,7 +31,7 @@ export interface Event {
   modalidade: EventModality;
   status: EventStatus;
   vagas?: number;
-  carga_horaria: number; // Campo obrigatório para certificados
+  carga_horaria: number;
   organizer_id?: string;
   image_url?: string;
 }
@@ -52,7 +51,7 @@ export interface CertificateMapping {
       y: number;
       fontSize?: number;
       color?: string;
-      size?: number; // Para QR Code
+      size?: number;
     };
   };
 }
@@ -85,11 +84,20 @@ export type NotificationType = 'evento' | 'certificado' | 'sistema' | 'vinculo';
 
 export interface Notification {
   id: string;
-  userId: string;
+  userId: string | null;
   titulo: string;
   mensagem: string;
   tipo: NotificationType;
   lida: boolean;
   createdAt: Date;
   referenciaId?: string;
+}
+
+export interface Inscricao {
+  id: string;
+  eventoId: string;
+  userId: string;
+  status: string;
+  createdAt: Date;
+  event?: Event;
 }
