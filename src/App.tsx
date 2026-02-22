@@ -60,7 +60,6 @@ export default function App() {
 function AppRoutes() {
   const { session, loading } = useUser();
 
-  // Não bloqueamos mais a renderização total, apenas rotas que REALMENTE precisam de auth imediata
   return (
     <Routes>
       {/* Rotas Públicas */}
