@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Search, SlidersHorizontal, Star, Loader2, Calendar, AlertCircle, Tag } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Search, SlidersHorizontal, Star, Loader2, Calendar, AlertCircle } from 'lucide-react';
 import { supabase } from '@/src/integrations/supabase/client';
 import { Event } from '@/src/types';
 import EventCard from '@/src/components/EventCard';
@@ -18,7 +18,7 @@ export default function ExplorePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchEvents = useCallback(async () => {
+  const fetchEvents = async () => {
     setIsLoading(true);
     setError(null);
     
@@ -30,36 +30,34 @@ export default function ExplorePage() {
 
       if (supabaseError) throw supabaseError;
 
-      if (data) {
-        const formattedEvents: Event[] = data.map(e => ({
-          id: e.id,
-          titulo: e.title,
-          descricao: e.description || '',
-          dataInicio: new Date(e.date),
-          local: e.location || '',
-          campus: e.campus || '',
-          instituicao: 'IFAL',
-          modalidade: 'Presencial',
-          status: 'publicado',
-          vagas: e.workload || 0,
-          carga_horaria: e.workload || 0,
-          category: e.category || 'Geral'
-        }));
-        setEvents(formattedEvents);
-      }
+      const formattedEvents: Event[] = (data || []).map(e => ({
+        id: e.id,
+        titulo: e.title,
+        descricao: e.description || '',
+        dataInicio: new Date(e.date),
+        local: e.location || '',
+        campus: e.campus || '',
+        instituicao: 'IFAL',
+        modalidade: 'Presencial',
+        status: 'publicado',
+        vagas: e.workload || 0,
+        carga_horaria: e.workload || 0,
+        category: e.category || 'Geral'
+      }));
+      setEvents(formattedEvents);
     } catch (err: any) {
       console.error("[ExplorePage] Erro ao buscar eventos:", err);
-      setError("Não foi possível carregar os eventos.");
+      setError("Não foi possível carregar os eventos. Verifique sua conexão.");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+  }, []);
 
-  const toggleFavorite = useCallback((eventId: string) => {
+  const toggleFavorite = (eventId: string) => {
     setFavorites(prev => {
       const newFavs = new Set(prev);
       if (newFavs.has(eventId)) {
@@ -69,7 +67,7 @@ export default function ExplorePage() {
       }
       return newFavs;
     });
-  }, []);
+  };
 
   const filteredEvents = useMemo(() => {
     let filtered = events;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '@/src/contexts/UserContext';
 import { useToast } from '@/src/contexts/ToastContext';
@@ -15,11 +15,8 @@ export default function UserInscriptionsPage() {
   const [inscriptions, setInscriptions] = useState<Inscricao[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchInscriptions = useCallback(async () => {
-    if (!user) {
-      if (!userLoading) setLoading(false);
-      return;
-    }
+  const fetchInscriptions = async () => {
+    if (!user) return;
     
     setLoading(true);
     try {
@@ -31,38 +28,44 @@ export default function UserInscriptionsPage() {
         `)
         .eq('user_id', user.id);
 
-      if (!error && data) {
-        const formatted: Inscricao[] = data.map(reg => ({
-          id: reg.id,
-          eventoId: reg.event_id,
-          userId: reg.user_id,
-          status: reg.status,
-          createdAt: new Date(reg.registered_at),
-          event: {
-            id: reg.events.id,
-            titulo: reg.events.title,
-            dataInicio: new Date(reg.events.date),
-            campus: reg.events.campus || '',
-            instituicao: 'IFAL',
-            local: reg.events.location || '',
-            descricao: reg.events.description || '',
-            modalidade: 'Presencial',
-            status: 'publicado',
-            carga_horaria: reg.events.workload || 0
-          }
-        }));
-        setInscriptions(formatted);
-      }
+      if (error) throw error;
+
+      const formatted: Inscricao[] = (data || []).map(reg => ({
+        id: reg.id,
+        eventoId: reg.event_id,
+        userId: reg.user_id,
+        status: reg.status,
+        createdAt: new Date(reg.registered_at),
+        event: reg.events ? {
+          id: reg.events.id,
+          titulo: reg.events.title,
+          dataInicio: new Date(reg.events.date),
+          campus: reg.events.campus || '',
+          instituicao: 'IFAL',
+          local: reg.events.location || '',
+          descricao: reg.events.description || '',
+          modalidade: 'Presencial',
+          status: 'publicado',
+          carga_horaria: reg.events.workload || 0
+        } : undefined
+      }));
+      setInscriptions(formatted);
     } catch (err) {
       console.error("Erro ao buscar inscrições:", err);
     } finally {
       setLoading(false);
     }
-  }, [user, userLoading]);
+  };
 
   useEffect(() => {
-    fetchInscriptions();
-  }, [fetchInscriptions]);
+    if (!userLoading) {
+      if (user) {
+        fetchInscriptions();
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [user, userLoading]);
 
   const handleCancel = async (eventId: string) => {
     if (!user || !window.confirm('Deseja realmente cancelar esta inscrição?')) return;
