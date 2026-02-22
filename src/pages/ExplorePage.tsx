@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { Search, SlidersHorizontal, Star, Loader2, Calendar } from 'lucide-react';
+import { Search, SlidersHorizontal, Star, Loader2, Calendar, AlertCircle } from 'lucide-react';
 import { supabase } from '@/src/integrations/supabase/client';
 import { Event } from '@/src/types';
 import EventCard from '@/src/components/EventCard';
@@ -13,19 +13,23 @@ export default function ExplorePage() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchEvents = async () => {
       setIsLoading(true);
+      setError(null);
       try {
-        const { data, error } = await supabase
+        const { data, error: supabaseError } = await supabase
           .from('events')
           .select('*')
           .order('date', { ascending: true });
 
-        if (error) throw error;
+        if (supabaseError) throw supabaseError;
 
-        if (data) {
+        if (isMounted && data) {
           const formattedEvents: Event[] = data.map(e => ({
             id: e.id,
             titulo: e.title,
@@ -41,14 +45,19 @@ export default function ExplorePage() {
           }));
           setEvents(formattedEvents);
         }
-      } catch (err) {
-        console.error("Erro ao buscar eventos:", err);
+      } catch (err: any) {
+        console.error("[ExplorePage] Erro ao buscar eventos:", err);
+        if (isMounted) setError("Não foi possível carregar os eventos.");
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchEvents();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const toggleFavorite = (eventId: string) => {
@@ -128,6 +137,12 @@ export default function ExplorePage() {
             <Loader2 className="w-10 h-10 animate-spin mb-4" />
             <p className="font-medium">Buscando eventos...</p>
           </div>
+        ) : error ? (
+          <div className="text-center py-20 bg-white rounded-3xl border border-red-100">
+            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-700">{error}</h3>
+            <button onClick={() => window.location.reload()} className="mt-4 text-indigo-600 font-bold hover:underline">Tentar novamente</button>
+          </div>
         ) : filteredEvents.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
             <AnimatePresence mode="popLayout">
@@ -160,14 +175,6 @@ export default function ExplorePage() {
             </div>
             <h3 className="text-xl font-bold text-gray-700">Nenhum evento encontrado</h3>
             <p className="text-gray-500 mt-2 max-w-xs mx-auto">Tente ajustar sua busca ou remover os filtros aplicados.</p>
-            {(searchTerm || showFavorites) && (
-              <button 
-                onClick={() => { setSearchTerm(''); setShowFavorites(false); }}
-                className="mt-6 text-indigo-600 font-bold hover:underline"
-              >
-                Limpar todos os filtros
-              </button>
-            )}
           </motion.div>
         )}
       </main>

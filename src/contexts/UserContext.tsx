@@ -70,14 +70,19 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     let mounted = true;
 
     const initialize = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      if (!mounted) return;
-      
-      setSession(initialSession);
-      if (initialSession) {
-        await fetchProfile(initialSession.user);
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (!mounted) return;
+        
+        setSession(initialSession);
+        if (initialSession) {
+          await fetchProfile(initialSession.user);
+        }
+      } catch (err) {
+        console.error("[UserContext] Erro na inicialização:", err);
+      } finally {
+        if (mounted) setLoading(false);
       }
-      setLoading(false);
     };
 
     initialize();
@@ -122,15 +127,12 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   };
 
   const logout = async () => {
-    setLoading(true);
     try {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
     } catch (err) {
       console.error("[UserContext] Erro no logout:", err);
-    } finally {
-      setLoading(false);
     }
   };
 

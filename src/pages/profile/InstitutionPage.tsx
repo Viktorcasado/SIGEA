@@ -33,7 +33,6 @@ export default function InstitutionPage() {
   const [matricula, setMatricula] = useState(user?.matricula || '');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Reset campus if it's not in the new institution's list
   useEffect(() => {
     if (!CAMPUSES[instituicao].includes(campus)) {
       setCampus(CAMPUSES[instituicao][0]);
@@ -54,16 +53,16 @@ export default function InstitutionPage() {
         is_organizer: isOrganizer
       });
 
-      addNotification({
+      await addNotification({
         titulo: 'Vínculo Atualizado',
         mensagem: `Seu perfil agora está vinculado como ${perfil} no ${instituicao} - ${campus}.`,
         tipo: 'vinculo',
       });
       
       navigate('/perfil');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao atualizar vínculo:', error);
-      alert('Erro ao atualizar vínculo. Tente novamente.');
+      alert('Erro ao atualizar vínculo: ' + (error.message || 'Tente novamente.'));
     } finally {
       setIsLoading(false);
     }
@@ -149,15 +148,6 @@ export default function InstitutionPage() {
                 />
                 <GradIcon className="absolute right-4 top-3.5 text-gray-400 w-5 h-5" />
               </div>
-            </div>
-          )}
-
-          {perfil === 'servidor' && (
-            <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex gap-3">
-              <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0" />
-              <p className="text-xs text-amber-800 leading-relaxed">
-                Ao selecionar o perfil de <strong>Servidor</strong>, você terá acesso às ferramentas de criação e gestão de eventos após a confirmação dos dados.
-              </p>
             </div>
           )}
 
