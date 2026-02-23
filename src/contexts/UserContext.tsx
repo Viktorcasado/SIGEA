@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState, useContext, ReactNode, FC, useEffect, useCallback } from 'react';
+import { createContext, useState, useContext, ReactNode, FC, useEffect, useCallback, useRef } from 'react';
 import { User, UserStatus } from '@/src/types';
 import { supabase } from '@/src/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -28,6 +28,7 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const isInitialMount = useRef(true);
 
   const fetchProfile = useCallback(async (supabaseUser: SupabaseUser) => {
     try {
@@ -63,42 +64,40 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
         status: 'ativo_comunidade',
         is_organizer: false
       } as User);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     const initAuth = async () => {
+      if (!isInitialMount.current) return;
+      isInitialMount.current = false;
+
       try {
-        // Verifica se há uma sessão inicial (útil para recarregamento de página)
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         if (initialSession) {
           setSession(initialSession);
           await fetchProfile(initialSession.user);
-        } else {
-          setLoading(false);
         }
       } catch (error) {
         console.error("[UserContext] Erro na inicialização:", error);
+      } finally {
         setLoading(false);
       }
     };
 
     initAuth();
 
-    // Escuta mudanças no estado de autenticação (Login, Logout, Token Refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log(`[UserContext] Auth Event: ${event}`);
-      
-      if (currentSession) {
-        setSession(currentSession);
-        await fetchProfile(currentSession.user);
-      } else {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (currentSession) {
+          setSession(currentSession);
+          await fetchProfile(currentSession.user);
+        }
+      } else if (event === 'SIGNED_OUT') {
         setSession(null);
         setUser(null);
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -127,13 +126,10 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    // IMPORTANTE: Para HashRouter, redirecionamos para a raiz sem o hash.
-    // O Supabase anexará o token como #access_token=...
-    // Nós capturaremos isso na inicialização do app.
     const { error } = await supabase.auth.signInWithOAuth({ 
       provider: 'google',
       options: { 
-        redirectTo: window.location.origin, // Redireciona para a URL base
+        redirectTo: window.location.origin,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
