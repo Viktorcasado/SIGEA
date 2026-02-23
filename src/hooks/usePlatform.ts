@@ -9,28 +9,33 @@ export const usePlatform = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIos = /iphone|ipad|ipod/.test(userAgent);
-    const isAndroid = /android/.test(userAgent);
-    
-    if (isIos) {
-      setPlatform('ios');
-      setIsMobile(true);
-    } else if (isAndroid) {
-      setPlatform('android');
-      setIsMobile(true);
-    } else {
-      setPlatform('desktop');
-      setIsMobile(window.innerWidth < 1024);
-    }
+    const checkPlatform = () => {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const isIos = /iphone|ipad|ipod/.test(userAgent);
+      const isAndroid = /android/.test(userAgent);
+      const mobileQuery = window.matchMedia('(max-width: 1023px)').matches;
+      
+      if (isIos) {
+        setPlatform('ios');
+      } else if (isAndroid) {
+        setPlatform('android');
+      } else {
+        setPlatform('desktop');
+      }
 
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024 || isIos || isAndroid);
+      setIsMobile(mobileQuery || isIos || isAndroid);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    checkPlatform();
+    window.addEventListener('resize', checkPlatform);
+    return () => window.removeEventListener('resize', checkPlatform);
   }, []);
 
-  return { platform, isMobile, isIos: platform === 'ios', isAndroid: platform === 'android', isDesktop: platform === 'desktop' };
+  return { 
+    platform, 
+    isMobile, 
+    isIos: platform === 'ios', 
+    isAndroid: platform === 'android', 
+    isDesktop: platform === 'desktop' 
+  };
 };

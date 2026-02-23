@@ -9,10 +9,15 @@
 @layer base {
   html {
     @apply text-gray-900 antialiased bg-gray-50;
+    /* Garante que o app ocupe toda a altura, incluindo áreas seguras */
+    height: -webkit-fill-available;
   }
   
   body {
     @apply min-h-screen;
+    min-height: -webkit-fill-available;
+    /* Previne scroll elástico indesejado no mobile */
+    overflow-x: hidden;
   }
 }
 
@@ -23,6 +28,11 @@
   
   .glass-card {
     @apply bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300;
+  }
+
+  /* Utilitário para padding inferior considerando a barra do sistema mobile */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
   }
 }
 

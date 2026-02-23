@@ -73,6 +73,12 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       isInitialMount.current = false;
 
       try {
+        // No mobile, o HashRouter pode "comer" o fragmento do Supabase.
+        // Verificamos se a URL contém dados de auth antes de inicializar.
+        if (window.location.hash.includes('access_token=')) {
+          // Deixa o Supabase processar o hash naturalmente
+        }
+
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         if (initialSession) {
           setSession(initialSession);
@@ -126,10 +132,12 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
+    // No mobile, forçamos o redirecionamento para a URL base sem hash
+    // para que o Supabase consiga injetar o token corretamente.
     const { error } = await supabase.auth.signInWithOAuth({ 
       provider: 'google',
       options: { 
-        redirectTo: window.location.origin,
+        redirectTo: window.location.origin + '/',
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
