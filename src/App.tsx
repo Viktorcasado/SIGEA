@@ -41,6 +41,7 @@ import ActivityFormPage from './pages/event/ActivityFormPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import CertificateTemplatePage from './pages/gestor/CertificateTemplatePage';
 import CertificateEditorPage from './pages/gestor/CertificateEditorPage';
+import RestrictedPage from './pages/RestrictedPage';
 
 export default function App() {
   return (
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route path="/validar-certificado" element={<ValidateCertificatePage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/acesso-restrito" element={<RestrictedPage />} />
               
               {/* Rotas que redirecionam se logado */}
               <Route element={<PublicRoute />}>

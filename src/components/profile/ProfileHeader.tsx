@@ -4,6 +4,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { User } from '@/src/types';
 import { motion } from 'motion/react';
+import { ShieldCheck } from 'lucide-react';
 
 interface ProfileHeaderProps {
   user: User | null;
@@ -30,7 +31,7 @@ const ProfileHeader = ({ user }: ProfileHeaderProps) => {
     };
     const current = statuses[user.status] || { text: 'Visitante', color: 'bg-gray-100 text-gray-700 border-gray-200' };
     return (
-      <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full border ${current.color}`}>
+      <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full border ${current.color}`}>
         {current.text}
       </span>
     );
@@ -40,50 +41,49 @@ const ProfileHeader = ({ user }: ProfileHeaderProps) => {
     <motion.div 
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-center gap-6"
+      className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-center gap-8"
     >
       <div className="relative">
         {user.avatar_url ? (
           <img 
             src={user.avatar_url} 
             alt={user.nome} 
-            className="w-24 h-24 rounded-full object-cover shadow-lg border-4 border-white"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-              const parent = (e.target as HTMLImageElement).parentElement;
-              if (parent) {
-                const fallback = document.createElement('div');
-                fallback.className = "w-24 h-24 bg-linear-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-extrabold shadow-lg";
-                fallback.innerText = getInitials(user.nome);
-                parent.appendChild(fallback);
-              }
-            }}
+            className="w-28 h-28 rounded-[2rem] object-cover shadow-xl border-4 border-white"
           />
         ) : (
-          <div className="w-24 h-24 bg-linear-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-extrabold shadow-lg">
+          <div className="w-28 h-28 bg-linear-to-br from-indigo-500 to-purple-600 rounded-[2rem] flex items-center justify-center text-white text-4xl font-black shadow-xl">
             {getInitials(user.nome)}
           </div>
         )}
-        <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-sm">
-          <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+        <div className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-full shadow-md">
+          <div className="w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
         </div>
       </div>
       
-      <div className="flex-1">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
-          <h1 className="text-2xl font-bold text-gray-900">{user.nome}</h1>
-          <div className="flex justify-center sm:justify-start">
-            {statusBadge()}
+      <div className="flex-1 space-y-4">
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-1">
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">{user.nome}</h1>
+            <div className="flex justify-center sm:justify-start">
+              {statusBadge()}
+            </div>
           </div>
+          <p className="text-gray-400 font-bold text-sm">{user.email}</p>
         </div>
-        <p className="text-gray-500 text-sm mb-3">{user.email}</p>
         
         <div className="flex flex-wrap justify-center sm:justify-start gap-3">
           <Link 
             to="/perfil/editar" 
-            className="text-xs font-bold py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="text-xs font-black py-3 px-6 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-all border border-gray-100"
           >
             Editar Perfil
+          </Link>
+          <Link 
+            to="/perfil/vinculo" 
+            className="text-xs font-black py-3 px-6 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all border border-indigo-100 flex items-center gap-2"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Validar Vínculo
           </Link>
         </div>
       </div>

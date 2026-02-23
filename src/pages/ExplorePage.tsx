@@ -49,14 +49,14 @@ export default function ExplorePage() {
       console.error("[ExplorePage] Erro ao buscar eventos:", err);
       setError("Não foi possível carregar os eventos. Verifique sua conexão.");
     } finally {
+      // Garantir que o loading pare mesmo em caso de erro ou dados vazios
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchEvents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Executa apenas uma vez na montagem
+  }, [fetchEvents]);
 
   const toggleFavorite = (eventId: string) => {
     setFavorites(prev => {
@@ -98,7 +98,7 @@ export default function ExplorePage() {
     <div className="space-y-6 pb-12">
       <header>
         <h1 className="text-4xl font-black text-gray-900 tracking-tight">Explorar</h1>
-        <p className="text-gray-500 mt-1 font-medium">Descubra oportunidades e eventos incríveis.</p>
+        <p className="text-gray-500 mt-1 font-medium">Encontre eventos acadêmicos e profissionais</p>
       </header>
 
       <div className="sticky top-0 z-20 bg-gray-50/90 backdrop-blur-xl -mx-4 px-4 py-4 space-y-4">
@@ -107,7 +107,7 @@ export default function ExplorePage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Buscar por nome, campus ou tema..."
+              placeholder="Buscar por nome ou campus..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm text-gray-900 font-medium"
@@ -128,7 +128,7 @@ export default function ExplorePage() {
             }`}
           >
             <Star className={`w-4 h-4 ${showFavorites ? 'fill-current' : ''}`} />
-            Favoritos
+            Favoritos ({favorites.size})
           </button>
           <div className="w-px h-8 bg-gray-200 mx-1 shrink-0 self-center" />
           {CATEGORIES.map(cat => (
@@ -151,7 +151,7 @@ export default function ExplorePage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-32 text-gray-400">
             <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mb-4" />
-            <p className="font-bold text-gray-500">Sincronizando eventos...</p>
+            <p className="font-bold text-gray-500">Buscando eventos...</p>
           </div>
         ) : error ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-red-100 shadow-sm">
