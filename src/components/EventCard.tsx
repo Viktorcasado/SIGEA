@@ -1,6 +1,7 @@
 import { Event } from '@/src/types';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, CheckCircle, Zap, Clock, Users, Star, Tv, Footprints } from 'lucide-react';
+import { Calendar, MapPin, CheckCircle, Zap, Clock, Star } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface EventCardProps {
   event: Event;
@@ -29,7 +30,10 @@ export default function EventCard({ event, variant = 'horizontal', isFavorite, o
 
   if (variant === 'list') {
     return (
-        <div className="glass-card p-6 rounded-3xl group">
+        <motion.div 
+          whileHover={{ x: 10 }}
+          className="glass-card p-6 rounded-3xl group"
+        >
             <div className="flex justify-between items-start gap-4">
                 <Link to={`/evento/${event.id}`} className='flex-grow'>
                     <div className="flex items-center gap-3 mb-2">
@@ -49,35 +53,41 @@ export default function EventCard({ event, variant = 'horizontal', isFavorite, o
                     </button>
                 )}
             </div>
-        </div>
+        </motion.div>
     );
   }
 
   return (
-    <Link to={`/evento/${event.id}`} className="flex-shrink-0 w-72 glass-card rounded-[2.5rem] p-6 group">
-      <div className="relative mb-6">
-        <div className="w-16 h-16 bg-indigo-600/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-          <Calendar className="w-8 h-8 text-indigo-600" />
+    <motion.div
+      whileHover={{ y: -10, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="flex-shrink-0 w-72"
+    >
+      <Link to={`/evento/${event.id}`} className="block glass-card rounded-[2.5rem] p-6 group h-full">
+        <div className="relative mb-6">
+          <div className="w-16 h-16 bg-indigo-600/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+            <Calendar className="w-8 h-8 text-indigo-600" />
+          </div>
+          <div className="absolute top-0 right-0">
+            <StatusBadge status={event.status} />
+          </div>
         </div>
-        <div className="absolute top-0 right-0">
-          <StatusBadge status={event.status} />
+        
+        <div className="space-y-1">
+          <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">
+            {event.dataInicio.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+          </p>
+          <h3 className="font-black text-gray-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors">{event.titulo}</h3>
         </div>
-      </div>
-      
-      <div className="space-y-1">
-        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em]">
-          {event.dataInicio.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-        </p>
-        <h3 className="font-black text-gray-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors">{event.titulo}</h3>
-      </div>
 
-      <div className="mt-6 pt-6 border-t border-black/5 flex items-center justify-between">
-        <p className="text-xs font-bold text-gray-500 flex items-center">
-          <MapPin className="w-3.5 h-3.5 mr-1.5 text-indigo-400" />
-          {event.campus}
-        </p>
-        <span className="text-[10px] font-black text-gray-400 bg-black/5 px-2 py-1 rounded-lg">{event.carga_horaria}H</span>
-      </div>
-    </Link>
+        <div className="mt-6 pt-6 border-t border-black/5 flex items-center justify-between">
+          <p className="text-xs font-bold text-gray-500 flex items-center">
+            <MapPin className="w-3.5 h-3.5 mr-1.5 text-indigo-400" />
+            {event.campus}
+          </p>
+          <span className="text-[10px] font-black text-gray-400 bg-black/5 px-2 py-1 rounded-lg">{event.carga_horaria}H</span>
+        </div>
+      </Link>
+    </motion.div>
   );
 }

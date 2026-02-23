@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, Compass, Award, Calendar, AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Bell, Compass, Award, Calendar, ArrowRight, Sparkles, Users, FileText } from 'lucide-react';
 import { useNotifications } from '@/src/contexts/NotificationContext';
 import { useUser } from '@/src/contexts/UserContext';
 import { supabase } from '@/src/integrations/supabase/client';
@@ -14,18 +14,22 @@ export default function HomePage() {
   const { user } = useUser();
   const { unreadCount } = useNotifications();
   const [events, setEvents] = useState<Event[]>([]);
+  const [stats, setStats] = useState({ inscriptions: 0, certificates: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      setLoading(true);
+      
+      // Fetch Events
+      const { data: eventsData } = await supabase
         .from('events')
         .select('*')
         .order('date', { ascending: true })
         .limit(10);
 
-      if (data) {
-        setEvents(data.map(e => ({
+      if (eventsData) {
+        setEvents(eventsData.map(e => ({
           id: e.id,
           titulo: e.title,
           descricao: e.description || '',
@@ -38,20 +42,42 @@ export default function HomePage() {
           carga_horaria: e.workload || 0
         })));
       }
+
+      // Fetch User Stats if logged in
+      if (user) {
+        const { count: insCount } = await supabase
+          .from('event_registrations')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+        
+        const { count: certCount } = await supabase
+          .from('certificados')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        setStats({
+          inscriptions: insCount || 0,
+          certificates: certCount || 0
+        });
+      }
+
       setLoading(false);
     };
-    fetchEvents();
-  }, []);
+    fetchData();
+  }, [user]);
 
   return (
     <div className="space-y-12 pb-12">
       <header className="flex justify-between items-center">
-        <div>
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
           <h1 className="text-4xl font-black text-gray-900 tracking-tighter">
             Olá, <span className="text-white drop-shadow-sm">{user?.nome.split(' ')[0] || 'Visitante'}</span>!
           </h1>
           <p className="text-gray-600 font-bold mt-1">O que vamos aprender hoje?</p>
-        </div>
+        </motion.div>
         <Link to="/notificacoes" className="relative p-4 glass-card rounded-2xl hover:scale-110 transition-transform">
           <Bell className="w-6 h-6 text-gray-800" />
           {unreadCount > 0 && (
@@ -62,8 +88,42 @@ export default function HomePage() {
         </Link>
       </header>
 
+      {/* Quick Stats Bar */}
+      {user && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="grid grid-cols-2 gap-4"
+        >
+          <div className="glass-card p-6 rounded-[2rem] flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-600/10 rounded-2xl flex items-center justify-center text-indigo-600">
+              <Users className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Inscrições</p>
+              <p className="text-2xl font-black text-gray-900">{stats.inscriptions}</p>
+            </div>
+          </div>
+          <div className="glass-card p-6 rounded-[2rem] flex items-center gap-4">
+            <div className="w-12 h-12 bg-emerald-600/10 rounded-2xl flex items-center justify-center text-emerald-600">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Certificados</p>
+              <p className="text-2xl font-black text-gray-900">{stats.certificates}</p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Hero Section */}
-      <section className="relative overflow-hidden glass-panel rounded-[3rem] p-10 text-gray-900">
+      <motion.section 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+        className="relative overflow-hidden glass-panel rounded-[3rem] p-10 text-gray-900"
+      >
         <div className="relative z-10 max-w-lg">
           <div className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-6 shadow-lg shadow-indigo-200">
             <Sparkles className="w-3 h-3" />
@@ -78,8 +138,8 @@ export default function HomePage() {
             <ArrowRight className="w-6 h-6" />
           </Link>
         </div>
-        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl"></div>
-      </section>
+        <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl animate-pulse"></div>
+      </motion.section>
 
       <section>
         <div className="flex justify-between items-end mb-8 px-2">
