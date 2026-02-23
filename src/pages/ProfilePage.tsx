@@ -13,7 +13,8 @@ import {
   Info, 
   Bell,
   Settings,
-  LayoutDashboard
+  LayoutDashboard,
+  Building2
 } from 'lucide-react';
 import ProfileHeader from '@/src/components/profile/ProfileHeader';
 import ProfileMenuItem from '@/src/components/profile/ProfileMenuItem';
@@ -68,6 +69,12 @@ export default function ProfilePage() {
           icon={UserIcon} 
           label="Dados Pessoais" 
           description="Nome, e-mail e foto"
+        />
+        <ProfileMenuItem 
+          to="/perfil/vinculo" 
+          icon={Building2} 
+          label="Vínculo Institucional" 
+          description="Instituição, campus e matrícula"
         />
         <ProfileMenuItem 
           to="/perfil/seguranca" 

@@ -20,6 +20,7 @@ import UserPresencesPage from './pages/profile/UserPresencesPage';
 import MyEventsPage from './pages/profile/MyEventsPage';
 import InscritosPage from './pages/profile/InscritosPage';
 import MarcarPresencaPage from './pages/profile/MarcarPresencaPage';
+import InstitutionalLinkPage from './pages/profile/InstitutionalLinkPage';
 import GestorLayout from './pages/gestor/GestorLayout';
 import PainelPage from './pages/gestor/PainelPage';
 import GestorEventosPage from './pages/gestor/GestorEventosPage';
@@ -86,6 +87,7 @@ function AppRoutes() {
       {/* Rotas Protegidas Fora do Layout */}
       <Route element={<ProtectedRoute />}>
         <Route path="/perfil/editar" element={<EditProfilePage />} />
+        <Route path="/perfil/vinculo" element={<div className='bg-gray-50 min-h-screen font-sans'><InstitutionalLinkPage /></div>} />
         <Route path="/perfil/seguranca" element={<SecurityPage />} />
         <Route path="/perfil/configuracoes" element={<AppSettingsPage />} />
         <Route path="/perfil/eventos-inscritos" element={<div className='bg-gray-50 min-h-screen font-sans'><UserInscriptionsPage /></div>} />
