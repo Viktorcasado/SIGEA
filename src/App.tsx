@@ -48,78 +48,77 @@ export default function App() {
       <NotificationProvider>
         <ToastProvider>
           <HashRouter>
-            <AppRoutes />
+            <Routes>
+              {/* Rotas Públicas de Sistema */}
+              <Route path="/auth/callback" element={<AuthCallbackPage />} />
+              <Route path="/validar-certificado" element={<ValidateCertificatePage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              
+              {/* Rotas que redirecionam se logado */}
+              <Route element={<PublicRoute />}>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+              </Route>
+              
+              {/* Layout Principal (Home, Explorar, Detalhes) */}
+              <Route path="/" element={<Layout />}>
+                <Route index element={<HomePage />} />
+                <Route path="explorar" element={<ExplorePage />} />
+                <Route path="evento/:id" element={<EventDetailPage />} />
+                
+                {/* Rotas Protegidas dentro do Layout */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="certificados" element={<CertificatesPage />} />
+                  <Route path="perfil" element={<ProfilePage />} />
+                  <Route path="notificacoes" element={<NotificationsPage />} />
+                </Route>
+              </Route>
+
+              {/* Rotas Protegidas Fora do Layout (Páginas de Perfil e Gestão) */}
+              <Route element={<ProtectedRoute />}>
+                {/* Perfil e Configurações */}
+                <Route path="/perfil/editar" element={<EditProfilePage />} />
+                <Route path="/perfil/vinculo" element={<div className='bg-gray-50 min-h-screen font-sans'><InstitutionalLinkPage /></div>} />
+                <Route path="/perfil/seguranca" element={<SecurityPage />} />
+                <Route path="/perfil/configuracoes" element={<AppSettingsPage />} />
+                <Route path="/perfil/eventos-inscritos" element={<div className='bg-gray-50 min-h-screen font-sans'><UserInscriptionsPage /></div>} />
+                <Route path="/perfil/presencas" element={<div className='bg-gray-50 min-h-screen font-sans'><UserPresencesPage /></div>} />
+                <Route path="/perfil/meus-eventos" element={<div className='bg-gray-50 min-h-screen font-sans'><MyEventsPage /></div>} />
+                <Route path="/perfil/inscritos" element={<div className='bg-gray-50 min-h-screen font-sans'><InscritosPage /></div>} />
+                <Route path="/perfil/marcar-presenca" element={<div className='bg-gray-50 min-h-screen font-sans'><MarcarPresencaPage /></div>} />
+                
+                {/* Sistema */}
+                <Route path="/sistema/politicas" element={<PoliciesPage />} />
+                <Route path="/sistema/termos" element={<TermsPage />} />
+                <Route path="/sistema/sobre" element={<AboutPage />} />
+
+                {/* Área do Gestor */}
+                <Route element={<GestorProtectedRoute />}>
+                  <Route path="/gestor" element={<GestorLayout />}>
+                    <Route path="painel" element={<PainelPage />} />
+                    <Route path="eventos" element={<GestorEventosPage />} />
+                    <Route path="vinculos" element={<GestorVinculosPage />} />
+                    <Route path="relatorios" element={<GestorRelatoriosPage />} />
+                    <Route path="auditoria" element={<GestorAuditoriaPage />} />
+                    <Route path="eventos/:id/certificado-template" element={<CertificateTemplatePage />} />
+                    <Route path="eventos/:id/certificado-template/editor" element={<CertificateEditorPage />} />
+                  </Route>
+                </Route>
+
+                {/* Gestão de Eventos Específicos (Prioridade sobre evento/:id) */}
+                <Route path="/evento/criar" element={<div className='bg-gray-50 min-h-screen font-sans'><CreateEventPage /></div>} />
+                <Route path="/evento/:id/cronograma" element={<div className='bg-gray-50 min-h-screen font-sans'><SchedulePage /></div>} />
+                <Route path="/evento/:id/atividades" element={<div className='bg-gray-50 min-h-screen font-sans'><ManageActivitiesPage /></div>} />
+                <Route path="/evento/:id/atividades/criar" element={<div className='bg-gray-50 min-h-screen font-sans'><ActivityFormPage /></div>} />
+                <Route path="/evento/:id/atividades/:activityId/editar" element={<div className='bg-gray-50 min-h-screen font-sans'><ActivityFormPage /></div>} />
+              </Route>
+
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </HashRouter>
         </ToastProvider>
       </NotificationProvider>
     </UserProvider>
-  );
-}
-
-function AppRoutes() {
-  return (
-    <Routes>
-      {/* Rotas Públicas de Sistema */}
-      <Route path="/auth/callback" element={<AuthCallbackPage />} />
-      <Route path="/validar-certificado" element={<ValidateCertificatePage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      
-      {/* Rotas que redirecionam se logado */}
-      <Route element={<PublicRoute />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Route>
-      
-      {/* Layout Principal */}
-      <Route path="/" element={<Layout />}>
-        <Route index element={<HomePage />} />
-        <Route path="explorar" element={<ExplorePage />} />
-        <Route path="evento/:id" element={<EventDetailPage />} />
-        
-        {/* Rotas Protegidas dentro do Layout */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="certificados" element={<CertificatesPage />} />
-          <Route path="perfil" element={<ProfilePage />} />
-          <Route path="notificacoes" element={<NotificationsPage />} />
-        </Route>
-      </Route>
-
-      {/* Rotas Protegidas Fora do Layout */}
-      <Route element={<ProtectedRoute />}>
-        <Route path="/perfil/editar" element={<EditProfilePage />} />
-        <Route path="/perfil/vinculo" element={<div className='bg-gray-50 min-h-screen font-sans'><InstitutionalLinkPage /></div>} />
-        <Route path="/perfil/seguranca" element={<SecurityPage />} />
-        <Route path="/perfil/configuracoes" element={<AppSettingsPage />} />
-        <Route path="/perfil/eventos-inscritos" element={<div className='bg-gray-50 min-h-screen font-sans'><UserInscriptionsPage /></div>} />
-        <Route path="/perfil/presencas" element={<div className='bg-gray-50 min-h-screen font-sans'><UserPresencesPage /></div>} />
-        <Route path="/perfil/meus-eventos" element={<div className='bg-gray-50 min-h-screen font-sans'><MyEventsPage /></div>} />
-        <Route path="/perfil/inscritos" element={<div className='bg-gray-50 min-h-screen font-sans'><InscritosPage /></div>} />
-        <Route path="/perfil/marcar-presenca" element={<div className='bg-gray-50 min-h-screen font-sans'><MarcarPresencaPage /></div>} />
-        
-        <Route path="/sistema/politicas" element={<PoliciesPage />} />
-        <Route path="/sistema/termos" element={<TermsPage />} />
-        <Route path="/sistema/sobre" element={<AboutPage />} />
-
-        <Route element={<GestorProtectedRoute />}>
-          <Route path="/gestor" element={<GestorLayout />}>
-            <Route path="painel" element={<PainelPage />} />
-            <Route path="eventos" element={<GestorEventosPage />} />
-            <Route path="vinculos" element={<GestorVinculosPage />} />
-            <Route path="relatorios" element={<GestorRelatoriosPage />} />
-            <Route path="auditoria" element={<GestorAuditoriaPage />} />
-            <Route path="eventos/:id/certificado-template" element={<CertificateTemplatePage />} />
-            <Route path="eventos/:id/certificado-template/editor" element={<CertificateEditorPage />} />
-          </Route>
-        </Route>
-
-        <Route path="/evento/criar" element={<div className='bg-gray-50 min-h-screen font-sans'><CreateEventPage /></div>} />
-        <Route path="/evento/:id/cronograma" element={<div className='bg-gray-50 min-h-screen font-sans'><SchedulePage /></div>} />
-        <Route path="/evento/:id/atividades" element={<div className='bg-gray-50 min-h-screen font-sans'><ManageActivitiesPage /></div>} />
-        <Route path="/evento/:id/atividades/criar" element={<div className='bg-gray-50 min-h-screen font-sans'><ActivityFormPage /></div>} />
-        <Route path="/evento/:id/atividades/:activityId/editar" element={<div className='bg-gray-50 min-h-screen font-sans'><ActivityFormPage /></div>} />
-      </Route>
-
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
   );
 }
