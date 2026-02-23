@@ -55,7 +55,8 @@ export default function ExplorePage() {
 
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Executa apenas uma vez na montagem
 
   const toggleFavorite = (eventId: string) => {
     setFavorites(prev => {

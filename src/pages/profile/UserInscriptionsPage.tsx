@@ -16,10 +16,7 @@ export default function UserInscriptionsPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchInscriptions = useCallback(async () => {
-    if (!user) {
-      if (!userLoading) setLoading(false);
-      return;
-    }
+    if (!user) return;
     
     setLoading(true);
     try {
@@ -58,11 +55,17 @@ export default function UserInscriptionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, userLoading]);
+  }, [user?.id]);
 
   useEffect(() => {
-    fetchInscriptions();
-  }, [fetchInscriptions]);
+    if (!userLoading) {
+      if (user) {
+        fetchInscriptions();
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [user?.id, userLoading, fetchInscriptions]);
 
   const handleCancel = async (eventId: string) => {
     if (!user || !window.confirm('Deseja realmente cancelar esta inscrição?')) return;

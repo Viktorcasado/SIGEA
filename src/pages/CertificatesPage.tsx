@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { BadgeCheck, Download, Copy, Award, Search, Loader2, Clock, Calendar, ExternalLink } from 'lucide-react';
 import { useUser } from '@/src/contexts/UserContext';
@@ -16,59 +16,62 @@ export default function CertificatesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const fetchCertificates = async () => {
-      if (!user) {
-        if (!userLoading) setLoading(false);
-        return;
-      }
-      
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('certificados')
-          .select(`
-            *,
-            events:evento_id (*)
-          `)
-          .eq('user_id', user.id);
+  const fetchCertificates = useCallback(async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('certificados')
+        .select(`
+          *,
+          events:evento_id (*)
+        `)
+        .eq('user_id', user.id);
 
-        if (!error && data) {
-          const formatted: Certificate[] = data.map(c => {
-            const eventData = Array.isArray(c.events) ? c.events[0] : c.events;
-            
-            return {
-              id: c.id,
-              userId: c.user_id,
-              eventoId: c.evento_id,
-              codigo: c.codigo_certificado,
-              dataEmissao: new Date(c.emitido_em),
-              carga_horaria: c.carga_horaria || eventData?.workload || 0,
-              event: eventData ? {
-                id: eventData.id,
-                titulo: eventData.title,
-                instituicao: 'IFAL',
-                campus: eventData.campus,
-                dataInicio: new Date(eventData.date),
-                local: eventData.location || '',
-                descricao: eventData.description || '',
-                modalidade: 'Presencial',
-                status: 'publicado',
-                carga_horaria: eventData.workload || 0
-              } : undefined
-            };
-          });
-          setCertificates(formatted);
-        }
-      } catch (err) {
-        console.error("Erro ao buscar certificados:", err);
-      } finally {
+      if (!error && data) {
+        const formatted: Certificate[] = data.map(c => {
+          const eventData = Array.isArray(c.events) ? c.events[0] : c.events;
+          
+          return {
+            id: c.id,
+            userId: c.user_id,
+            eventoId: c.evento_id,
+            codigo: c.codigo_certificado,
+            dataEmissao: new Date(c.emitido_em),
+            carga_horaria: c.carga_horaria || eventData?.workload || 0,
+            event: eventData ? {
+              id: eventData.id,
+              titulo: eventData.title,
+              instituicao: 'IFAL',
+              campus: eventData.campus,
+              dataInicio: new Date(eventData.date),
+              local: eventData.location || '',
+              descricao: eventData.description || '',
+              modalidade: 'Presencial',
+              status: 'publicado',
+              carga_horaria: eventData.workload || 0
+            } : undefined
+          };
+        });
+        setCertificates(formatted);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar certificados:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]); // Depende apenas do ID do usuário
+
+  useEffect(() => {
+    if (!userLoading) {
+      if (user) {
+        fetchCertificates();
+      } else {
         setLoading(false);
       }
-    };
-
-    fetchCertificates();
-  }, [user, userLoading]);
+    }
+  }, [user?.id, userLoading, fetchCertificates]);
 
   const filteredCertificates = certificates.filter(cert => 
     cert.event?.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -78,7 +81,7 @@ export default function CertificatesPage() {
   const generatePdf = async (cert: Certificate) => {
     if (!cert.event) return;
     const doc = new jsPDF({ orientation: 'landscape' });
-    const validationUrl = `${window.location.origin}/validar-certificado?codigo=${cert.codigo}`;
+    const validationUrl = `${window.location.origin}/#/validar-certificado?codigo=${cert.codigo}`;
 
     doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, 297, 210, 'F');

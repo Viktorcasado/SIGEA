@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, ReactNode, FC, useMemo, useEffect } from 'react';
+import { createContext, useState, useContext, ReactNode, FC, useMemo, useEffect, useCallback } from 'react';
 import { Notification } from '@/src/types';
 import { supabase } from '@/src/integrations/supabase/client';
 import { useUser } from './UserContext';
@@ -20,7 +20,7 @@ export const NotificationProvider: FC<{children: ReactNode}> = ({ children }) =>
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user) {
       setNotifications([]);
       setLoading(false);
@@ -46,7 +46,7 @@ export const NotificationProvider: FC<{children: ReactNode}> = ({ children }) =>
       setNotifications(formatted);
     }
     setLoading(false);
-  };
+  }, [user?.id]);
 
   useEffect(() => {
     fetchNotifications();
@@ -66,7 +66,7 @@ export const NotificationProvider: FC<{children: ReactNode}> = ({ children }) =>
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id, fetchNotifications]);
 
   const unreadCount = useMemo(() => {
     return notifications.filter(n => !n.lida).length;
