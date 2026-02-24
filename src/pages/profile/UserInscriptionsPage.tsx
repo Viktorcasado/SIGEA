@@ -8,7 +8,7 @@ import { CertificateRepository } from '@/src/repositories/CertificateRepository'
 import { ArrowLeft, Calendar, Award, Download, ChevronRight } from 'lucide-react';
 
 export default function UserInscriptionsPage() {
-  const { user } = user;
+  const { user } = useUser();
   const [events, setEvents] = useState<(Event & { certificate?: Certificate })[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,17 +18,22 @@ export default function UserInscriptionsPage() {
         try {
           const userInscriptions = await InscricaoRepository.listByUser(user.id);
           const subscribedEventIds = userInscriptions.map(i => i.event_id);
-          const eventsData = await EventRepository.listByIds(subscribedEventIds);
-          const certificates = await CertificateRepository.listByUser(user.id);
+          
+          if (subscribedEventIds.length > 0) {
+            const eventsData = await EventRepository.listByIds(subscribedEventIds);
+            const certificates = await CertificateRepository.listByUser(user.id);
 
-          const eventsWithCerts = eventsData.map(event => ({
-            ...event,
-            certificate: certificates.find(c => c.evento?.id === event.id || c.evento_titulo === event.titulo)
-          }));
+            const eventsWithCerts = eventsData.map(event => ({
+              ...event,
+              certificate: certificates.find(c => c.evento?.id === event.id || c.evento_titulo === event.titulo)
+            }));
 
-          setEvents(eventsWithCerts);
+            setEvents(eventsWithCerts);
+          } else {
+            setEvents([]);
+          }
         } catch (err) {
-          console.error(err);
+          console.error('Erro ao carregar inscrições:', err);
         } finally {
           setLoading(false);
         }

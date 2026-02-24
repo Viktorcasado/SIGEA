@@ -79,10 +79,11 @@ export default function EventDetailPage() {
           referenciaId: event.id.toString(),
         });
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Erro na operação de inscrição:', err);
       addNotification({
-        titulo: 'Erro na Inscrição',
-        mensagem: 'Não foi possível processar sua inscrição. Tente novamente.',
+        titulo: 'Erro na Operação',
+        mensagem: err.message || 'Não foi possível processar sua solicitação. Verifique sua conexão ou permissões.',
         tipo: 'sistema',
       });
     } finally {
