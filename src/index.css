@@ -8,8 +8,7 @@
 
 @layer base {
   html {
-    @apply text-gray-900 antialiased;
-    background: fixed linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
+    @apply text-gray-900 antialiased bg-gray-50;
   }
   
   body {
@@ -18,16 +17,8 @@
 }
 
 @layer components {
-  .glass-panel {
-    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-2xl;
-  }
-  
-  .glass-card {
-    @apply bg-white/40 backdrop-blur-md border border-white/30 shadow-lg hover:bg-white/50 transition-all duration-300;
-  }
-
-  .liquid-blob {
-    @apply absolute rounded-full blur-[100px] opacity-60 animate-pulse;
+  .panel-card {
+    @apply bg-white border border-gray-200 shadow-sm rounded-3xl;
   }
 }
 
@@ -41,7 +32,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    @apply bg-white/30 rounded-full backdrop-blur-md;
+    @apply bg-gray-300 rounded-full;
 }
 
 .no-scrollbar::-webkit-scrollbar {
