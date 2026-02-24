@@ -39,8 +39,16 @@ const ProfileHeader = () => {
     <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 mb-8">
       <div className="flex flex-col items-center text-center">
         <div className="relative mb-4">
-          <div className="w-24 h-24 bg-indigo-600 rounded-3xl flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-indigo-200 rotate-3">
-            <span className="-rotate-3">{getInitials(user.nome)}</span>
+          <div className="w-24 h-24 bg-indigo-600 rounded-3xl flex items-center justify-center text-white text-3xl font-black shadow-lg shadow-indigo-200 rotate-3 overflow-hidden">
+            {user.avatar_url ? (
+              <img 
+                src={user.avatar_url} 
+                alt={user.nome} 
+                className="w-full h-full object-cover -rotate-3 scale-110"
+              />
+            ) : (
+              <span className="-rotate-3">{getInitials(user.nome)}</span>
+            )}
           </div>
           <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 border-4 border-white rounded-full shadow-sm"></div>
         </div>
