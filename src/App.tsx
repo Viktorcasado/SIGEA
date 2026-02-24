@@ -10,8 +10,6 @@ import HomePage from './pages/HomePage';
 import ExplorePage from './pages/ExplorePage';
 import CertificatesPage from './pages/CertificatesPage';
 import ValidateCertificatePage from './pages/ValidateCertificatePage';
-import EventDetailPage from './pages/EventDetailPage';
-import PlaceholderPage from './pages/PlaceholderPage';
 import ProfilePage from './pages/ProfilePage';
 import EditProfilePage from './pages/profile/EditProfilePage';
 import InstitutionPage from './pages/profile/InstitutionPage';
@@ -37,6 +35,7 @@ import SchedulePage from './pages/event/SchedulePage';
 import ManageActivitiesPage from './pages/event/ManageActivitiesPage';
 import ActivityFormPage from './pages/event/ActivityFormPage';
 import WhatsAppButton from './components/WhatsAppButton';
+import { Loader2 } from 'lucide-react';
 
 export default function App() {
   return (
@@ -54,7 +53,15 @@ function AppRoutes() {
   const { user, loading } = useUser();
 
   if (loading) {
-    return <div>Carregando...</div>; // Ou um componente de spinner mais elaborado
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <div className="text-4xl font-black text-gray-900 tracking-tighter mb-8 animate-pulse">
+          SIGEA<span className="text-indigo-600">.</span>
+        </div>
+        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+        <p className="mt-4 text-gray-500 font-medium">Carregando sistema...</p>
+      </div>
+    );
   }
 
   return (
