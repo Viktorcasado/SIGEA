@@ -8,7 +8,7 @@ import { CertificateRepository } from '@/src/repositories/CertificateRepository'
 import { ArrowLeft, Calendar, Award, Download, ChevronRight } from 'lucide-react';
 
 export default function UserInscriptionsPage() {
-  const { user } = useUser();
+  const { user } = user;
   const [events, setEvents] = useState<(Event & { certificate?: Certificate })[]>([]);
   const [loading, setLoading] = useState(true);
 
