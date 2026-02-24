@@ -34,7 +34,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SchedulePage from './pages/event/SchedulePage';
 import ManageActivitiesPage from './pages/event/ManageActivitiesPage';
 import ActivityFormPage from './pages/event/ActivityFormPage';
-import WhatsAppButton from './components/WhatsAppButton';
 import { Loader2 } from 'lucide-react';
 
 export default function App() {
@@ -65,58 +64,55 @@ function AppRoutes() {
   }
 
   return (
-    <>
-      <Routes>
-        {!user ? (
-          <>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/login-govbr" element={<LoginGovBrPage />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </>
-        ) : (
-          <>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<HomePage />} />
-              <Route path="explorar" element={<ExplorePage />} />
-              <Route path="certificados" element={<CertificatesPage />} />
-              <Route path="perfil" element={<ProfilePage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+    <Routes>
+      {!user ? (
+        <>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/login-govbr" element={<LoginGovBrPage />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </>
+      ) : (
+        <>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<HomePage />} />
+            <Route path="explorar" element={<ExplorePage />} />
+            <Route path="certificados" element={<CertificatesPage />} />
+            <Route path="perfil" element={<ProfilePage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+          <Route path="/perfil/editar" element={<EditProfilePage />} />
+          <Route path="/perfil/instituicao-campus" element={<InstitutionPage />} />
+          <Route path="/perfil/documentos" element={<DocumentsPage />} />
+          <Route path="/perfil/seguranca" element={<SecurityPage />} />
+          <Route path="/perfil/eventos-inscritos" element={<div className='bg-gray-50 min-h-screen'><UserInscriptionsPage /></div>} />
+          <Route path="/sistema/politicas" element={<PoliciesPage />} />
+          <Route path="/sistema/termos" element={<TermsPage />} />
+          <Route path="/sistema/sobre" element={<AboutPage />} />
+          <Route path="/gestor/acesso-restrito" element={<AcessoRestritoPage />} />
+          <Route element={<GestorProtectedRoute />}>
+            <Route path="/gestor" element={<GestorLayout />}>
+              <Route path="painel" element={<PainelPage />} />
+              <Route path="eventos" element={<GestorEventosPage />} />
+              <Route path="vinculos" element={<GestorVinculosPage />} />
+              <Route path="relatorios" element={<GestorRelatoriosPage />} />
+              <Route path="auditoria" element={<GestorAuditoriaPage />} />
             </Route>
-            <Route path="/perfil/editar" element={<EditProfilePage />} />
-            <Route path="/perfil/instituicao-campus" element={<InstitutionPage />} />
-            <Route path="/perfil/documentos" element={<DocumentsPage />} />
-            <Route path="/perfil/seguranca" element={<SecurityPage />} />
-            <Route path="/perfil/eventos-inscritos" element={<div className='bg-gray-50 min-h-screen'><UserInscriptionsPage /></div>} />
-            <Route path="/sistema/politicas" element={<PoliciesPage />} />
-            <Route path="/sistema/termos" element={<TermsPage />} />
-            <Route path="/sistema/sobre" element={<AboutPage />} />
-            <Route path="/gestor/acesso-restrito" element={<AcessoRestritoPage />} />
-            <Route element={<GestorProtectedRoute />}>
-              <Route path="/gestor" element={<GestorLayout />}>
-                <Route path="painel" element={<PainelPage />} />
-                <Route path="eventos" element={<GestorEventosPage />} />
-                <Route path="vinculos" element={<GestorVinculosPage />} />
-                <Route path="relatorios" element={<GestorRelatoriosPage />} />
-                <Route path="auditoria" element={<GestorAuditoriaPage />} />
-              </Route>
-            </Route>
-            <Route path="/evento/:id" element={<div className='bg-gray-50 min-h-screen'><div className='max-w-4xl mx-auto p-4'><HomePage /></div></div>} />
-            <Route path="/notificacoes" element={<NotificationsPage />} />
-            <Route path="/validar-certificado" element={<ValidateCertificatePage />} />
-            <Route path="/acesso-restrito" element={<RestrictedAccessPage />} />
-            <Route element={<ProtectedRoute allowedProfiles={['servidor', 'gestor', 'admin']} />}>
-              <Route path="/evento/criar" element={<div className='bg-gray-50 min-h-screen'><CreateEventPage /></div>} />
-              <Route path="/evento/:id/cronograma" element={<div className='bg-gray-50 min-h-screen'><SchedulePage /></div>} />
-              <Route path="/evento/:id/atividades" element={<div className='bg-gray-50 min-h-screen'><ManageActivitiesPage /></div>} />
-              <Route path="/evento/:id/atividades/criar" element={<div className='bg-gray-50 min-h-screen'><ActivityFormPage /></div>} />
-              <Route path="/evento/:id/atividades/:activityId/editar" element={<div className='bg-gray-50 min-h-screen'><ActivityFormPage /></div>} />
-            </Route>
-          </>
-        )}
-      </Routes>
-      <WhatsAppButton />
-    </>
+          </Route>
+          <Route path="/evento/:id" element={<div className='bg-gray-50 min-h-screen'><div className='max-w-4xl mx-auto p-4'><HomePage /></div></div>} />
+          <Route path="/notificacoes" element={<NotificationsPage />} />
+          <Route path="/validar-certificado" element={<ValidateCertificatePage />} />
+          <Route path="/acesso-restrito" element={<RestrictedAccessPage />} />
+          <Route element={<ProtectedRoute allowedProfiles={['servidor', 'gestor', 'admin']} />}>
+            <Route path="/evento/criar" element={<div className='bg-gray-50 min-h-screen'><CreateEventPage /></div>} />
+            <Route path="/evento/:id/cronograma" element={<div className='bg-gray-50 min-h-screen'><SchedulePage /></div>} />
+            <Route path="/evento/:id/atividades" element={<div className='bg-gray-50 min-h-screen'><ManageActivitiesPage /></div>} />
+            <Route path="/evento/:id/atividades/criar" element={<div className='bg-gray-50 min-h-screen'><ActivityFormPage /></div>} />
+            <Route path="/evento/:id/atividades/:activityId/editar" element={<div className='bg-gray-50 min-h-screen'><ActivityFormPage /></div>} />
+          </Route>
+        </>
+      )}
+    </Routes>
   );
 }
