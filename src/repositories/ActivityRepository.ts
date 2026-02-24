@@ -2,7 +2,7 @@ import { supabase } from '@/src/services/supabase';
 import { Activity } from '@/src/types';
 
 export const ActivityRepository = {
-  async listByEvent(eventId: string): Promise<Activity[]> {
+  async listByEvent(eventId: string | number): Promise<Activity[]> {
     const { data, error } = await supabase
       .from('activities')
       .select('*')
@@ -20,7 +20,7 @@ export const ActivityRepository = {
       hora_inicio: item.start_time,
       hora_fim: item.end_time,
       local: item.location,
-      carga_horaria_minutos: item.hours * 60
+      carga_horaria_minutos: (item.hours || 0) * 60
     }));
   },
 
@@ -36,7 +36,7 @@ export const ActivityRepository = {
         start_time: activityData.hora_inicio,
         end_time: activityData.hora_fim,
         location: activityData.local,
-        hours: activityData.carga_horaria_minutos / 60
+        hours: (activityData.carga_horaria_minutos || 0) / 60
       })
       .select()
       .single();

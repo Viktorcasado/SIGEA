@@ -15,12 +15,13 @@ export const EventRepository = {
       titulo: item.title,
       descricao: item.description,
       data_inicio: item.date,
-      data_fim: item.date, // Ajustar se houver campo de fim
+      data_fim: item.date,
       local: item.location,
-      status: 'publicado', // Mapear conforme lógica de negócio
-      modalidade: 'Presencial', // Mapear conforme lógica de negócio
+      banner_url: item.image_url,
+      status: 'publicado',
+      modalidade: 'Presencial',
       campus: item.campus,
-      instituicao: 'IFAL', // Valor padrão ou vindo do banco
+      instituicao: 'IFAL',
       vagas: 0
     }));
   },
@@ -41,6 +42,7 @@ export const EventRepository = {
       data_inicio: data.date,
       data_fim: data.date,
       local: data.location,
+      banner_url: data.image_url,
       status: 'publicado',
       modalidade: 'Presencial',
       campus: data.campus,
@@ -65,6 +67,7 @@ export const EventRepository = {
       data_inicio: item.date,
       data_fim: item.date,
       local: item.location,
+      banner_url: item.image_url,
       status: 'publicado',
       modalidade: 'Presencial',
       campus: item.campus,
