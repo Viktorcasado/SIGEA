@@ -1,7 +1,7 @@
 "use client";
 
 import { NavLink, Link } from 'react-router-dom';
-import { Home, Compass, Award, User, Bell, LogOut, LogIn } from 'lucide-react';
+import { Home, Compass, Award, User, LogOut, LogIn } from 'lucide-react';
 import { useUser } from '@/src/contexts/UserContext';
 
 export default function Sidebar() {
@@ -11,7 +11,6 @@ export default function Sidebar() {
     { path: '/', label: 'Início', icon: Home },
     { path: '/explorar', label: 'Explorar', icon: Compass },
     { path: '/certificados', label: 'Certificados', icon: Award, protected: true },
-    { path: '/notificacoes', label: 'Notificações', icon: Bell, protected: true },
     { path: '/perfil', label: 'Meu Perfil', icon: User, protected: true },
   ];
 

@@ -5,9 +5,10 @@ import { Home, Compass, Award, User } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const navItems = [
-  { path: '/', label: 'Home', icon: Home },
-  { path: '/explorar', label: 'Explore', icon: Compass },
-  { path: '/certificados', label: 'Shop', icon: Award }, // Usando Award para representar conquistas/certificados
+  { path: '/', label: 'Início', icon: Home },
+  { path: '/explorar', label: 'Explorar', icon: Compass },
+  { path: '/certificados', label: 'Certificados', icon: Award },
+  { path: '/perfil', label: 'Perfil', icon: User },
 ];
 
 export default function BottomBar() {
@@ -23,7 +24,7 @@ export default function BottomBar() {
             <NavLink
               key={path}
               to={path}
-              className="relative flex items-center justify-center px-6 py-3 rounded-full transition-all duration-300 group"
+              className="relative flex items-center justify-center px-5 py-3 rounded-full transition-all duration-300 group"
             >
               {isActive && (
                 <motion.div
@@ -34,7 +35,7 @@ export default function BottomBar() {
               )}
               <div className="relative flex flex-col items-center gap-1">
                 <Icon 
-                  className={`w-6 h-6 transition-colors duration-300 ${
+                  className={`w-5 h-5 transition-colors duration-300 ${
                     isActive ? 'text-indigo-600' : 'text-gray-500 group-hover:text-gray-700'
                   }`} 
                 />
