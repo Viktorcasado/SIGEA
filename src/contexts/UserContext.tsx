@@ -31,7 +31,17 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
         console.error('Erro ao buscar perfil:', error);
         return null;
       }
-      return profile as User;
+      
+      return {
+        id: profile.id,
+        email: supabaseUser.email,
+        nome: profile.full_name,
+        campus: profile.campus,
+        avatar_url: profile.avatar_url,
+        perfil: profile.user_type || 'comunidade_externa',
+        status: profile.user_type === 'gestor' ? 'gestor' : 'ativo_comunidade',
+        matricula: profile.registration_number
+      } as User;
     } catch (error) {
       console.error('Erro inesperado ao buscar perfil:', error);
       return null;
@@ -58,9 +68,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
       if (supabaseUser) {
         const profile = await fetchCurrentProfile(supabaseUser);
         setUser(profile);
-        if (['SIGNED_IN', 'TOKEN_REFRESHED'].includes(event)) {
-          await upsertProfile(supabaseUser);
-        }
       } else {
         setUser(null);
       }
@@ -69,7 +76,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
-    // Fetch initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleAuthChange('INITIAL_SESSION', session);
     });
@@ -96,25 +102,6 @@ export const UserProvider: FC<{children: ReactNode}> = ({ children }) => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setUser(null);
-  };
-
-  
-
-  const upsertProfile = async (supabaseUser: SupabaseUser) => {
-    if (!supabaseUser || !supabase) return;
-
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({
-        id: supabaseUser.id,
-        email: supabaseUser.email,
-        nome: supabaseUser.user_metadata.full_name || supabaseUser.email,
-        status: 'ativo_comunidade',
-      }, { onConflict: 'id' });
-
-    if (error) {
-      console.error("Erro no upsert do perfil: ", error);
-    }
   };
 
   return (
