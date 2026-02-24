@@ -35,7 +35,7 @@ export const PresencaRepositoryMock = {
     presencas.forEach(presenca => {
       const atividade = atividadesDoEvento.find(a => a.id === presenca.atividadeId);
       if (atividade) {
-        totalMinutos += atividade.cargaHorariaMinutos;
+        totalMinutos += atividade.carga_horaria_minutos;
       }
     });
     return totalMinutos;

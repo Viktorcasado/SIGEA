@@ -17,9 +17,9 @@ export default function ValidateCertificatePage() {
   const [result, setResult] = useState<ValidationResult | null>(null);
 
   const handleValidation = () => {
-    const certificate = mockCertificates.find(c => c.codigo.toUpperCase() === code.toUpperCase());
+    const certificate = mockCertificates.find(c => c.codigo_validacao.toUpperCase() === code.toUpperCase());
     if (certificate) {
-      const event = mockEvents.find(e => e.id === certificate.eventId);
+      const event = mockEvents.find(e => e.id === certificate.evento_id);
       if (event) {
         setResult({ certificate, event });
         setValidationStatus('valid');
@@ -72,9 +72,9 @@ export default function ValidateCertificatePage() {
                 <div className="mt-4 pl-9 text-gray-700 space-y-2">
                     <p><strong>Evento:</strong> {result.event.titulo}</p>
                     <p><strong>Instituição:</strong> {result.event.instituicao} - {result.event.campus}</p>
-                    <p><strong>Carga Horária:</strong> {result.certificate.cargaHoraria}h</p>
-                    <p><strong>Data de Emissão:</strong> {result.certificate.dataEmissao.toLocaleDateString('pt-BR')}</p>
-                    <p><strong>Código:</strong> {result.certificate.codigo}</p>
+                    <p><strong>Carga Horária:</strong> {result.certificate.carga_horaria}h</p>
+                    <p><strong>Data de Emissão:</strong> {new Date(result.certificate.data_emissao).toLocaleDateString('pt-BR')}</p>
+                    <p><strong>Código:</strong> {result.certificate.codigo_validacao}</p>
                 </div>
             </div>
         )}

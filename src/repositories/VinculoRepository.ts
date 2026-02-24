@@ -3,16 +3,16 @@ import { mockUsers } from '@/src/data/mock';
 
 const mockVinculosDB: Vinculo[] = [
   {
-    id: 'vnc01',
-    userId: 'user003',
-    userNome: mockUsers.find(u => u.id === 'user003')?.nome || '',
-    userEmail: mockUsers.find(u => u.id === 'user003')?.email || '',
+    id: 1,
+    user_id: 'user003',
+    user_nome: mockUsers.find(u => u.id === 'user003')?.nome || '',
+    user_email: mockUsers.find(u => u.id === 'user003')?.email || '',
     instituicao: 'IFAL',
     campus: 'Maceió',
-    perfilSolicitado: 'aluno',
-    matriculaOuSiape: '2023987654',
+    perfil_solicitado: 'aluno',
+    matricula_ou_siape: '2023987654',
     status: 'pendente',
-    createdAt: new Date(),
+    created_at: new Date(),
   }
 ];
 
@@ -21,7 +21,7 @@ export const VinculoRepositoryMock = {
     return mockVinculosDB.filter(v => v.status === status);
   },
 
-  async updateStatus(vinculoId: string, status: VinculoStatus): Promise<Vinculo | null> {
+  async updateStatus(vinculoId: number, status: VinculoStatus): Promise<Vinculo | null> {
     const index = mockVinculosDB.findIndex(v => v.id === vinculoId);
     if (index > -1) {
       mockVinculosDB[index].status = status;

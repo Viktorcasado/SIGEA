@@ -33,7 +33,7 @@ export default function InstitutionPage() {
       addNotification({
         titulo: 'Vínculo Institucional Confirmado',
         mensagem: 'Seu vínculo com a instituição foi confirmado com sucesso!',
-        tipo: 'vinculo',
+        tipo: 'sistema',
       });
       setIsLoading(false);
       alert('Vínculo confirmado com sucesso! (Modo de Teste)');

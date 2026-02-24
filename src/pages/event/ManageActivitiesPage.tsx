@@ -17,10 +17,10 @@ export default function ManageActivitiesPage() {
     }
   }, [eventId]);
 
-  const handleDelete = (activityId: string) => {
+  const handleDelete = (activityId: number) => {
     if (window.confirm('Tem certeza que deseja excluir esta atividade?')) {
       if (!eventId) return;
-      ActivityRepositoryMock.deleteActivity(eventId, activityId).then(() => {
+      ActivityRepositoryMock.deleteActivity(Number(eventId), activityId).then(() => {
         setActivities(prev => prev.filter(a => a.id !== activityId));
       });
     }
@@ -50,7 +50,7 @@ export default function ManageActivitiesPage() {
             <div key={activity.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50">
               <div>
                 <p className="font-semibold text-gray-800">{activity.titulo}</p>
-                <p className="text-sm text-gray-500">{activity.data} | {activity.horaInicio} - {activity.horaFim}</p>
+                <p className="text-sm text-gray-500">{activity.data} | {activity.hora_inicio} - {activity.hora_fim}</p>
               </div>
               <div className="flex gap-2">
                 <button onClick={() => navigate(`/evento/${eventId}/atividades/${activity.id}/editar`)} className="p-2 text-gray-500 hover:text-indigo-600">

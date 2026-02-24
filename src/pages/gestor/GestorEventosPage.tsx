@@ -53,7 +53,7 @@ export default function GestorEventosPage() {
                     <div className="text-sm text-gray-500">{event.campus}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(event.dataInicio).toLocaleDateString('pt-BR')} - {event.dataFim ? new Date(event.dataFim).toLocaleDateString('pt-BR') : ''}
+                    {new Date(event.data_inicio).toLocaleDateString('pt-BR')} - {event.data_fim ? new Date(event.data_fim).toLocaleDateString('pt-BR') : ''}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <StatusBadge status={event.status} />

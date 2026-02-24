@@ -79,7 +79,7 @@ export default function NotificationsPage() {
                 <div className='flex-grow'>
                     <p className='font-semibold text-gray-800'>{notification.titulo}</p>
                     <p className='text-sm text-gray-600'>{notification.mensagem}</p>
-                    <p className='text-xs text-gray-400 mt-1'><TimeAgo date={notification.createdAt} /></p>
+                    <p className='text-xs text-gray-400 mt-1'><TimeAgo date={notification.created_at} /></p>
                 </div>
               </div>
             ))}

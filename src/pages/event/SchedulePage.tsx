@@ -15,10 +15,10 @@ export default function SchedulePage() {
 
   useEffect(() => {
     if (!eventId) return;
-    const foundEvent = mockEvents.find(e => e.id === eventId);
+    const foundEvent = mockEvents.find(e => e.id === Number(eventId));
     setEvent(foundEvent || null);
     ActivityRepositoryMock.listByEvent(eventId).then(data => {
-      const sorted = [...data].sort((a, b) => new Date(a.data + 'T' + a.horaInicio).getTime() - new Date(b.data + 'T' + b.horaInicio).getTime());
+      const sorted = [...data].sort((a, b) => new Date(a.data + 'T' + a.hora_inicio).getTime() - new Date(b.data + 'T' + b.hora_inicio).getTime());
       setActivities(sorted);
     });
   }, [eventId]);
@@ -76,9 +76,9 @@ export default function SchedulePage() {
             <div className="space-y-4">
               {acts.map(act => (
                 <div key={act.id} className="bg-white p-4 rounded-lg shadow-sm">
-                  <p className="font-bold text-indigo-700">{act.horaInicio} - {act.horaFim}</p>
+                  <p className="font-bold text-indigo-700">{act.hora_inicio} - {act.hora_fim}</p>
                   <p className="font-semibold text-gray-900 mt-1">{act.titulo}</p>
-                  <p className="text-sm text-gray-500">{act.tipo} - {act.localOuLink}</p>
+                  <p className="text-sm text-gray-500">{act.tipo} - {act.local}</p>
                 </div>
               ))}
             </div>

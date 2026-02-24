@@ -10,7 +10,7 @@ import { mockEvents } from '@/src/data/mock';
 const createEventMock = (eventData: Omit<Event, 'id' | 'status'>) => {
   const newEvent: Event = {
     ...eventData,
-    id: `evt${Date.now()}`,
+    id: Math.floor(Math.random() * 10000),
     status: 'rascunho',
   };
   mockEvents.push(newEvent);
@@ -48,8 +48,8 @@ export default function CreateEventPage() {
             descricao,
             instituicao: instituicao as EventInstitution,
             campus,
-            dataInicio: new Date(dataInicio),
-            dataFim: new Date(dataFim),
+            data_inicio: new Date(dataInicio).toISOString(),
+            data_fim: new Date(dataFim).toISOString(),
             modalidade,
             local: `${local}${link && ' / ' + link}`,
             vagas

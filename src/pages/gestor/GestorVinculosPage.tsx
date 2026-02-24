@@ -28,7 +28,7 @@ export default function GestorVinculosPage() {
     });
   }, []);
 
-  const handleUpdateStatus = (vinculoId: string, status: VinculoStatus) => {
+  const handleUpdateStatus = (vinculoId: number, status: VinculoStatus) => {
     // Em uma app real, você pode querer um modal de confirmação ou para adicionar um motivo de rejeição
     VinculoRepositoryMock.updateStatus(vinculoId, status).then(() => {
         setVinculos(vinculos.filter(v => v.id !== vinculoId));
@@ -62,15 +62,15 @@ export default function GestorVinculosPage() {
               {vinculos.map(vinculo => (
                 <tr key={vinculo.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{vinculo.userNome}</div>
-                      <div className="text-sm text-gray-500">{vinculo.userEmail}</div>
+                      <div className="font-medium text-gray-900">{vinculo.user_nome}</div>
+                      <div className="text-sm text-gray-500">{vinculo.user_email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div>{vinculo.perfilSolicitado} - {vinculo.instituicao}</div>
-                      <div>Matrícula/SIAPE: {vinculo.matriculaOuSiape}</div>
+                      <div>{vinculo.perfil_solicitado} - {vinculo.instituicao}</div>
+                      <div>Matrícula/SIAPE: {vinculo.matricula_ou_siape}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(vinculo.createdAt).toLocaleDateString('pt-BR')}
+                      {new Date(vinculo.created_at).toLocaleDateString('pt-BR')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button onClick={() => handleUpdateStatus(vinculo.id, 'aprovado')} className="p-2 rounded-full bg-green-100 text-green-700 hover:bg-green-200 mr-2">

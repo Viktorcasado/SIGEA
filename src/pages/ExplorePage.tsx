@@ -30,7 +30,7 @@ export default function ExplorePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const toggleFavorite = (eventId: string) => {
+  const toggleFavorite = (eventId: number) => {
     setFavorites(prev => {
       const newFavs = new Set(prev);
       if (newFavs.has(eventId)) {
@@ -46,7 +46,7 @@ export default function ExplorePage() {
     let events = mockEvents;
 
     if (showFavorites) {
-        events = events.filter(event => favorites.has(event.id));
+        events = events.filter(event => favorites.has(String(event.id)));
     }
 
     if (searchTerm) {
@@ -110,7 +110,7 @@ export default function ExplorePage() {
                 key={event.id} 
                 event={event} 
                 variant="list" 
-                isFavorite={favorites.has(event.id)}
+                isFavorite={favorites.has(String(event.id))}
                 onToggleFavorite={toggleFavorite}
               />
             ))}

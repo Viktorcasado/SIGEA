@@ -1,56 +1,53 @@
 import { Activity } from '@/src/types';
 
-// Mock database for activities, keyed by eventId
-const mockActivitiesDB: Record<string, Activity[]> = {
-  'evt01': [
+const mockActivitiesDB: Record<number, Activity[]> = {
+  1: [
     {
-      id: 'act01',
-      eventoId: 'evt01',
+      id: 1,
+      event_id: 1,
       titulo: 'Abertura e Boas-vindas',
       tipo: 'palestra',
       data: '2026-02-20',
-      horaInicio: '09:00',
-      horaFim: '10:00',
-      localOuLink: 'Auditório Principal',
-      responsavel: 'Direção do Campus',
-      cargaHorariaMinutos: 60,
+      hora_inicio: '09:00',
+      hora_fim: '10:00',
+      local: 'Auditório Principal',
+      descricao: 'Direção do Campus',
+      carga_horaria_minutos: 60,
     },
     {
-      id: 'act02',
-      eventoId: 'evt01',
+      id: 2,
+      event_id: 1,
       titulo: 'Introdução ao React com TypeScript',
       tipo: 'oficina',
       data: '2026-02-20',
-      horaInicio: '10:30',
-      horaFim: '12:30',
-      localOuLink: 'Laboratório 5',
-      responsavel: 'Prof. João Dev',
-      cargaHorariaMinutos: 120,
+      hora_inicio: '10:30',
+      hora_fim: '12:30',
+      local: 'Laboratório 5',
+      descricao: 'Prof. João Dev',
+      carga_horaria_minutos: 120,
     },
   ]
 };
 
-// Mock Repository Implementation
 export const ActivityRepositoryMock = {
-  async listByEvent(eventoId: string): Promise<Activity[]> {
-    return mockActivitiesDB[eventoId] || [];
+  async listByEvent(eventId: number): Promise<Activity[]> {
+    return mockActivitiesDB[eventId] || [];
   },
 
-  async createActivity(eventoId: string, activityData: Omit<Activity, 'id' | 'eventoId'>): Promise<Activity> {
-    if (!mockActivitiesDB[eventoId]) {
-      mockActivitiesDB[eventoId] = [];
+  async createActivity(eventId: number, activityData: Omit<Activity, 'id'>): Promise<Activity> {
+    if (!mockActivitiesDB[eventId]) {
+      mockActivitiesDB[eventId] = [];
     }
     const newActivity: Activity = {
       ...activityData,
-      id: `act${Date.now()}`,
-      eventoId,
+      id: Math.floor(Math.random() * 10000),
     };
-    mockActivitiesDB[eventoId].push(newActivity);
+    mockActivitiesDB[eventId].push(newActivity);
     return newActivity;
   },
 
   async updateActivity(updatedActivity: Activity): Promise<Activity> {
-    const eventActivities = mockActivitiesDB[updatedActivity.eventoId];
+    const eventActivities = mockActivitiesDB[updatedActivity.event_id];
     if (!eventActivities) throw new Error('Event not found');
     const index = eventActivities.findIndex(a => a.id === updatedActivity.id);
     if (index === -1) throw new Error('Activity not found');
@@ -58,9 +55,9 @@ export const ActivityRepositoryMock = {
     return updatedActivity;
   },
 
-  async deleteActivity(eventoId: string, activityId: string): Promise<void> {
-    const eventActivities = mockActivitiesDB[eventoId];
+  async deleteActivity(eventId: number, activityId: number): Promise<void> {
+    const eventActivities = mockActivitiesDB[eventId];
     if (!eventActivities) return;
-    mockActivitiesDB[eventoId] = eventActivities.filter(a => a.id !== activityId);
+    mockActivitiesDB[eventId] = eventActivities.filter(a => a.id !== activityId);
   },
 };

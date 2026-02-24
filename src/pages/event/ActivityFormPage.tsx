@@ -22,8 +22,8 @@ export default function ActivityFormPage() {
   const [data, setData] = useState('');
   const [horaInicio, setHoraInicio] = useState('');
   const [horaFim, setHoraFim] = useState('');
-  const [localOuLink, setLocalOuLink] = useState('');
-  const [responsavel, setResponsavel] = useState('');
+  const [local, setLocal] = useState('');
+  const [descricao, setDescricao] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const cargaHoraria = calculateDuration(horaInicio, horaFim);
@@ -31,15 +31,15 @@ export default function ActivityFormPage() {
   useEffect(() => {
     if (isEditing && eventId) {
         ActivityRepositoryMock.listByEvent(eventId).then(activities => {
-            const activity = activities.find(a => a.id === activityId);
+            const activity = activities.find(a => a.id === Number(activityId));
             if (activity) {
                 setTitulo(activity.titulo);
                 setTipo(activity.tipo);
                 setData(activity.data);
-                setHoraInicio(activity.horaInicio);
-                setHoraFim(activity.horaFim);
-                setLocalOuLink(activity.localOuLink);
-                setResponsavel(activity.responsavel || '');
+                setHoraInicio(activity.hora_inicio);
+                setHoraFim(activity.hora_fim);
+                setLocal(activity.local);
+                setDescricao(activity.descricao || '');
             }
         });
     }
@@ -49,11 +49,11 @@ export default function ActivityFormPage() {
     e.preventDefault();
     if (!eventId) return;
     setIsLoading(true);
-    const activityData = { titulo, tipo, data, horaInicio, horaFim, localOuLink, responsavel, cargaHorariaMinutos: cargaHoraria };
+    const activityData = { titulo, tipo, data, hora_inicio: horaInicio, hora_fim: horaFim, local, descricao, carga_horaria_minutos: cargaHoraria, event_id: Number(eventId) };
     
     const promise = isEditing
-      ? ActivityRepositoryMock.updateActivity({ ...activityData, id: activityId!, eventoId: eventId })
-      : ActivityRepositoryMock.createActivity(eventId, activityData);
+      ? ActivityRepositoryMock.updateActivity({ ...activityData, id: Number(activityId!) })
+      : ActivityRepositoryMock.createActivity(Number(eventId), activityData);
 
     promise.then(() => {
         setIsLoading(false);

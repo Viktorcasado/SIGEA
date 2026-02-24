@@ -15,7 +15,7 @@ export default function UserInscriptionsPage() {
     if (user) {
       InscricaoRepositoryMock.listByUser(user.id).then(userInscriptions => {
         setInscriptions(userInscriptions);
-        const subscribedEventIds = userInscriptions.map(i => i.eventoId);
+        const subscribedEventIds = userInscriptions.map(i => i.event_id);
         const subscribedEvents = mockEvents.filter(e => subscribedEventIds.includes(e.id));
         setEvents(subscribedEvents);
       });
@@ -46,7 +46,7 @@ export default function UserInscriptionsPage() {
             <Link to={`/evento/${event.id}`} key={event.id} className="block bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
               <h3 className="font-semibold text-lg text-gray-800">{event.titulo}</h3>
               <p className="text-sm text-gray-500">{event.instituicao} - {event.campus}</p>
-              <p className="text-sm text-gray-600 mt-1">{new Date(event.dataInicio).toLocaleDateString('pt-BR')}</p>
+              <p className="text-sm text-gray-600 mt-1">{new Date(event.data_inicio).toLocaleDateString('pt-BR')}</p>
             </Link>
           ))}
         </div>
