@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, Download, Copy, Loader2, Award, ArrowRight, Search, FileCheck } from 'lucide-react';
+import { BadgeCheck, Download, Copy, Loader2, Award, ArrowRight, Search, FileCheck, Calendar, Clock } from 'lucide-react';
 import { useUser } from '@/src/contexts/UserContext';
 import { CertificateRepository } from '@/src/repositories/CertificateRepository';
 import { Certificate, Event } from '@/src/types';
@@ -17,26 +17,33 @@ const generatePdf = async (certificate: Certificate, event?: Event) => {
     
     const validationUrl = `${window.location.origin}/validar-certificado?codigo=${certificate.codigo_validacao}`;
 
-    // Background decoration (simple)
+    // Borda decorativa
     doc.setDrawColor(79, 70, 229); // Indigo-600
-    doc.setLineWidth(2);
+    doc.setLineWidth(1.5);
     doc.rect(10, 10, 277, 190);
+    doc.setDrawColor(79, 70, 229);
+    doc.setLineWidth(0.5);
+    doc.rect(12, 12, 273, 186);
     
+    // Título
     doc.setFontSize(40);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(17, 24, 39); // Gray-900
     doc.text('CERTIFICADO', 148.5, 50, { align: 'center' });
 
-    doc.setFontSize(14);
+    // Texto de certificação
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(107, 114, 128); // Gray-500
-    doc.text('Certificamos para os devidos fins que o participante concluiu o evento:', 148.5, 70, { align: 'center' });
+    doc.text('Certificamos que o participante concluiu com êxito o evento:', 148.5, 70, { align: 'center' });
 
-    doc.setFontSize(24);
+    // Nome do Evento
+    doc.setFontSize(28);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(79, 70, 229); // Indigo-600
     doc.text(certificate.evento_titulo, 148.5, 90, { align: 'center' });
 
+    // Detalhes
     doc.setFontSize(14);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(55, 65, 81); // Gray-700
@@ -44,10 +51,10 @@ const generatePdf = async (certificate: Certificate, event?: Event) => {
     doc.text(campusInfo, 148.5, 105, { align: 'center' });
 
     doc.setFontSize(12);
-    doc.text(`Carga Horária: ${Math.floor(certificate.carga_horaria_minutos / 60)} horas`, 148.5, 125, { align: 'center' });
+    doc.text(`Carga Horária Total: ${Math.floor(certificate.carga_horaria_minutos / 60)} horas`, 148.5, 125, { align: 'center' });
     doc.text(`Data de Emissão: ${new Date(certificate.data_emissao).toLocaleDateString('pt-BR')}`, 148.5, 135, { align: 'center' });
 
-    // Footer / Validation
+    // Rodapé e Validação
     doc.setFontSize(10);
     doc.setTextColor(156, 163, 175); // Gray-400
     doc.text(`Código de Autenticidade: ${certificate.codigo_validacao}`, 148.5, 170, { align: 'center' });
@@ -74,7 +81,8 @@ const CertificateCard = ({ certificate }: { certificate: Certificate }) => {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
       className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 group"
     >
       <div className="flex flex-col lg:flex-row justify-between gap-6">
@@ -85,18 +93,20 @@ const CertificateCard = ({ certificate }: { certificate: Certificate }) => {
             </div>
             <div>
                 <h3 className="font-black text-gray-900 text-xl tracking-tight leading-tight">{certificate.evento_titulo}</h3>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2">
+                    <div className="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        <Calendar className="w-3.5 h-3.5 mr-1.5 text-indigo-400" />
                         Emitido em {new Date(certificate.data_emissao).toLocaleDateString('pt-BR')}
-                    </span>
-                    <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">
+                    </div>
+                    <div className="flex items-center text-xs font-bold text-indigo-500 uppercase tracking-wider">
+                        <Clock className="w-3.5 h-3.5 mr-1.5" />
                         {Math.floor(certificate.carga_horaria_minutos / 60)} Horas
-                    </span>
+                    </div>
                 </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 ml-0 lg:ml-18">
+          <div className="flex items-center gap-2">
             <div className="flex items-center bg-gray-50 border border-gray-100 rounded-xl px-4 py-2 group/code">
                 <code className="text-[11px] font-black font-mono text-gray-500 uppercase tracking-widest">
                     {certificate.codigo_validacao}
@@ -118,7 +128,7 @@ const CertificateCard = ({ certificate }: { certificate: Certificate }) => {
                 className="w-full lg:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95"
             >
                 <Download className="w-5 h-5" />
-                Baixar Certificado
+                Baixar PDF
             </button>
         </div>
       </div>
@@ -140,7 +150,7 @@ export default function CertificatesPage() {
   }, [user]);
 
   return (
-    <div className="space-y-10 pb-20">
+    <div className="space-y-10 pb-24">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
             <h1 className="text-4xl font-black text-gray-900 tracking-tighter">Meus Certificados</h1>

@@ -20,7 +20,7 @@ export const CertificateRepository = {
       codigo_validacao: result.codigo_certificado,
       carga_horaria_minutos: result.carga_horaria_total * 60,
       evento: {
-        id: 0, 
+        id: '0', 
         titulo: result.evento_titulo,
         descricao: '',
         instituicao: result.instituicao_sigla,
@@ -45,24 +45,47 @@ export const CertificateRepository = {
       .select(`
         *,
         eventos:evento_id (
-          titulo,
-          instituicao,
-          campus
+          id,
+          title,
+          description,
+          date,
+          location,
+          image_url,
+          campus,
+          workload
         )
       `)
       .eq('user_id', userId);
 
     if (error) throw error;
 
-    return (data || []).map(item => ({
-      id: item.id,
-      evento_titulo: item.eventos?.titulo || 'Evento Desconhecido',
-      nome_participante: '', 
-      data_emissao: item.emitido_em,
-      codigo_validacao: item.codigo_certificado,
-      carga_horaria_minutos: (item.carga_horaria || 0) * 60,
-      evento: item.eventos
-    }));
+    return (data || []).map(item => {
+      const eventData = item.eventos;
+      const mappedEvent: Event | undefined = eventData ? {
+        id: eventData.id,
+        titulo: eventData.title,
+        descricao: eventData.description,
+        data_inicio: eventData.date,
+        data_fim: eventData.date,
+        local: eventData.location,
+        banner_url: eventData.image_url,
+        status: 'publicado',
+        modalidade: 'Presencial',
+        campus: eventData.campus,
+        instituicao: 'IFAL',
+        vagas: 0
+      } : undefined;
+
+      return {
+        id: item.id,
+        evento_titulo: mappedEvent?.titulo || 'Evento Desconhecido',
+        nome_participante: '', 
+        data_emissao: item.emitido_em,
+        codigo_validacao: item.codigo_certificado, // Usando o código formatado pelo trigger
+        carga_horaria_minutos: (item.carga_horaria || eventData?.workload || 0) * 60,
+        evento: mappedEvent
+      };
+    });
   },
 
   async findByEventAndUser(eventId: string | number, userId: string): Promise<Certificate | null> {
@@ -71,9 +94,14 @@ export const CertificateRepository = {
       .select(`
         *,
         eventos:evento_id (
-          titulo,
-          instituicao,
-          campus
+          id,
+          title,
+          description,
+          date,
+          location,
+          image_url,
+          campus,
+          workload
         )
       `)
       .eq('evento_id', eventId)
@@ -82,14 +110,30 @@ export const CertificateRepository = {
 
     if (error || !data) return null;
 
+    const eventData = data.eventos;
+    const mappedEvent: Event = {
+      id: eventData.id,
+      titulo: eventData.title,
+      descricao: eventData.description,
+      data_inicio: eventData.date,
+      data_fim: eventData.date,
+      local: eventData.location,
+      banner_url: eventData.image_url,
+      status: 'publicado',
+      modalidade: 'Presencial',
+      campus: eventData.campus,
+      instituicao: 'IFAL',
+      vagas: 0
+    };
+
     return {
       id: data.id,
-      evento_titulo: data.eventos?.titulo || 'Evento Desconhecido',
+      evento_titulo: mappedEvent.titulo,
       nome_participante: '',
       data_emissao: data.emitido_em,
       codigo_validacao: data.codigo_certificado,
-      carga_horaria_minutos: (data.carga_horaria || 0) * 60,
-      evento: data.eventos
+      carga_horaria_minutos: (data.carga_horaria || eventData?.workload || 0) * 60,
+      evento: mappedEvent
     };
   }
 };
