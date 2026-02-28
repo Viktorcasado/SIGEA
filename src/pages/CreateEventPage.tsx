@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useUser } from '@/src/contexts/UserContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Info, Users, Image as ImageIcon, Save, Globe, Building2 } from 'lucide-react';
 import { Event, EventInstitution, EventModality } from '@/src/types';
-import { EventRepository } from '@/src/repositories/EventRepository';
+import { supabase } from '@/src/services/supabase';
+import { motion } from 'motion/react';
 
 export default function CreateEventPage() {
   const { user } = useUser();
@@ -11,7 +12,7 @@ export default function CreateEventPage() {
 
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [instituicao, setInstituicao] = useState<EventInstitution | ''>(user?.instituicao || '');
+  const [instituicao, setInstituicao] = useState<EventInstitution | ''>(user?.instituicao || 'IFAL');
   const [campus, setCampus] = useState(user?.campus || '');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
@@ -21,38 +22,36 @@ export default function CreateEventPage() {
   const [vagas, setVagas] = useState<number | undefined>();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent, andGoToDetails = false) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (titulo.length < 5 || descricao.length < 20) {
-      alert('Preencha o título e a descrição corretamente.');
+    if (!titulo || !descricao || !dataInicio) {
+      alert('Por favor, preencha os campos obrigatórios.');
       return;
     }
 
     setIsLoading(true);
     try {
-      const newEventData: Omit<Event, 'id' | 'status'> = {
-        titulo,
-        descricao,
-        instituicao: instituicao as EventInstitution,
-        campus,
-        data_inicio: new Date(dataInicio).toISOString(),
-        data_fim: new Date(dataFim).toISOString(),
-        modalidade,
-        local: `${local}${link && ' / ' + link}`,
-        vagas,
-      };
+      const { data, error } = await supabase
+        .from('events')
+        .insert({
+          title: titulo,
+          description: descricao,
+          date: dataInicio,
+          location: modalidade === 'Online' ? link : local,
+          campus: campus,
+          organizer_id: user?.id,
+          workload: 0, // Será calculado pelas atividades
+        })
+        .select()
+        .single();
 
-      const newEvent = await EventRepository.create(newEventData);
+      if (error) throw error;
       
-      alert('Evento salvo com sucesso!');
-      if (andGoToDetails) {
-        navigate(`/evento/${newEvent.id}`);
-      } else {
-        navigate('/');
-      }
+      alert('Evento criado com sucesso!');
+      navigate(`/evento/${data.id}`);
     } catch (error) {
       console.error('Failed to create event:', error);
-      alert('Ocorreu um erro ao salvar o evento. Tente novamente.');
+      alert('Erro ao salvar o evento.');
     } finally {
       setIsLoading(false);
     }
@@ -60,106 +59,170 @@ export default function CreateEventPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
-      <Link to="/" className="flex items-center text-gray-600 hover:text-gray-900 font-semibold mb-6">
-        <ArrowLeft className="w-5 h-5 mr-2" />
-        Voltar
-      </Link>
+      <header className="mb-10">
+        <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-gray-900 font-bold group mb-6">
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100 mr-3 group-hover:scale-110 transition-transform">
+            <ArrowLeft className="w-5 h-5" />
+          </div>
+          Voltar
+        </button>
+        <h1 className="text-4xl font-black text-gray-900 tracking-tighter">Criar Novo Evento</h1>
+        <p className="text-gray-500 font-bold mt-1">Preencha as informações básicas para começar.</p>
+      </header>
 
-      <h1 className="text-3xl font-bold text-gray-900">Criar Novo Evento</h1>
-
-      <form className="mt-8 space-y-8">
-        {/* Section 1: Info */}
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 className="text-xl font-bold text-gray-800">Informações</h2>
-            <div className="mt-4 grid grid-cols-1 gap-6">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Seção: Informações Básicas */}
+        <section className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100">
+            <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center">
+                    <Info className="w-6 h-6 text-indigo-600" />
+                </div>
+                <h2 className="text-xl font-black text-gray-900 tracking-tight">Informações Gerais</h2>
+            </div>
+            
+            <div className="space-y-6">
                 <div>
-                    <label htmlFor="titulo" className="block text-sm font-medium text-gray-700">Título do evento</label>
-                    <input type="text" id="titulo" value={titulo} onChange={e => setTitulo(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Título do Evento *</label>
+                    <input 
+                        type="text" 
+                        value={titulo} 
+                        onChange={e => setTitulo(e.target.value)} 
+                        placeholder="Ex: I Semana de Tecnologia do IFAL"
+                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-medium"
+                        required
+                    />
                 </div>
                 <div>
-                    <label htmlFor="descricao" className="block text-sm font-medium text-gray-700">Descrição</label>
-                    <textarea id="descricao" value={descricao} onChange={e => setDescricao(e.target.value)} rows={4} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Descrição Detalhada *</label>
+                    <textarea 
+                        value={descricao} 
+                        onChange={e => setDescricao(e.target.value)} 
+                        rows={5}
+                        placeholder="Conte mais sobre o objetivo do evento, público-alvo e o que esperar..."
+                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-medium"
+                        required
+                    />
                 </div>
             </div>
-        </div>
+        </section>
 
-        {/* Section 4: Modality */}
-                {/* Section 2: Institution */}
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 className="text-xl font-bold text-gray-800">Instituição e Campus</h2>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label htmlFor="instituicao" className="block text-sm font-medium text-gray-700">Instituição</label>
-                    <select id="instituicao" value={instituicao} onChange={e => setInstituicao(e.target.value as EventInstitution)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
-                        <option value="IFAL">IFAL</option>
-                        <option value="UFAL">UFAL</option>
-                        <option value="Outro">Outro</option>
-                    </select>
+        {/* Seção: Localização e Modalidade */}
+        <section className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100">
+            <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
+                    <Globe className="w-6 h-6 text-blue-600" />
                 </div>
-                <div>
-                    <label htmlFor="campus" className="block text-sm font-medium text-gray-700">Campus</label>
-                    <input type="text" id="campus" value={campus} onChange={e => setCampus(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                </div>
+                <h2 className="text-xl font-black text-gray-900 tracking-tight">Onde e Quando</h2>
             </div>
-        </div>
 
-        {/* Section 3: Dates */}
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 className="text-xl font-bold text-gray-800">Datas</h2>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label htmlFor="dataInicio" className="block text-sm font-medium text-gray-700">Data de Início</label>
-                    <input type="date" id="dataInicio" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                </div>
-                <div>
-                    <label htmlFor="dataFim" className="block text-sm font-medium text-gray-700">Data de Fim</label>
-                    <input type="date" id="dataFim" value={dataFim} onChange={e => setDataFim(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                </div>
-            </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 className="text-xl font-bold text-gray-800">Modalidade e Local</h2>
-            <div className="mt-4 space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Modalidade</label>
-                    <div className="mt-2 flex rounded-md shadow-sm">
-                        <button type="button" onClick={() => setModalidade('Presencial')} className={`flex-1 px-4 py-2 text-sm font-medium border ${modalidade === 'Presencial' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} rounded-l-md`}>Presencial</button>
-                        <button type="button" onClick={() => setModalidade('Online')} className={`flex-1 px-4 py-2 text-sm font-medium border-t border-b ${modalidade === 'Online' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}>Online</button>
-                        <button type="button" onClick={() => setModalidade('Híbrido')} className={`flex-1 px-4 py-2 text-sm font-medium border ${modalidade === 'Híbrido' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'} rounded-r-md`}>Híbrido</button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-3">Modalidade</label>
+                    <div className="flex p-1 bg-gray-50 rounded-2xl border border-gray-100">
+                        {['Presencial', 'Online', 'Híbrido'].map((mod) => (
+                            <button
+                                key={mod}
+                                type="button"
+                                onClick={() => setModalidade(mod as EventModality)}
+                                className={`flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                                    modalidade === mod 
+                                    ? 'bg-white text-indigo-600 shadow-sm' 
+                                    : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                            >
+                                {mod}
+                            </button>
+                        ))}
                     </div>
                 </div>
-                {(modalidade === 'Presencial' || modalidade === 'Híbrido') && (
-                    <div>
-                        <label htmlFor="local" className="block text-sm font-medium text-gray-700">Local</label>
-                        <input type="text" id="local" value={local} onChange={e => setLocal(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                    </div>
-                )}
-                {(modalidade === 'Online' || modalidade === 'Híbrido') && (
-                    <div>
-                        <label htmlFor="link" className="block text-sm font-medium text-gray-700">Link</label>
-                        <input type="url" id="link" value={link} onChange={e => setLink(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-                    </div>
-                )}
-            </div>
-        </div>
 
-        {/* Section 5: Vagas */}
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-            <h2 className="text-xl font-bold text-gray-800">Vagas e Público-alvo</h2>
-            <div className="mt-4">
-                <label htmlFor="vagas" className="block text-sm font-medium text-gray-700">Número de Vagas (deixe em branco para ilimitado)</label>
-                <input type="number" id="vagas" value={vagas || ''} onChange={e => setVagas(e.target.value ? parseInt(e.target.value) : undefined)} min="1" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
-            </div>
-        </div>
+                <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Data de Início *</label>
+                    <div className="relative">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input 
+                            type="date" 
+                            value={dataInicio} 
+                            onChange={e => setDataInicio(e.target.value)}
+                            className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-medium"
+                            required
+                        />
+                    </div>
+                </div>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-4">
-            <button type="button" onClick={() => navigate('/')} className="px-6 py-2.5 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 font-semibold">Cancelar</button>
-            <button type="button" onClick={(e) => handleSubmit(e, false)} disabled={isLoading} className="px-6 py-2.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-semibold">{isLoading ? 'Salvando...' : 'Salvar Rascunho'}</button>
-            <button type="button" onClick={(e) => handleSubmit(e, true)} disabled={isLoading} className="px-6 py-2.5 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 font-semibold">{isLoading ? 'Salvando...' : 'Salvar e Ver Detalhes'}</button>
+                <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Campus / Instituição</label>
+                    <div className="relative">
+                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input 
+                            type="text" 
+                            value={campus} 
+                            onChange={e => setCampus(e.target.value)}
+                            placeholder="Ex: Campus Maceió"
+                            className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-medium"
+                        />
+                    </div>
+                </div>
+
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                        {modalidade === 'Online' ? 'Link da Transmissão' : 'Local / Endereço'}
+                    </label>
+                    <div className="relative">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input 
+                            type="text" 
+                            value={modalidade === 'Online' ? link : local} 
+                            onChange={e => modalidade === 'Online' ? setLink(e.target.value) : setLocal(e.target.value)}
+                            placeholder={modalidade === 'Online' ? "https://youtube.com/..." : "Auditório Principal, Bloco A"}
+                            className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-medium"
+                        />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {/* Seção: Vagas */}
+        <section className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100">
+            <div className="flex items-center gap-3 mb-8">
+                <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
+                    <Users className="w-6 h-6 text-green-600" />
+                </div>
+                <h2 className="text-xl font-black text-gray-900 tracking-tight">Capacidade</h2>
+            </div>
+            
+            <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Número de Vagas (opcional)</label>
+                <input 
+                    type="number" 
+                    value={vagas || ''} 
+                    onChange={e => setVagas(e.target.value ? parseInt(e.target.value) : undefined)} 
+                    placeholder="Deixe vazio para ilimitado"
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-medium"
+                />
+            </div>
+        </section>
+
+        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <button 
+                type="submit" 
+                disabled={isLoading}
+                className="flex-1 flex items-center justify-center gap-3 px-8 py-5 bg-indigo-600 text-white font-black rounded-[2rem] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 active:scale-95 disabled:bg-gray-300"
+            >
+                {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
+                {isLoading ? 'Criando Evento...' : 'Criar Evento'}
+            </button>
+            <button 
+                type="button" 
+                onClick={() => navigate(-1)}
+                className="px-8 py-5 bg-white border border-gray-200 text-gray-600 font-black rounded-[2rem] hover:bg-gray-50 transition-all active:scale-95"
+            >
+                Cancelar
+            </button>
         </div>
       </form>
     </div>
   );
 }
+
+import { Loader2 as LoaderIcon } from 'lucide-react';
