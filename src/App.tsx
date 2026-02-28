@@ -35,6 +35,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import SchedulePage from './pages/event/SchedulePage';
 import ManageActivitiesPage from './pages/event/ManageActivitiesPage';
 import ActivityFormPage from './pages/event/ActivityFormPage';
+import MarkPresencePage from './pages/event/MarkPresencePage';
 import { Loader2 } from 'lucide-react';
 
 export default function App() {
@@ -111,6 +112,7 @@ function AppRoutes() {
             <Route path="/evento/:id/atividades" element={<div className='bg-gray-50 min-h-screen'><ManageActivitiesPage /></div>} />
             <Route path="/evento/:id/atividades/criar" element={<div className='bg-gray-50 min-h-screen'><ActivityFormPage /></div>} />
             <Route path="/evento/:id/atividades/:activityId/editar" element={<div className='bg-gray-50 min-h-screen'><ActivityFormPage /></div>} />
+            <Route path="/evento/:id/atividades/:activityId/presenca" element={<div className='bg-gray-50 min-h-screen'><MarkPresencePage /></div>} />
           </Route>
         </>
       )}
