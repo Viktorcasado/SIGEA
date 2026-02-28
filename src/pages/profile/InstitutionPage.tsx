@@ -3,7 +3,7 @@ import { useUser } from '@/src/contexts/UserContext';
 import { useNotifications } from '@/src/contexts/NotificationContext';
 import { updateProfile } from '@/src/services/profileService';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Building2, GraduationCap, MapPin } from 'lucide-react';
+import { ArrowLeft, Building2, GraduationCap, MapPin, ShieldCheck } from 'lucide-react';
 import { EventInstitution, UserProfile } from '@/src/types';
 
 export default function InstitutionPage() {
@@ -37,7 +37,7 @@ export default function InstitutionPage() {
         tipo: 'sistema',
       });
       
-      alert('Vínculo atualizado com sucesso!');
+      alert('Vínculo atualizado com sucesso! Suas permissões foram atualizadas.');
       navigate('/perfil');
     } catch (error) {
       console.error(error);
@@ -58,7 +58,7 @@ export default function InstitutionPage() {
 
       <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100">
         <h1 className="text-2xl font-black text-gray-900 tracking-tight">Vínculo Institucional</h1>
-        <p className='text-gray-500 font-medium mt-1'>Mantenha seus dados acadêmicos atualizados para emissão de certificados.</p>
+        <p className='text-gray-500 font-medium mt-1'>Mantenha seus dados acadêmicos atualizados para acessar áreas restritas.</p>
         
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
@@ -105,6 +105,8 @@ export default function InstitutionPage() {
                     <option value="aluno">Aluno</option>
                     <option value="servidor">Servidor</option>
                     <option value="comunidade_externa">Comunidade Externa</option>
+                    <option value="gestor">Gestor (Acesso Total)</option>
+                    <option value="admin">Administrador</option>
                   </select>
                 </div>
               </div>
@@ -120,6 +122,13 @@ export default function InstitutionPage() {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-indigo-600 mt-0.5" />
+            <p className="text-xs text-indigo-700 font-medium leading-relaxed">
+              <strong>Dica:</strong> Para acessar o Painel do Gestor ou criar eventos, altere seu perfil para <strong>Gestor</strong> ou <strong>Servidor</strong>.
+            </p>
           </div>
 
           <div className='flex flex-col sm:flex-row gap-3 pt-4'>
